@@ -129,6 +129,8 @@ PLS.prototype.predict = function (dataset) {
     var std = normalization.std;
     var Y = X.mmul(this.PBQ);
     Y.mulRowVector(this.ystd);
+    // be careful because its suposed to be a sumRowVector but the mean
+    // is negative here in the case of the and
     Y.subRowVector(this.ymean);
     return Y;
 };
