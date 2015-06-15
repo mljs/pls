@@ -30,9 +30,13 @@ function PLS(dataset, predictions, reload) {
     if(reload) {
         // TODO: reload PLS
     } else {
-        var tolerance = 1e-7;
-        var X = Matrix(dataset).clone();
-        var Y = Matrix(predictions).clone();
+
+        var tolerance = 1e-10;
+        var X = featureNormalize(Matrix(dataset).clone()).result;
+        var resultY = featureNormalize(Matrix(predictions).clone());
+        this.ymean = resultY.means;
+        this.ystd = resultY.std;
+        var Y = resultY.result;
 
         var rx = X.rows;
         var cx = X.columns;
@@ -67,7 +71,7 @@ function PLS(dataset, predictions, reload) {
                 var w = transposeX.mmul(u);
                 w.div(norm(w));
                 t = t1;
-                t1 = X.clone().mmul(w);
+                t1 = X.mmul(w);
                 var q = transposeY.mmul(t1);
                 q.div(norm(q));
                 var u = Y.mmul(q);
@@ -119,12 +123,13 @@ function PLS(dataset, predictions, reload) {
 
 PLS.prototype.predict = function (dataset) {
     var X = Matrix(dataset).clone();
-    var normalization = featureNormalize(dataset);
+    var normalization = featureNormalize(X);
     X = normalization.result;
     var means = normalization.means;
     var std = normalization.std;
-    var Y = dataset.mmul(this.PBQ);
-    Y.mulRowVector(std).addRowVector(means);
+    var Y = X.mmul(this.PBQ);
+    Y.mulRowVector(this.ystd);
+    Y.subRowVector(this.ymean);
     return Y;
 };
 
