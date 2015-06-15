@@ -2,6 +2,7 @@
 
 module.exports = PLS;
 var Matrix = require('ml-matrix');
+var Stat = require('ml-stat');
 
 function pow2array(i, j) {
     this[i][j] = this[i][j] * this[i][j];
@@ -55,11 +56,11 @@ function PLS(dataset, predictions, reload) {
             var transposeX = X.transpose();
             var transposeY = Y.transpose();
 
-            var tIndex = maxSumColIndex(X.clone().mulM(transposeX));
-            var uIndex = maxSumColIndex(Y.clone().mulM(transposeY));
+            var tIndex = maxSumColIndex(X.clone().mulM(X));
+            var uIndex = maxSumColIndex(Y.clone().mulM(Y));
 
-            var t1 = X.getRowVector(tIndex);
-            var u = Y.getRowVector(uIndex);
+            var t1 = X.getColumnVector(tIndex);
+            var u = Y.getColumnVector(uIndex);
             var t = Matrix.zeros(rx, 1);
 
             while(norm(t1.clone().sub(t)) > tolerance) {
@@ -74,7 +75,7 @@ function PLS(dataset, predictions, reload) {
 
             t = t1;
             var num = transposeX.mmul(t);
-            var den = t.transpose().mmul(t);
+            var den = (t.transpose().mmul(t))[0][0];
             var p = num.div(den);
             var pnorm = norm(p);
             p.div(pnorm);
@@ -82,9 +83,9 @@ function PLS(dataset, predictions, reload) {
             w.mul(pnorm);
 
             num = u.transpose().mmul(t);
-            var b = num.div(den);
+            var b = (num.div(den))[0][0];
             X.sub(t.mmul(p.transpose()));
-            Y.sub(b.mmul(t).mmul(q.transpose()));
+            Y.sub(t.mmul(q.transpose()).mul(b));
 
 
             T.addColumn(k, t);
@@ -96,14 +97,15 @@ function PLS(dataset, predictions, reload) {
             k++;
         }
 
-        if(k != n) {
-            T = T.subMatrix(1, n, 1, k);
-            P = P.subMatrix(1, n, 1, k);
-            U = U.subMatrix(1, n, 1, k);
-            Q = Q.subMatrix(1, n, 1, k);
-            W = W.subMatrix(1, n, 1, k);
-            B = B.subMatrix(1, k, 1, k);
-        }
+
+        k--;
+        n--;
+        T = T.subMatrix(0, n, 0, k);
+        P = P.subMatrix(0, n, 0, k);
+        U = U.subMatrix(0, n, 0, k);
+        Q = Q.subMatrix(0, n, 0, k);
+        W = W.subMatrix(0, n, 0, k);
+        B = B.subMatrix(0, k, 0, k);
 
         this.T = T;
         this.P = P;
@@ -111,10 +113,26 @@ function PLS(dataset, predictions, reload) {
         this.Q = Q;
         this.W = W;
         this.B = B;
+        this.PBQ = this.P.mmul(this.B).mmul(this.Q.transpose());
     }
 }
 
 PLS.prototype.predict = function (dataset) {
-    var X = Matrix(dataset);
-    return (X.mmul(this.B)).add(this.B0);
+    var X = Matrix(dataset).clone();
+    var normalization = featureNormalize(dataset);
+    X = normalization.result;
+    var means = normalization.means;
+    var std = normalization.std;
+    var Y = dataset.mmul(this.PBQ);
+    Y.mulRowVector(std).addRowVector(means);
+    return Y;
 };
+
+function featureNormalize(dataset) {
+    var means = Stat.matrix.mean(dataset);
+    var std = Matrix.rowVector(Stat.matrix.standardDeviation(dataset, means, true));
+    means = Matrix.rowVector(means);
+
+    var result = dataset.addRowVector(means.neg());
+    return {result: result.divRowVector(std), means: means, std: std};
+}
