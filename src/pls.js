@@ -167,6 +167,19 @@ PLS.load = function (model) {
 };
 
 /**
+ * Function that exports a PLS model to an Object.
+ * @returns {{modelName: string, ymean: *, ystd: *, PBQ: *}} model.
+ */
+PLS.prototype.export = function () {
+    return {
+        modelName: "PLS",
+        ymean: this.ymean,
+        ystd: this.ystd,
+        PBQ: this.PBQ
+    };
+};
+
+/**
  * Function that predict the behavior of the given dataset.
  * @param dataset - data to be predicted.
  * @returns {Matrix} - predictions of each element of the dataset.
@@ -189,7 +202,8 @@ PLS.prototype.predict = function (dataset) {
  * Function that normalize the dataset and return the means and
  * standard deviation of each feature.
  * @param dataset
- * @returns {{result: Matrix, means: (*|number), std: Matrix}}
+ * @returns {{result: Matrix, means: (*|number), std: Matrix}} dataset normalized, means
+ *                                                             and standard deviations
  */
 function featureNormalize(dataset) {
     var means = Stat.matrix.mean(dataset);
