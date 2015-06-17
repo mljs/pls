@@ -55,7 +55,9 @@ function maxSumColIndex(X) {
  */
 function PLS(dataset, predictions, reload) {
     if(reload) {
-        // TODO: reload PLS
+        this.ymean = dataset.ymean;
+        this.ystd = dataset.ystd;
+        this.PBQ = dataset.PBQ;
     } else {
         if(dataset.length !== predictions.length)
             throw new RangeError("The number of predictions and elements in the dataset must be the same");
@@ -130,25 +132,38 @@ function PLS(dataset, predictions, reload) {
             k++;
         }
 
+        // NOTE: some variables commented because maybe it's needed
+        // in the future
 
         k--;
         n--;
-        T = T.subMatrix(0, n, 0, k);
+        //T = T.subMatrix(0, n, 0, k);
         P = P.subMatrix(0, n, 0, k);
-        U = U.subMatrix(0, n, 0, k);
+        //U = U.subMatrix(0, n, 0, k);
         Q = Q.subMatrix(0, n, 0, k);
-        W = W.subMatrix(0, n, 0, k);
+        //W = W.subMatrix(0, n, 0, k);
         B = B.subMatrix(0, k, 0, k);
 
-        this.T = T;
-        this.P = P;
-        this.U = U;
-        this.Q = Q;
-        this.W = W;
-        this.B = B;
-        this.PBQ = this.P.mmul(this.B).mmul(this.Q.transpose());
+        // this.T = T;
+        // this.P = P;
+        // this.U = U;
+        // this.Q = Q;
+        // this.W = W;
+        // this.B = B;
+        this.PBQ = P.mmul(B).mmul(Q.transpose());
     }
 }
+/**
+ * Load a PLS model from an Object
+ * @param model
+ * @returns {PLS} - PLS object from the given model
+ */
+PLS.load = function (model) {
+    if(model.modelName !== 'PLS')
+        throw new RangeError("The current model is invalid!");
+
+    return new PLS(model, null, true);
+};
 
 /**
  * Function that predict the behavior of the given dataset.
