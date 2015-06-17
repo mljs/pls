@@ -153,6 +153,7 @@ function PLS(dataset, predictions, reload) {
         this.PBQ = P.mmul(B).mmul(Q.transpose());
     }
 }
+
 /**
  * Load a PLS model from an Object
  * @param model
