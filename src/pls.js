@@ -4,15 +4,33 @@ module.exports = PLS;
 var Matrix = require('ml-matrix');
 var Stat = require('ml-stat');
 
+/**
+* Function that pow 2 each element of a Matrix or a Vector,
+* used in the apply method of the Matrix object
+* @param i - index i.
+* @param j - index j.
+* @return The Matrix object modified at the index i, j.
+* */
 function pow2array(i, j) {
     this[i][j] = this[i][j] * this[i][j];
     return this;
 }
 
+/**
+ * Function that given vector, returns his norm
+ * @param {Vector} X
+ * @returns {number} Norm of the vector
+ */
 function norm(X) {
     return Math.sqrt(X.clone().apply(pow2array).sum());
 }
 
+/**
+ * Function that returns the index where the sum of each
+ * column vector is maximum.
+ * @param {Matrix} X
+ * @returns {number} index of the maximum
+ */
 function maxSumColIndex(X) {
     var maxIndex = 0;
     var maxSum = -Infinity;
@@ -26,10 +44,21 @@ function maxSumColIndex(X) {
     return i;
 }
 
+/**
+ * Construction of the PLS model that takes
+ * @param {Matrix} dataset - Dataset to be apply the model
+ * @param {Matrix} predictions - Predictions over each case of the dataset
+ * @param reload - used internally for load purposes.
+ * @constructor
+ * @throws RangeError - if the number of elements in predictions isn't be
+ *                      the same to the dataset
+ */
 function PLS(dataset, predictions, reload) {
     if(reload) {
         // TODO: reload PLS
     } else {
+        if(dataset.length !== predictions.length)
+            throw new RangeError("The number of predictions and elements in the dataset must be the same");
 
         var tolerance = 1e-10;
         var X = featureNormalize(Matrix(dataset).clone()).result;
@@ -121,6 +150,11 @@ function PLS(dataset, predictions, reload) {
     }
 }
 
+/**
+ * Function that predict the behavior of the given dataset.
+ * @param dataset - data to be predicted.
+ * @returns {Matrix} - predictions of each element of the dataset.
+ */
 PLS.prototype.predict = function (dataset) {
     var X = Matrix(dataset).clone();
     var normalization = featureNormalize(X);
@@ -135,6 +169,12 @@ PLS.prototype.predict = function (dataset) {
     return Y;
 };
 
+/**
+ * Function that normalize the dataset and return the means and
+ * standard deviation of each feature.
+ * @param dataset
+ * @returns {{result: Matrix, means: (*|number), std: Matrix}}
+ */
 function featureNormalize(dataset) {
     var means = Stat.matrix.mean(dataset);
     var std = Matrix.rowVector(Stat.matrix.standardDeviation(dataset, means, true));
