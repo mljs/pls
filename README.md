@@ -4,29 +4,24 @@ PLS regression algorithm
 
 ## Methods
 
-### new PLS([LayersSize])
+### new PLS()
 
-__Arguments__
-
-* `layersSize` - Array of numbers with sizes of each layer.
+Constructor that takes no arguments.
 
 __Example__
 
 ```js
-var FNN = new FeedforwardNeuralNetwork([2, 4, 1]);
+var pls = new PLS();
 ```
 
-### train(trainingSet, predictions, learningRate, momentum)
+### fit(trainingSet, predictions)
 
-Train the Neural Network with a given training set, predictions, learning rate and a 
-momentum (Regularization term).
+Fit the PLS model to the given training set and predictions
 
 __Arguments__
 
 * `trainingSet` - A matrix of the training set.
 * `predictions` - A matrix of predictions with the same size of rows of the trainingSet.
-* `learningRate` - The learning rate (number).
-* `momentum` - The regularization term (number).
 
 __Example__
 
@@ -34,7 +29,7 @@ __Example__
 var trainingSet = [[0, 0], [0, 1], [1, 0], [1, 1]];
 var predictions = [[0], [0], [0], [1]];
 
-FNN.train(trainingSet, predictions, 0.3, 0.3);
+pls.fit(trainingSet, predictions);
 ```
 
 ### predict(dataset)
@@ -50,7 +45,7 @@ __Example__
 ```js
 var dataset = [[0, 0], [0, 1], [1, 0], [1, 1]];
 
-var ans = FNN.predict(dataset);
+var ans = pls.predict(dataset);
 ```
 
 ### export()
