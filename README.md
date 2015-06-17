@@ -50,11 +50,11 @@ var ans = pls.predict(dataset);
 
 ### export()
 
-Exports the actual Neural Network to an Javascript Object.
+Exports the actual PLS to an Javascript Object.
 
 ### load(model)
 
-Returns a new Neural Network with the given model.
+Returns a new PLS with the given model.
 
 __Arguments__
 
