@@ -1,6 +1,6 @@
 "use strict";
 
-var PLS = require("../src/pls");
+var PLS = require("..");
 var Matrix = require("ml-matrix");
 
 describe("PLS-DA algorithm", function () {

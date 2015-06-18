@@ -1,1 +1,1 @@
-exports.PLS = require("./pls");
+module.exports = require("./pls");
