@@ -1,6 +1,8 @@
 # Partial Least Squares (PLS)
 
-PLS regression algorithm
+PLS regression algorithm based on the Yi Cao Matlab implementation:
+
+[Partial Least-Squares and Discriminant Analysis](http://www.mathworks.com/matlabcentral/fileexchange/18760-partial-least-squares-and-discriminant-analysis)
 
 ## Methods
 
