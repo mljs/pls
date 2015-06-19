@@ -28,8 +28,8 @@ __Arguments__
 __Example__
 
 ```js
-var trainingSet = [[0, 0], [0, 1], [1, 0], [1, 1]];
-var predictions = [[0], [0], [0], [1]];
+var training = [[0.1, 0.02], [0.25, 1.01] ,[0.95, 0.01], [1.01, 0.96]];
+var predicted = [[1, 0], [1, 0], [1, 0], [0, 1]];
 
 pls.fit(trainingSet, predictions);
 ```
