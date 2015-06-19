@@ -1,5 +1,5 @@
 {
-  "name": "Partial Least Squares",
+  "name": "ml-pls",
   "version": "1.0.0",
   "description": "Partial least squares library",
   "main": "src/index.js",
