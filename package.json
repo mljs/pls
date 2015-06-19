@@ -1,7 +1,7 @@
 {
-  "name": "feedforwardNeuralNetworks",
+  "name": "Partial Least Squares",
   "version": "1.0.0",
-  "description": "feedforward neural networks library",
+  "description": "Partial least squares library",
   "main": "src/index.js",
   "directories": {
     "lib": "src",
@@ -13,21 +13,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mljs/optimization.git"
+    "url": "https://github.com/mljs/pls.git"
   },
   "keywords": [
-    "neural",
-    "networks",
-    "feedforward",
+    "partial",
+    "least",
+    "squares",
     "machine",
     "learning"
   ],
   "author": "Jefferson Hernández",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mljs/feedforwardNeuralNetworks/issues"
+    "url": "https://github.com/mljs/pls/issues"
   },
-  "homepage": "https://github.com/mljs/feedforwardNeuralNetworks",
+  "homepage": "https://github.com/mljs/pls",
   "dependencies": {
     "ml-matrix": "0.1.0",
     "ml-stat": "^1.0.1"
