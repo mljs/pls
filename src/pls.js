@@ -55,11 +55,27 @@ function PLS(reload, model) {
         this.ymean = model.ymean;
         this.ystd = model.ystd;
         this.PBQ = model.PBQ;
+        this.T = model.T;
+        this.P = model.P;
+        this.U = model.U;
+        this.Q = model.Q;
+        this.W = model.W;
+        this.B = model.B;
+        this.OSC = model.OSC;
     }
 }
 
 /**
- * Function that fit the model with the given data and predictions.
+ * Function that fit the model with the given data and predictions, in this function is calculated the
+ * following outputs:
+ *
+ * T - Score matrix of X
+ * P - Loading matrix of X
+ * U - Score matrix of Y
+ * Q - Loading matrix of Y
+ * B - Matrix of regression coefficient
+ * W - Weght matrix of X
+ *
  * @param {Matrix} trainingSet - Dataset to be apply the model
  * @param {Matrix} predictions - Predictions over each case of the dataset
  */
@@ -80,7 +96,7 @@ PLS.prototype.fit = function (trainingSet, predictions) {
     var cy = Y.columns;
 
     if(rx != ry) {
-        throw new Error("dataset cases is not the same as the predictions");
+        throw new RangeError("dataset cases is not the same as the predictions");
     }
 
     var n = Math.max(cx, cy);
@@ -137,25 +153,23 @@ PLS.prototype.fit = function (trainingSet, predictions) {
         k++;
     }
 
-    // NOTE: some variables commented because maybe it's needed
-    // in the future
-
     k--;
     n--;
-    //T = T.subMatrix(0, n, 0, k);
+    T = T.subMatrix(0, n, 0, k);
     P = P.subMatrix(0, n, 0, k);
-    //U = U.subMatrix(0, n, 0, k);
+    U = U.subMatrix(0, n, 0, k);
     Q = Q.subMatrix(0, n, 0, k);
-    //W = W.subMatrix(0, n, 0, k);
+    W = W.subMatrix(0, n, 0, k);
     B = B.subMatrix(0, k, 0, k);
 
-    // this.T = T;
-    // this.P = P;
-    // this.U = U;
-    // this.Q = Q;
-    // this.W = W;
-    // this.B = B;
+    this.T = T;
+    this.P = P;
+    this.U = U;
+    this.Q = Q;
+    this.W = W;
+    this.B = B;
     this.PBQ = P.mmul(B).mmul(Q.transpose());
+    this.OSC = false
 };
 
 /**
@@ -179,7 +193,14 @@ PLS.prototype.export = function () {
         modelName: "PLS",
         ymean: this.ymean,
         ystd: this.ystd,
-        PBQ: this.PBQ
+        PBQ: this.PBQ,
+        T: this.T,
+        P: this.P,
+        U: this.U,
+        Q: this.Q,
+        W: this.W,
+        B: this.B,
+        OSC: this.OSC
     };
 };
 
@@ -200,6 +221,9 @@ PLS.prototype.predict = function (dataset) {
     // is negative here in the case of the and
     Y.subRowVector(this.ymean);
     return Y;
+};
+
+PLS.prototype.applyOSC = function () {
 };
 
 /**
