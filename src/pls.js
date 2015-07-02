@@ -52,6 +52,7 @@ function maxSumColIndex(X) {
  */
 function PLS(reload, model) {
     if(reload) {
+        this.X = model.X;
         this.ymean = model.ymean;
         this.ystd = model.ystd;
         this.PBQ = model.PBQ;
@@ -62,6 +63,9 @@ function PLS(reload, model) {
         this.W = model.W;
         this.B = model.B;
         this.OSC = model.OSC;
+        this.orthoP = model.orthoP;
+        this.orthoW = model.orthoW;
+        this.orthoT = model.orthoT;
     }
 }
 
@@ -99,7 +103,7 @@ PLS.prototype.fit = function (trainingSet, predictions) {
         throw new RangeError("dataset cases is not the same as the predictions");
     }
 
-    var n = Math.max(cx, cy);
+    var n = Math.max(cx, cy); // components of the pls
     var T = Matrix.zeros(rx, n);
     var P = Matrix.zeros(cx, n);
     var U = Matrix.zeros(ry, n);
@@ -126,7 +130,7 @@ PLS.prototype.fit = function (trainingSet, predictions) {
             t1 = X.mmul(w);
             var q = transposeY.mmul(t1);
             q.div(norm(q));
-            var u = Y.mmul(q);
+            u = Y.mmul(q);
         }
 
         t = t1;
@@ -143,12 +147,11 @@ PLS.prototype.fit = function (trainingSet, predictions) {
         X.sub(t.mmul(p.transpose()));
         Y.sub(t.mmul(q.transpose()).mul(b));
 
-
-        T.addColumn(k, t);
-        P.addColumn(k, p);
-        U.addColumn(k, u);
-        Q.addColumn(k, q);
-        W.addColumn(k, w);
+        T.setColumn(k, t);
+        P.setColumn(k, p);
+        U.setColumn(k, u);
+        Q.setColumn(k, q);
+        W.setColumn(k, w);
         B[k][k] = b;
         k++;
     }
@@ -162,6 +165,7 @@ PLS.prototype.fit = function (trainingSet, predictions) {
     W = W.subMatrix(0, n, 0, k);
     B = B.subMatrix(0, k, 0, k);
 
+    this.X = X;
     this.T = T;
     this.P = P;
     this.U = U;
@@ -169,7 +173,10 @@ PLS.prototype.fit = function (trainingSet, predictions) {
     this.W = W;
     this.B = B;
     this.PBQ = P.mmul(B).mmul(Q.transpose());
-    this.OSC = false
+    this.OSC = false;
+    this.orthoW = undefined;
+    this.orthoT = undefined;
+    this.orthoP = undefined;
 };
 
 /**
@@ -191,6 +198,7 @@ PLS.load = function (model) {
 PLS.prototype.export = function () {
     return {
         modelName: "PLS",
+        X: this.X,
         ymean: this.ymean,
         ystd: this.ystd,
         PBQ: this.PBQ,
@@ -200,7 +208,10 @@ PLS.prototype.export = function () {
         Q: this.Q,
         W: this.W,
         B: this.B,
-        OSC: this.OSC
+        OSC: this.OSC,
+        orthoW: this.orthoW,
+        orthoT: this.orthoT,
+        orthoP: this.orthoP
     };
 };
 
@@ -224,6 +235,31 @@ PLS.prototype.predict = function (dataset) {
 };
 
 PLS.prototype.applyOSC = function () {
+    var orthoP = new Matrix(this.P.rows, this.P.columns);
+    var orthoW = new Matrix(this.W.rows, this.W.columns);
+    var orthoT = new Matrix(this.T.rows, this.T.columns);
+    for(var i = 0; i < 1; ++i) {
+        var p = this.P.getColumnVector(i);
+        var w = this.W.getColumnVector(i);
+        var t = this.T.getColumnVector(i);
+        var wTranspose = w.transpose();
+        var tTranspose = t.transpose();
+
+        console.log(wTranspose.rows + " " + wTranspose.columns);
+        console.log(p.rows + " " + p.columns);
+        var numerator = wTranspose.clone().mmul(p);
+        var denominator = wTranspose.clone().mmul(w);
+        this.orthoW = p.clone().sub(w.mulS(numerator.div(denominator)[0][0]));
+        this.orthoT = this.X.clone().mmul(this.orthoW);
+
+        numerator = this.X.transpose().mmul(this.orthoT);
+        denominator = this.orthoT.transpose().mmul(this.orthoT);
+        this.orthoP = numerator.divS(denominator[0][0]);
+    }
+
+    this.OSC = true;
+
+    return this.X.clone().sub(this.orthoT.clone().mmul(this.orthoP.transpose()));
 };
 
 /**

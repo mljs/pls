@@ -8,6 +8,7 @@ describe("PLS-DA algorithm", function () {
     var predicted = [[1, 0], [1, 0], [1, 0], [0, 1]];
     var pls = new PLS();
     pls.fit(training, predicted);
+
     it("test with a pseudo-AND operator", function () {
         var result = pls.predict(training);
 
@@ -26,5 +27,5 @@ describe("PLS-DA algorithm", function () {
         (result[1][0] > result[1][1]).should.be.ok;
         (result[2][0] > result[2][1]).should.be.ok;
         (result[3][0] < result[3][1]).should.be.ok;
-    })
+    });
 });
