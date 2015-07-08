@@ -12,10 +12,22 @@ describe("PLS-DA algorithm", function () {
     it("test with a pseudo-AND operator", function () {
         var result = pls.predict(training);
 
-        (result[0][0] > result[0][1]).should.be.ok;
-        (result[1][0] > result[1][1]).should.be.ok;
-        (result[2][0] > result[2][1]).should.be.ok;
-        (result[3][0] < result[3][1]).should.be.ok;
+        (result[0][0]).should.be.greaterThan(result[0][1]);
+        (result[1][0]).should.be.greaterThan(result[1][1]);
+        (result[2][0]).should.be.greaterThan(result[2][1]);
+        (result[3][0]).should.be.lessThan(result[3][1]);
+    });
+
+    it('Random points test', function () {
+        var training = [[0.323, 34, 56, 23], [2.23, 43, 32, 83]];
+        var predicted = [[23], [15]];
+
+        var newPls = new PLS();
+        newPls.fit(training, predicted);
+        var result = newPls.predict(training);
+
+        result[0][0].should.be.equal(predicted[0][0]);
+        result[1][0].should.be.equal(predicted[1][0]);
     });
 
     it("Export and import", function () {
@@ -23,9 +35,9 @@ describe("PLS-DA algorithm", function () {
         var newpls = PLS.load(model);
         var result = newpls.predict(training);
 
-        (result[0][0] > result[0][1]).should.be.ok;
-        (result[1][0] > result[1][1]).should.be.ok;
-        (result[2][0] > result[2][1]).should.be.ok;
-        (result[3][0] < result[3][1]).should.be.ok;
+        (result[0][0]).should.be.greaterThan(result[0][1]);
+        (result[1][0]).should.be.greaterThan(result[1][1]);
+        (result[2][0]).should.be.greaterThan(result[2][1]);
+        (result[3][0]).should.be.lessThan(result[3][1]);
     });
 });

@@ -34,14 +34,14 @@ function norm(X) {
 function maxSumColIndex(X) {
     var maxIndex = 0;
     var maxSum = -Infinity;
-    for(var i = 0; i < X.column; ++i) {
+    for(var i = 0; i < X.columns; ++i) {
         var currentSum = X.getColumnVector(i).sum();
         if(currentSum > maxSum) {
             maxSum = currentSum;
             maxIndex = i;
         }
     }
-    return i;
+    return maxIndex;
 }
 
 /**
@@ -143,9 +143,10 @@ PLS.prototype.fit = function (trainingSet, predictions) {
         w.mul(pnorm);
 
         num = u.transpose().mmul(t);
+        den = (t.transpose().mmul(t))[0][0];
         var b = (num.div(den))[0][0];
         X.sub(t.mmul(p.transpose()));
-        Y.sub(t.mmul(q.transpose()).mul(b));
+        Y.sub(t.clone().mul(b).mmul(q.transpose()));
 
         T.setColumn(k, t);
         P.setColumn(k, p);
@@ -158,11 +159,11 @@ PLS.prototype.fit = function (trainingSet, predictions) {
 
     k--;
     n--;
-    T = T.subMatrix(0, n, 0, k);
-    P = P.subMatrix(0, n, 0, k);
-    U = U.subMatrix(0, n, 0, k);
-    Q = Q.subMatrix(0, n, 0, k);
-    W = W.subMatrix(0, n, 0, k);
+    T = T.subMatrix(0, T.rows - 1, 0, k);
+    P = P.subMatrix(0, P.rows - 1, 0, k);
+    U = U.subMatrix(0, U.rows - 1, 0, k);
+    Q = Q.subMatrix(0, Q.rows - 1, 0, k);
+    W = W.subMatrix(0, W.rows - 1, 0, k);
     B = B.subMatrix(0, k, 0, k);
 
     this.X = X;
@@ -245,8 +246,6 @@ PLS.prototype.applyOSC = function () {
         var wTranspose = w.transpose();
         var tTranspose = t.transpose();
 
-        console.log(wTranspose.rows + " " + wTranspose.columns);
-        console.log(p.rows + " " + p.columns);
         var numerator = wTranspose.clone().mmul(p);
         var denominator = wTranspose.clone().mmul(w);
         this.orthoW = p.clone().sub(w.mulS(numerator.div(denominator)[0][0]));
