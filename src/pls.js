@@ -3,27 +3,7 @@
 module.exports = PLS;
 var Matrix = require('ml-matrix');
 var Stat = require('ml-stat');
-
-/**
-* Function that pow 2 each element of a Matrix or a Vector,
-* used in the apply method of the Matrix object
-* @param i - index i.
-* @param j - index j.
-* @return The Matrix object modified at the index i, j.
-* */
-function pow2array(i, j) {
-    this[i][j] = this[i][j] * this[i][j];
-    return this;
-}
-
-/**
- * Function that given vector, returns his norm
- * @param {Vector} X
- * @returns {number} Norm of the vector
- */
-function norm(X) {
-    return Math.sqrt(X.clone().apply(pow2array).sum());
-}
+var Utils = require('./utils');
 
 /**
  * Function that returns the index where the sum of each
@@ -52,7 +32,8 @@ function maxSumColIndex(X) {
  */
 function PLS(reload, model) {
     if(reload) {
-        this.X = model.X;
+        this.E = model.E;
+        this.F = model.F;
         this.ymean = model.ymean;
         this.ystd = model.ystd;
         this.PBQ = model.PBQ;
@@ -73,23 +54,23 @@ function PLS(reload, model) {
  * Function that fit the model with the given data and predictions, in this function is calculated the
  * following outputs:
  *
- * T - Score matrix of X
- * P - Loading matrix of X
- * U - Score matrix of Y
- * Q - Loading matrix of Y
+ * T - Score matrix of E
+ * P - Loading matrix of E
+ * U - Score matrix of F
+ * Q - Loading matrix of F
  * B - Matrix of regression coefficient
- * W - Weght matrix of X
+ * W - Weight matrix of E
  *
  * @param {Matrix} trainingSet - Dataset to be apply the model
  * @param {Matrix} predictions - Predictions over each case of the dataset
  */
-PLS.prototype.fit = function (trainingSet, predictions) {
+PLS.prototype.fit = function (trainingSet, predictions, latentVectors, tolerance) {
     if(trainingSet.length !== predictions.length)
         throw new RangeError("The number of predictions and elements in the dataset must be the same");
 
-    var tolerance = 1e-10;
-    var X = featureNormalize(Matrix(trainingSet).clone()).result;
-    var resultY = featureNormalize(Matrix(predictions).clone());
+    //var tolerance = 1e-9;
+    var X = Utils.featureNormalize(Matrix(trainingSet).clone()).result;
+    var resultY = Utils.featureNormalize(Matrix(predictions).clone());
     this.ymean = resultY.means;
     this.ystd = resultY.std;
     var Y = resultY.result;
@@ -103,7 +84,7 @@ PLS.prototype.fit = function (trainingSet, predictions) {
         throw new RangeError("dataset cases is not the same as the predictions");
     }
 
-    var n = Math.max(cx, cy); // components of the pls
+    var n = latentVectors; //Math.max(cx, cy); // components of the pls
     var T = Matrix.zeros(rx, n);
     var P = Matrix.zeros(cx, n);
     var U = Matrix.zeros(ry, n);
@@ -112,7 +93,7 @@ PLS.prototype.fit = function (trainingSet, predictions) {
     var W = P.clone();
     var k = 0;
 
-    while(norm(Y) > tolerance && k < n) {
+    while(Utils.norm(Y) > tolerance && k < n) {
         var transposeX = X.transpose();
         var transposeY = Y.transpose();
 
@@ -123,13 +104,13 @@ PLS.prototype.fit = function (trainingSet, predictions) {
         var u = Y.getColumnVector(uIndex);
         var t = Matrix.zeros(rx, 1);
 
-        while(norm(t1.clone().sub(t)) > tolerance) {
+        while(Utils.norm(t1.clone().sub(t)) > tolerance) {
             var w = transposeX.mmul(u);
-            w.div(norm(w));
+            w.div(Utils.norm(w));
             t = t1;
             t1 = X.mmul(w);
             var q = transposeY.mmul(t1);
-            q.div(norm(q));
+            q.div(Utils.norm(q));
             u = Y.mmul(q);
         }
 
@@ -137,7 +118,7 @@ PLS.prototype.fit = function (trainingSet, predictions) {
         var num = transposeX.mmul(t);
         var den = (t.transpose().mmul(t))[0][0];
         var p = num.div(den);
-        var pnorm = norm(p);
+        var pnorm = Utils.norm(p);
         p.div(pnorm);
         t.mul(pnorm);
         w.mul(pnorm);
@@ -166,7 +147,8 @@ PLS.prototype.fit = function (trainingSet, predictions) {
     W = W.subMatrix(0, W.rows - 1, 0, k);
     B = B.subMatrix(0, k, 0, k);
 
-    this.X = X;
+    this.E = X;
+    this.F = Y;
     this.T = T;
     this.P = P;
     this.U = U;
@@ -178,6 +160,44 @@ PLS.prototype.fit = function (trainingSet, predictions) {
     this.orthoW = undefined;
     this.orthoT = undefined;
     this.orthoP = undefined;
+};
+
+/**
+ * Function that predict the behavior of the given dataset.
+ * @param dataset - data to be predicted.
+ * @returns {Matrix} - predictions of each element of the dataset.
+ */
+PLS.prototype.predict = function (dataset) {
+    var X = Matrix(dataset).clone();
+    var normalization = Utils.featureNormalize(X);
+    X = normalization.result;
+    var means = normalization.means;
+    var std = normalization.std;
+    var Y = X.mmul(this.PBQ).add(this.F);
+    Y.mulRowVector(this.ystd);
+    // be careful because its suposed to be a sumRowVector but the mean
+    // is negative here in the case of the and
+    Y.subRowVector(this.ymean);
+    return Y;
+};
+
+PLS.prototype.applyOSC = function (trainingSet) {
+    var X = Matrix(trainingSet).clone();
+    var w = this.W.getColumnVector(0);
+    var p = this.P.getColumnVector(0);
+
+    var numerator = w.transpose().mmul(p);
+    var denominator = w.transpose().mmul(w);
+    var resultDivision = numerator.div(denominator)[0][0];
+    this.orthoW = p.sub(w.mulS(resultDivision));
+
+    this.orthoT = X.mmul(this.orthoW);
+
+    numerator = X.transpose().mmul(this.orthoT);
+    denominator = this.orthoT.transpose().mmul(this.orthoT)[0][0];
+    this.orthoP = numerator.divS(denominator);
+
+    return X.sub(this.orthoT.mmul(this.orthoP.transpose()));
 };
 
 /**
@@ -199,7 +219,8 @@ PLS.load = function (model) {
 PLS.prototype.export = function () {
     return {
         modelName: "PLS",
-        X: this.X,
+        E: this.E,
+        F: this.F,
         ymean: this.ymean,
         ystd: this.ystd,
         PBQ: this.PBQ,
@@ -215,64 +236,3 @@ PLS.prototype.export = function () {
         orthoP: this.orthoP
     };
 };
-
-/**
- * Function that predict the behavior of the given dataset.
- * @param dataset - data to be predicted.
- * @returns {Matrix} - predictions of each element of the dataset.
- */
-PLS.prototype.predict = function (dataset) {
-    var X = Matrix(dataset).clone();
-    var normalization = featureNormalize(X);
-    X = normalization.result;
-    var means = normalization.means;
-    var std = normalization.std;
-    var Y = X.mmul(this.PBQ);
-    Y.mulRowVector(this.ystd);
-    // be careful because its suposed to be a sumRowVector but the mean
-    // is negative here in the case of the and
-    Y.subRowVector(this.ymean);
-    return Y;
-};
-
-PLS.prototype.applyOSC = function () {
-    var orthoP = new Matrix(this.P.rows, this.P.columns);
-    var orthoW = new Matrix(this.W.rows, this.W.columns);
-    var orthoT = new Matrix(this.T.rows, this.T.columns);
-    for(var i = 0; i < 1; ++i) {
-        var p = this.P.getColumnVector(i);
-        var w = this.W.getColumnVector(i);
-        var t = this.T.getColumnVector(i);
-        var wTranspose = w.transpose();
-        var tTranspose = t.transpose();
-
-        var numerator = wTranspose.clone().mmul(p);
-        var denominator = wTranspose.clone().mmul(w);
-        this.orthoW = p.clone().sub(w.mulS(numerator.div(denominator)[0][0]));
-        this.orthoT = this.X.clone().mmul(this.orthoW);
-
-        numerator = this.X.transpose().mmul(this.orthoT);
-        denominator = this.orthoT.transpose().mmul(this.orthoT);
-        this.orthoP = numerator.divS(denominator[0][0]);
-    }
-
-    this.OSC = true;
-
-    return this.X.clone().sub(this.orthoT.clone().mmul(this.orthoP.transpose()));
-};
-
-/**
- * Function that normalize the dataset and return the means and
- * standard deviation of each feature.
- * @param dataset
- * @returns {{result: Matrix, means: (*|number), std: Matrix}} dataset normalized, means
- *                                                             and standard deviations
- */
-function featureNormalize(dataset) {
-    var means = Stat.matrix.mean(dataset);
-    var std = Matrix.rowVector(Stat.matrix.standardDeviation(dataset, means, true));
-    means = Matrix.rowVector(means);
-
-    var result = dataset.addRowVector(means.neg());
-    return {result: result.divRowVector(std), means: means, std: std};
-}
