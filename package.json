@@ -1,6 +1,6 @@
 {
   "name": "ml-pls",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Partial least squares library",
   "main": "src/index.js",
   "directories": {
@@ -19,6 +19,9 @@
     "partial",
     "least",
     "squares",
+    "projection",
+    "latent",
+    "structures",
     "machine",
     "learning"
   ],

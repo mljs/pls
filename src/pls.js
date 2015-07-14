@@ -44,9 +44,6 @@ function PLS(reload, model) {
         this.W = model.W;
         this.B = model.B;
         this.OSC = model.OSC;
-        this.orthoP = model.orthoP;
-        this.orthoW = model.orthoW;
-        this.orthoT = model.orthoT;
     }
 }
 
@@ -54,15 +51,17 @@ function PLS(reload, model) {
  * Function that fit the model with the given data and predictions, in this function is calculated the
  * following outputs:
  *
- * T - Score matrix of E
- * P - Loading matrix of E
- * U - Score matrix of F
- * Q - Loading matrix of F
+ * T - Score matrix of X
+ * P - Loading matrix of X
+ * U - Score matrix of Y
+ * Q - Loading matrix of Y
  * B - Matrix of regression coefficient
- * W - Weight matrix of E
+ * W - Weight matrix of X
  *
  * @param {Matrix} trainingSet - Dataset to be apply the model
  * @param {Matrix} predictions - Predictions over each case of the dataset
+ * @param {Number} latentVectors - Number of latent variables
+ * @param {Number} tolerance - tolerance of the model
  */
 PLS.prototype.fit = function (trainingSet, predictions, latentVectors, tolerance) {
     if(trainingSet.length !== predictions.length)
@@ -156,10 +155,6 @@ PLS.prototype.fit = function (trainingSet, predictions, latentVectors, tolerance
     this.W = W;
     this.B = B;
     this.PBQ = P.mmul(B).mmul(Q.transpose());
-    this.OSC = false;
-    this.orthoW = undefined;
-    this.orthoT = undefined;
-    this.orthoP = undefined;
 };
 
 /**
@@ -176,28 +171,9 @@ PLS.prototype.predict = function (dataset) {
     var Y = X.mmul(this.PBQ).add(this.F);
     Y.mulRowVector(this.ystd);
     // be careful because its suposed to be a sumRowVector but the mean
-    // is negative here in the case of the and
+    // is negative here
     Y.subRowVector(this.ymean);
     return Y;
-};
-
-PLS.prototype.applyOSC = function (trainingSet) {
-    var X = Matrix(trainingSet).clone();
-    var w = this.W.getColumnVector(0);
-    var p = this.P.getColumnVector(0);
-
-    var numerator = w.transpose().mmul(p);
-    var denominator = w.transpose().mmul(w);
-    var resultDivision = numerator.div(denominator)[0][0];
-    this.orthoW = p.sub(w.mulS(resultDivision));
-
-    this.orthoT = X.mmul(this.orthoW);
-
-    numerator = X.transpose().mmul(this.orthoT);
-    denominator = this.orthoT.transpose().mmul(this.orthoT)[0][0];
-    this.orthoP = numerator.divS(denominator);
-
-    return X.sub(this.orthoT.mmul(this.orthoP.transpose()));
 };
 
 /**
@@ -230,9 +206,5 @@ PLS.prototype.export = function () {
         Q: this.Q,
         W: this.W,
         B: this.B,
-        OSC: this.OSC,
-        orthoW: this.orthoW,
-        orthoT: this.orthoT,
-        orthoP: this.orthoP
     };
 };
