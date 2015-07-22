@@ -42,14 +42,6 @@ describe("PLS-DA algorithm", function () {
         (result[3][0]).should.be.lessThan(result[3][1]);
     });
 
-    it("Apply OSC", function () {
-        var predicted = [[0], [0], [0], [1]];
-
-        pls.fit(training, predicted, 2, 1e-5);
-        var newTraining = pls.applyOSC(training);
-        //console.log(pls.predict([[0.1, 0.02], [0.25, 1.01]]));
-    });
-
     it('Wine test', function () {
         var dataset = [[7, 7, 13, 7],
                        [4, 3, 14, 7],

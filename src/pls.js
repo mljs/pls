@@ -43,7 +43,6 @@ function PLS(reload, model) {
         this.Q = model.Q;
         this.W = model.W;
         this.B = model.B;
-        this.OSC = model.OSC;
     }
 }
 
@@ -138,7 +137,6 @@ PLS.prototype.fit = function (trainingSet, predictions, latentVectors, tolerance
     }
 
     k--;
-    n--;
     T = T.subMatrix(0, T.rows - 1, 0, k);
     P = P.subMatrix(0, P.rows - 1, 0, k);
     U = U.subMatrix(0, U.rows - 1, 0, k);
@@ -166,11 +164,9 @@ PLS.prototype.predict = function (dataset) {
     var X = Matrix(dataset).clone();
     var normalization = Utils.featureNormalize(X);
     X = normalization.result;
-    var means = normalization.means;
-    var std = normalization.std;
     var Y = X.mmul(this.PBQ).add(this.F);
     Y.mulRowVector(this.ystd);
-    // be careful because its suposed to be a sumRowVector but the mean
+    // be careful because its supposed to be a sumRowVector but the mean
     // is negative here
     Y.subRowVector(this.ymean);
     return Y;
@@ -205,6 +201,6 @@ PLS.prototype.export = function () {
         U: this.U,
         Q: this.Q,
         W: this.W,
-        B: this.B,
+        B: this.B
     };
 };
