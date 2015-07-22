@@ -2,7 +2,6 @@
 
 module.exports = PLS;
 var Matrix = require('ml-matrix');
-var Stat = require('ml-stat');
 var Utils = require('./utils');
 
 /**
@@ -78,6 +77,8 @@ PLS.prototype.fit = function (trainingSet, predictions, latentVectors, tolerance
     var ry = Y.rows;
     var cy = Y.columns;
 
+    var ssqXcal = X.clone().mul(X).sum(); // for the r²
+
     if(rx != ry) {
         throw new RangeError("dataset cases is not the same as the predictions");
     }
@@ -144,6 +145,7 @@ PLS.prototype.fit = function (trainingSet, predictions, latentVectors, tolerance
     W = W.subMatrix(0, W.rows - 1, 0, k);
     B = B.subMatrix(0, k, 0, k);
 
+    this.r2cal = (1 - X.clone().mul(X).sum()) / ssqXcal;
     this.E = X;
     this.F = Y;
     this.T = T;
@@ -170,6 +172,14 @@ PLS.prototype.predict = function (dataset) {
     // is negative here
     Y.subRowVector(this.ymean);
     return Y;
+};
+
+/**
+ * Function that returns the explained variance on training of the PLS model.
+ * @returns {number}
+ */
+PLS.prototype.getExplainedVariance = function () {
+    return this.r2cal;
 };
 
 /**

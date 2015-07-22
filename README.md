@@ -4,6 +4,10 @@ PLS regression algorithm based on the Yi Cao Matlab implementation:
 
 [Partial Least-Squares and Discriminant Analysis](http://www.mathworks.com/matlabcentral/fileexchange/18760-partial-least-squares-and-discriminant-analysis)
 
+## installation
+
+`$ npm install ml-pls`
+
 ## Methods
 
 ### new PLS()
@@ -49,6 +53,10 @@ var dataset = [[0, 0], [0, 1], [1, 0], [1, 1]];
 
 var ans = pls.predict(dataset);
 ```
+
+### getExplainedVariance()
+
+Returns the explained variance on training
 
 ### export()
 
