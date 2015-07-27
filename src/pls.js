@@ -65,13 +65,13 @@ PLS.prototype.train = function (trainingSet, predictions, options) {
     if(options === undefined) options = {};
 
     var latentVectors = options.latentVectors;
-    if(latentVectors === undefined && !isNaN(latentVectors)) {
-        throw new RangeError("Latent vector cannot be ", latentVectors);
+    if(latentVectors === undefined || isNaN(latentVectors)) {
+        throw new RangeError("Latent vector must be a number.");
     }
 
     var tolerance = options.tolerance;
-    if(tolerance === undefined && !isNaN(tolerance)) {
-        throw new RangeError("Latent vector cannot be ", tolerance);
+    if(tolerance === undefined || isNaN(tolerance)) {
+        throw new RangeError("Tolerance must be a number");
     }
 
     if(trainingSet.length !== predictions.length)
