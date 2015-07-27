@@ -58,10 +58,22 @@ function PLS(reload, model) {
  *
  * @param {Matrix} trainingSet - Dataset to be apply the model
  * @param {Matrix} predictions - Predictions over each case of the dataset
- * @param {Number} latentVectors - Number of latent variables
- * @param {Number} tolerance - tolerance of the model
+ * @param {Number} options - recieves the latentVectors and the tolerance of each step of the PLS
  */
-PLS.prototype.fit = function (trainingSet, predictions, latentVectors, tolerance) {
+PLS.prototype.train = function (trainingSet, predictions, options) {
+
+    if(options === undefined) options = {};
+
+    var latentVectors = options.latentVectors;
+    if(latentVectors === undefined && !isNaN(latentVectors)) {
+        throw new RangeError("Latent vector cannot be ", latentVectors);
+    }
+
+    var tolerance = options.tolerance;
+    if(tolerance === undefined && !isNaN(tolerance)) {
+        throw new RangeError("Latent vector cannot be ", tolerance);
+    }
+
     if(trainingSet.length !== predictions.length)
         throw new RangeError("The number of predictions and elements in the dataset must be the same");
 

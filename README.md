@@ -25,22 +25,27 @@ __Example__
 var pls = new PLS();
 ```
 
-### fit(trainingSet, predictions)
+### train(trainingSet, predictions)
 
-Fit the PLS model to the given training set and predictions
+Train the PLS model to the given training set and predictions
 
 __Arguments__
 
 * `trainingSet` - A matrix of the training set.
 * `predictions` - A matrix of predictions with the same size of rows of the trainingSet.
+* `options` - A Javascript object with to values, latentVectors and the tolerance of each step of the PLS algorithm
 
 __Example__
 
 ```js
 var training = [[0.1, 0.02], [0.25, 1.01] ,[0.95, 0.01], [1.01, 0.96]];
 var predicted = [[1, 0], [1, 0], [1, 0], [0, 1]];
+var options = {
+  latentVectors: 10,
+  tolerance: 1e-4
+};
 
-pls.fit(trainingSet, predictions);
+pls.train(trainingSet, predictions, options);
 ```
 
 ### predict(dataset)
