@@ -28,7 +28,7 @@ describe("PLS-DA algorithm", function () {
 
         var newPls = new PLS();
         newPls.train(training, predicted,{
-            latentVectors: 3,
+            latentVectors: 2,
             tolerance: 1e-5
         });
         var result = newPls.predict(training);
@@ -48,7 +48,14 @@ describe("PLS-DA algorithm", function () {
         (result[3][0]).should.be.lessThan(result[3][1]);
     });
 
-    it('Wine test', function () {
+    /*
+    * Test case based on the following document:
+    *
+    * Partial Least Squares (PLS) regression by Herve Abdi
+    * https://www.utdallas.edu/~herve/Abdi-PLS-pretty.pdf
+    *
+    * */
+    it('Wine test with getExplainedVariance', function () {
         var dataset = [[7, 7, 13, 7],
                        [4, 3, 14, 7],
                        [10, 5, 12, 5],
@@ -61,7 +68,7 @@ describe("PLS-DA algorithm", function () {
                            [6, 2, 4]];
 
         var winePLS = new PLS();
-        var latentStructures = 2;
+        var latentStructures = 3;
         var tolerance = 1e-5;
         winePLS.train(dataset, predictions, {
             latentVectors: latentStructures,
@@ -72,6 +79,7 @@ describe("PLS-DA algorithm", function () {
         result[2][0].should.be.equal(predictions[2][0]);
         result[2][1].should.be.equal(predictions[2][1]);
         result[2][2].should.be.equal(predictions[2][2]);
+        winePLS.getExplainedVariance().should.be.approximately(0.02, 1e-2);
     });
 });
 
