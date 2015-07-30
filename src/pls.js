@@ -89,11 +89,12 @@ PLS.prototype.train = function (trainingSet, predictions, options) {
     var ry = Y.rows;
     var cy = Y.columns;
 
-    var ssqXcal = X.clone().mul(X).sum(); // for the r²
-
     if(rx != ry) {
         throw new RangeError("dataset cases is not the same as the predictions");
     }
+
+    var ssqXcal = X.clone().mul(X).sum(); // for the r²
+    var sumOfSquaresY = Y.clone().mul(Y).sum();
 
     var n = latentVectors; //Math.max(cx, cy); // components of the pls
     var T = Matrix.zeros(rx, n);
@@ -103,6 +104,7 @@ PLS.prototype.train = function (trainingSet, predictions, options) {
     var B = Matrix.zeros(n, n);
     var W = P.clone();
     var k = 0;
+    var R2X = new Array(n);
 
     while(Utils.norm(Y) > tolerance && k < n) {
         var transposeX = X.transpose();
@@ -145,6 +147,7 @@ PLS.prototype.train = function (trainingSet, predictions, options) {
         U.setColumn(k, u);
         Q.setColumn(k, q);
         W.setColumn(k, w);
+
         B[k][k] = b;
         k++;
     }
@@ -157,7 +160,12 @@ PLS.prototype.train = function (trainingSet, predictions, options) {
     W = W.subMatrix(0, W.rows - 1, 0, k);
     B = B.subMatrix(0, k, 0, k);
 
-    this.r2cal = (1 - X.clone().mul(X).sum()) / ssqXcal;
+    this.R2X = t.transpose().mmul(t).mmul(p.transpose().mmul(p)).divS(ssqXcal)[0][0];
+
+    // TODO: review of R2Y
+    //this.R2Y = t.transpose().mmul(t).mul(q[k][0]*q[k][0]).divS(ssqYcal)[0][0];
+
+    this.ssqYcal = sumOfSquaresY;
     this.E = X;
     this.F = Y;
     this.T = T;
@@ -178,9 +186,9 @@ PLS.prototype.predict = function (dataset) {
     var X = Matrix(dataset).clone();
     var normalization = Utils.featureNormalize(X);
     X = normalization.result;
-    var Y = X.mmul(this.PBQ).add(this.F);
+    var Y = X.mmul(this.PBQ).addM(this.F);
     Y.mulRowVector(this.ystd);
-    // be careful because its supposed to be a sumRowVector but the mean
+    // be careful because its supposed to be a addRowVector but the mean
     // is negative here
     Y.subRowVector(this.ymean);
     return Y;
@@ -191,7 +199,7 @@ PLS.prototype.predict = function (dataset) {
  * @returns {number}
  */
 PLS.prototype.getExplainedVariance = function () {
-    return this.r2cal;
+    return this.R2X;
 };
 
 /**
