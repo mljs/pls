@@ -33,6 +33,8 @@ function PLS(reload, model) {
     if(reload) {
         this.E = model.E;
         this.F = model.F;
+        this.ssqYcal = model.ssqYcal;
+        this.R2X = model.R2X;
         this.ymean = model.ymean;
         this.ystd = model.ystd;
         this.PBQ = model.PBQ;
@@ -80,7 +82,7 @@ PLS.prototype.train = function (trainingSet, predictions, options) {
     //var tolerance = 1e-9;
     var X = Utils.featureNormalize(Matrix(trainingSet, true)).result;
     var resultY = Utils.featureNormalize(Matrix(predictions, true));
-    this.ymean = resultY.means;
+    this.ymean = resultY.means.neg();
     this.ystd = resultY.std;
     var Y = resultY.result;
 
@@ -186,11 +188,9 @@ PLS.prototype.predict = function (dataset) {
     var X = Matrix(dataset, true);
     var normalization = Utils.featureNormalize(X);
     X = normalization.result;
-    var Y = X.mmul(this.PBQ).addM(this.F);
+    var Y = X.mmul(this.PBQ);
     Y.mulRowVector(this.ystd);
-    // be careful because its supposed to be a addRowVector but the mean
-    // is negative here
-    Y.subRowVector(this.ymean);
+    Y.addRowVector(this.ymean);
     return Y;
 };
 
@@ -223,6 +223,8 @@ PLS.prototype.export = function () {
         modelName: "PLS",
         E: this.E,
         F: this.F,
+        R2X: this.R2X,
+        ssqYcal: this.ssqYcal,
         ymean: this.ymean,
         ystd: this.ystd,
         PBQ: this.PBQ,

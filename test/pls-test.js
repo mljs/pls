@@ -39,6 +39,12 @@ describe("PLS-DA algorithm", function () {
 
     it("Export and import", function () {
         var model = pls.export();
+
+        model.should.have.properties([
+            'modelName', 'E', 'F', 'R2X',
+            'ssqYcal', 'ymean', 'ystd', 'PBQ',
+            'T', 'P', 'U', 'Q', 'W', 'B' ]);
+
         var newpls = PLS.load(model);
         var result = newpls.predict(training);
 
@@ -74,11 +80,12 @@ describe("PLS-DA algorithm", function () {
             latentVectors: latentStructures,
             tolerance: tolerance
         });
+        dataset.pop();
         var result = winePLS.predict(dataset);
 
-        result[2][0].should.be.equal(predictions[2][0]);
-        result[2][1].should.be.equal(predictions[2][1]);
-        result[2][2].should.be.equal(predictions[2][2]);
+        result[2][0].should.be.approximately(predictions[2][0], 1);
+        result[2][1].should.be.approximately(predictions[2][1], 1);
+        result[2][2].should.be.approximately(predictions[2][2], 1);
         winePLS.getExplainedVariance().should.be.approximately(0.02, 1e-2);
     });
 });
