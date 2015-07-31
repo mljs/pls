@@ -45,19 +45,19 @@ function maxSumColIndex(data) {
  */
 function PLS(reload, model) {
     if(reload) {
-        this.E = model.E;
-        this.F = model.F;
+        this.E = Matrix.checkMatrix(model.E);
+        this.F = Matrix.checkMatrix(model.F);
         this.ssqYcal = model.ssqYcal;
         this.R2X = model.R2X;
-        this.ymean = model.ymean;
-        this.ystd = model.ystd;
-        this.PBQ = model.PBQ;
-        this.T = model.T;
-        this.P = model.P;
-        this.U = model.U;
-        this.Q = model.Q;
-        this.W = model.W;
-        this.B = model.B;
+        this.ymean = Matrix.checkMatrix(model.ymean);
+        this.ystd = Matrix.checkMatrix(model.ystd);
+        this.PBQ = Matrix.checkMatrix(model.PBQ);
+        this.T = Matrix.checkMatrix(model.T);
+        this.P = Matrix.checkMatrix(model.P);
+        this.U = Matrix.checkMatrix(model.U);
+        this.Q = Matrix.checkMatrix(model.Q);
+        this.W = Matrix.checkMatrix(model.W);
+        this.B = Matrix.checkMatrix(model.B);
     }
 }
 
