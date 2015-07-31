@@ -5,16 +5,30 @@ var Matrix = require('ml-matrix');
 var Utils = require('./utils');
 
 /**
+ * Retrieves the sum at the column of the given matrix.
+ * @param matrix
+ * @param column
+ * @returns {number}
+ */
+function getColSum(matrix, column) {
+    var sum = 0;
+    for (var i = 0; i < matrix.rows; i++) {
+        sum += matrix[i][column];
+    }
+    return sum;
+}
+
+/**
  * Function that returns the index where the sum of each
  * column vector is maximum.
- * @param {Matrix} X
+ * @param {Matrix} data
  * @returns {number} index of the maximum
  */
-function maxSumColIndex(X) {
+function maxSumColIndex(data) {
     var maxIndex = 0;
     var maxSum = -Infinity;
-    for(var i = 0; i < X.columns; ++i) {
-        var currentSum = X.getColumnVector(i).sum();
+    for(var i = 0; i < data.columns; ++i) {
+        var currentSum = getColSum(data, i);
         if(currentSum > maxSum) {
             maxSum = currentSum;
             maxIndex = i;
