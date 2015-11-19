@@ -94,8 +94,8 @@ PLS.prototype.train = function (trainingSet, predictions, options) {
         throw new RangeError("The number of predictions and elements in the dataset must be the same");
 
     //var tolerance = 1e-9;
-    var X = Utils.featureNormalize(Matrix(trainingSet, true)).result;
-    var resultY = Utils.featureNormalize(Matrix(predictions, true));
+    var X = Utils.featureNormalize(new Matrix(trainingSet)).result;
+    var resultY = Utils.featureNormalize(new Matrix(predictions));
     this.ymean = resultY.means.neg();
     this.ystd = resultY.std;
     var Y = resultY.result;
@@ -199,7 +199,7 @@ PLS.prototype.train = function (trainingSet, predictions, options) {
  * @returns {Matrix} - predictions of each element of the dataset.
  */
 PLS.prototype.predict = function (dataset) {
-    var X = Matrix(dataset, true);
+    var X = new Matrix(dataset);
     var normalization = Utils.featureNormalize(X);
     X = normalization.result;
     var Y = X.mmul(this.PBQ);

@@ -6,8 +6,8 @@ var Utils = require('./utils');
 module.exports = OPLS;
 
 function OPLS(dataset, predictions, numberOSC) {
-    var X = Matrix(dataset).clone();
-    var y = Matrix(predictions).clone();
+    var X = new Matrix(dataset);
+    var y = new Matrix(predictions);
 
     X = Utils.featureNormalize(X).result;
     y = Utils.featureNormalize(y).result;
@@ -58,8 +58,7 @@ function OPLS(dataset, predictions, numberOSC) {
 }
 
 OPLS.prototype.correctDataset = function (dataset) {
-    var X = Matrix(dataset).clone();
-    //X = Utils.featureNormalize(dataset).result;
+    var X = new Matrix(dataset);
 
     var sumOfSquaresX = X.clone().mul(X).sum();
     for (var i = 0; i < this.numberOSC; i++) {
