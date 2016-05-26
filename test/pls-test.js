@@ -38,10 +38,10 @@ describe("PLS-DA algorithm", function () {
     });
 
     it("Export and import", function () {
-        var model = JSON.parse(JSON.stringify(pls.export()));
+        var model = JSON.parse(JSON.stringify(pls.toJSON()));
 
         model.should.have.properties([
-            'modelName', 'E', 'F', 'R2X',
+            'name', 'E', 'F', 'R2X',
             'ssqYcal', 'ymean', 'ystd', 'PBQ',
             'T', 'P', 'U', 'Q', 'W', 'B' ]);
 
