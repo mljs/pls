@@ -40,7 +40,7 @@ describe("PLS-DA algorithm", function () {
     it("Export and import", function () {
         var model = JSON.parse(JSON.stringify(pls.toJSON()));
 
-        model.should.have.properties(['name', 'R2X', 'ymean', 'ystd', 'PBQ']);
+        model.should.have.properties(['name', 'R2X', 'xmean', 'xstd', 'ymean', 'ystd', 'PBQ']);
 
         var newpls = PLS.load(model);
         var result = newpls.predict(training);
@@ -77,7 +77,6 @@ describe("PLS-DA algorithm", function () {
             latentVectors: latentStructures,
             tolerance: tolerance
         });
-        dataset.pop();
         var result = winePLS.predict(dataset);
 
         result[2][0].should.be.approximately(predictions[2][0], 1);

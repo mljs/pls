@@ -6,15 +6,12 @@ var Utils = require('./utils');
 class PLS {
     constructor(reload, model) {
         if (reload) {
-            this.ymean = Matrix.checkMatrix(model.ymean);
-            this.ystd = Matrix.checkMatrix(model.ystd);
+            this.xmean = model.xmean;
+            this.xstd = model.xstd;
+            this.ymean = model.ymean;
+            this.ystd = model.ystd;
             this.PBQ = Matrix.checkMatrix(model.PBQ);
             this.R2X = model.R2X;
-        } else {
-            this.ymean = null;
-            this.ystd = null;
-            this.PBQ = null;
-            this.R2X = 0;
         }
     }
 
@@ -37,22 +34,25 @@ class PLS {
         if(options === undefined) options = {};
 
         var latentVectors = options.latentVectors;
-        if (latentVectors === undefined || isNaN(latentVectors)) {
-            throw new RangeError('Latent vector must be a number.');
+        if (latentVectors === undefined) {
+            latentVectors = Math.min(trainingSet.length - 1, trainingSet[0].length);
         }
 
         var tolerance = options.tolerance;
-        if (tolerance === undefined || isNaN(tolerance)) {
-            throw new RangeError('Tolerance must be a number');
+        if (tolerance === undefined) {
+            tolerance = 1e-5;
         }
 
         if (trainingSet.length !== predictions.length)
             throw new RangeError('The number of predictions and elements in the dataset must be the same');
 
-        //var tolerance = 1e-9;
-        var X = Utils.featureNormalize(new Matrix(trainingSet)).result;
-        var resultY = Utils.featureNormalize(new Matrix(predictions));
-        this.ymean = resultY.means.neg();
+        var resultX = Utils.featureNormalize(trainingSet);
+        this.xmean = resultX.means;
+        this.xstd = resultX.std;
+        var X = resultX.result;
+
+        var resultY = Utils.featureNormalize(predictions);
+        this.ymean = resultY.means;
         this.ystd = resultY.std;
         var Y = resultY.result;
 
@@ -154,11 +154,9 @@ class PLS {
      */
     predict(dataset) {
         var X = Matrix.checkMatrix(dataset);
-        var normalization = Utils.featureNormalize(X);
-        X = normalization.result;
+        X = X.subRowVector(this.xmean).divRowVector(this.xstd);
         var Y = X.mmul(this.PBQ);
-        Y.mulRowVector(this.ystd);
-        Y.addRowVector(this.ymean);
+        Y = Y.mulRowVector(this.ystd).addRowVector(this.ymean);
         return Y;
     }
 
@@ -174,6 +172,8 @@ class PLS {
         return {
             name: 'PLS',
             R2X: this.R2X,
+            xmean: this.xmean,
+            xstd: this.xstd,
             ymean: this.ymean,
             ystd: this.ystd,
             PBQ: this.PBQ,

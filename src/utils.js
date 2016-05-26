@@ -1,7 +1,7 @@
 'use strict';
 
-var Matrix = require('ml-matrix');
-var Stat = require('ml-stat');
+const Matrix = require('ml-matrix');
+const Stat = require('ml-stat');
 
 /**
  * Function that given vector, returns his norm
@@ -33,10 +33,8 @@ function pow2array(i, j) {
  */
 function featureNormalize(dataset) {
     var means = Stat.matrix.mean(dataset);
-    var std = Matrix.rowVector(Stat.matrix.standardDeviation(dataset, means, true));
-    means = Matrix.rowVector(means);
-
-    var result = dataset.addRowVector(means.neg());
+    var std = Stat.matrix.standardDeviation(dataset, means, true);
+    var result = Matrix.checkMatrix(dataset).subRowVector(means);
     return {result: result.divRowVector(std), means: means, std: std};
 }
 
@@ -45,4 +43,3 @@ module.exports = {
     pow2array: pow2array,
     featureNormalize: featureNormalize
 };
-
