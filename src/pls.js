@@ -4,14 +4,28 @@ var Matrix = require('ml-matrix');
 var Utils = require('./utils');
 
 class PLS {
-    constructor(reload, model) {
-        if (reload) {
-            this.xmean = model.xmean;
-            this.xstd = model.xstd;
-            this.ymean = model.ymean;
-            this.ystd = model.ystd;
+    constructor(X, Y) {
+        if (X === true) {
+            const model = Y;
+            this.meanX = model.meanX;
+            this.stdDevX = model.stdDevX;
+            this.meanY = model.meanY;
+            this.stdDevY = model.stdDevY;
             this.PBQ = Matrix.checkMatrix(model.PBQ);
             this.R2X = model.R2X;
+        } else {
+            if (X.length !== Y.length)
+                throw new RangeError('The number of X rows must be equal to the number of Y rows');
+
+            const resultX = Utils.featureNormalize(X);
+            this.X = resultX.result;
+            this.meanX = resultX.means;
+            this.stdDevX = resultX.std;
+
+            const resultY = Utils.featureNormalize(Y);
+            this.Y = resultY.result;
+            this.meanY = resultY.means;
+            this.stdDevY = resultY.std;
         }
     }
 
@@ -26,44 +40,28 @@ class PLS {
      * B - Matrix of regression coefficient
      * W - Weight matrix of X
      *
-     * @param {Matrix} trainingSet - Dataset to be apply the model
-     * @param {Matrix} predictions - Predictions over each case of the dataset
      * @param {Object} options - recieves the latentVectors and the tolerance of each step of the PLS
      */
-    train(trainingSet, predictions, options) {
+    train(options) {
         if(options === undefined) options = {};
 
         var latentVectors = options.latentVectors;
         if (latentVectors === undefined) {
-            latentVectors = Math.min(trainingSet.length - 1, trainingSet[0].length);
+            latentVectors = Math.min(this.X.length - 1, this.X[0].length);
         }
 
         var tolerance = options.tolerance;
         if (tolerance === undefined) {
             tolerance = 1e-5;
         }
-
-        if (trainingSet.length !== predictions.length)
-            throw new RangeError('The number of predictions and elements in the dataset must be the same');
-
-        var resultX = Utils.featureNormalize(trainingSet);
-        this.xmean = resultX.means;
-        this.xstd = resultX.std;
-        var X = resultX.result;
-
-        var resultY = Utils.featureNormalize(predictions);
-        this.ymean = resultY.means;
-        this.ystd = resultY.std;
-        var Y = resultY.result;
+        
+        var X = this.X;
+        var Y = this.Y;
 
         var rx = X.rows;
         var cx = X.columns;
         var ry = Y.rows;
         var cy = Y.columns;
-
-        if(rx != ry) {
-            throw new RangeError('dataset cases is not the same as the predictions');
-        }
 
         var ssqXcal = X.clone().mul(X).sum(); // for the r²
         var sumOfSquaresY = Y.clone().mul(Y).sum();
@@ -154,9 +152,9 @@ class PLS {
      */
     predict(dataset) {
         var X = Matrix.checkMatrix(dataset);
-        X = X.subRowVector(this.xmean).divRowVector(this.xstd);
+        X = X.subRowVector(this.meanX).divRowVector(this.stdDevX);
         var Y = X.mmul(this.PBQ);
-        Y = Y.mulRowVector(this.ystd).addRowVector(this.ymean);
+        Y = Y.mulRowVector(this.stdDevY).addRowVector(this.meanY);
         return Y;
     }
 
@@ -172,10 +170,10 @@ class PLS {
         return {
             name: 'PLS',
             R2X: this.R2X,
-            xmean: this.xmean,
-            xstd: this.xstd,
-            ymean: this.ymean,
-            ystd: this.ystd,
+            meanX: this.meanX,
+            stdDevX: this.stdDevX,
+            meanY: this.meanY,
+            stdDevY: this.stdDevY,
             PBQ: this.PBQ,
         };
     }

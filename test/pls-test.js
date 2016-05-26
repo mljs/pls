@@ -2,13 +2,12 @@
 
 var PLS = require("..");
 var OPLS = require("..").OPLS;
-var Matrix = require("ml-matrix");
 
 describe("PLS-DA algorithm", function () {
     var training = [[0.1, 0.02], [0.25, 1.01] ,[0.95, 0.01], [1.01, 0.96]];
     var predicted = [[1, 0], [1, 0], [1, 0], [0, 1]];
-    var pls = new PLS();
-    pls.train(training, predicted, {
+    var pls = new PLS(training, predicted);
+    pls.train({
         latentVectors: 2,
         tolerance: 1e-5
     });
@@ -26,8 +25,8 @@ describe("PLS-DA algorithm", function () {
         var training = [[0.323, 34, 56, 23], [2.23, 43, 32, 83]];
         var predicted = [[23], [15]];
 
-        var newPls = new PLS();
-        newPls.train(training, predicted,{
+        var newPls = new PLS(training, predicted);
+        newPls.train({
             latentVectors: 2,
             tolerance: 1e-5
         });
@@ -40,7 +39,7 @@ describe("PLS-DA algorithm", function () {
     it("Export and import", function () {
         var model = JSON.parse(JSON.stringify(pls.toJSON()));
 
-        model.should.have.properties(['name', 'R2X', 'xmean', 'xstd', 'ymean', 'ystd', 'PBQ']);
+        model.should.have.properties(['name', 'R2X', 'meanX', 'stdDevX', 'meanY', 'stdDevY', 'PBQ']);
 
         var newpls = PLS.load(model);
         var result = newpls.predict(training);
@@ -70,10 +69,10 @@ describe("PLS-DA algorithm", function () {
                            [2, 4, 7],
                            [6, 2, 4]];
 
-        var winePLS = new PLS();
+        var winePLS = new PLS(dataset, predictions);
         var latentStructures = 3;
         var tolerance = 1e-5;
-        winePLS.train(dataset, predictions, {
+        winePLS.train({
             latentVectors: latentStructures,
             tolerance: tolerance
         });
