@@ -6,19 +6,15 @@ var Utils = require('./utils');
 class PLS {
     constructor(reload, model) {
         if (reload) {
-            this.E = Matrix.checkMatrix(model.E);
-            this.F = Matrix.checkMatrix(model.F);
-            this.ssqYcal = model.ssqYcal;
-            this.R2X = model.R2X;
             this.ymean = Matrix.checkMatrix(model.ymean);
             this.ystd = Matrix.checkMatrix(model.ystd);
             this.PBQ = Matrix.checkMatrix(model.PBQ);
-            this.T = Matrix.checkMatrix(model.T);
-            this.P = Matrix.checkMatrix(model.P);
-            this.U = Matrix.checkMatrix(model.U);
-            this.Q = Matrix.checkMatrix(model.Q);
-            this.W = Matrix.checkMatrix(model.W);
-            this.B = Matrix.checkMatrix(model.B);
+            this.R2X = model.R2X;
+        } else {
+            this.ymean = null;
+            this.ystd = null;
+            this.PBQ = null;
+            this.R2X = 0;
         }
     }
 
@@ -41,16 +37,16 @@ class PLS {
         if(options === undefined) options = {};
 
         var latentVectors = options.latentVectors;
-        if(latentVectors === undefined || isNaN(latentVectors)) {
+        if (latentVectors === undefined || isNaN(latentVectors)) {
             throw new RangeError('Latent vector must be a number.');
         }
 
         var tolerance = options.tolerance;
-        if(tolerance === undefined || isNaN(tolerance)) {
+        if (tolerance === undefined || isNaN(tolerance)) {
             throw new RangeError('Tolerance must be a number');
         }
 
-        if(trainingSet.length !== predictions.length)
+        if (trainingSet.length !== predictions.length)
             throw new RangeError('The number of predictions and elements in the dataset must be the same');
 
         //var tolerance = 1e-9;
@@ -80,7 +76,6 @@ class PLS {
         var B = Matrix.zeros(n, n);
         var W = P.clone();
         var k = 0;
-        var R2X = new Array(n);
 
         while(Utils.norm(Y) > tolerance && k < n) {
             var transposeX = X.transpose();
@@ -136,8 +131,6 @@ class PLS {
         W = W.subMatrix(0, W.rows - 1, 0, k);
         B = B.subMatrix(0, k, 0, k);
 
-        this.R2X = t.transpose().mmul(t).mmul(p.transpose().mmul(p)).divS(ssqXcal)[0][0];
-
         // TODO: review of R2Y
         //this.R2Y = t.transpose().mmul(t).mul(q[k][0]*q[k][0]).divS(ssqYcal)[0][0];
 
@@ -151,6 +144,7 @@ class PLS {
         this.W = W;
         this.B = B;
         this.PBQ = P.mmul(B).mmul(Q.transpose());
+        this.R2X = t.transpose().mmul(t).mmul(p.transpose().mmul(p)).div(ssqXcal)[0][0];
     }
 
     /**
@@ -179,19 +173,10 @@ class PLS {
     toJSON() {
         return {
             name: 'PLS',
-            E: this.E,
-            F: this.F,
             R2X: this.R2X,
-            ssqYcal: this.ssqYcal,
             ymean: this.ymean,
             ystd: this.ystd,
             PBQ: this.PBQ,
-            T: this.T,
-            P: this.P,
-            U: this.U,
-            Q: this.Q,
-            W: this.W,
-            B: this.B
         };
     }
 

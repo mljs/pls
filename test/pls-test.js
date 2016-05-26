@@ -40,10 +40,7 @@ describe("PLS-DA algorithm", function () {
     it("Export and import", function () {
         var model = JSON.parse(JSON.stringify(pls.toJSON()));
 
-        model.should.have.properties([
-            'name', 'E', 'F', 'R2X',
-            'ssqYcal', 'ymean', 'ystd', 'PBQ',
-            'T', 'P', 'U', 'Q', 'W', 'B' ]);
+        model.should.have.properties(['name', 'R2X', 'ymean', 'ystd', 'PBQ']);
 
         var newpls = PLS.load(model);
         var result = newpls.predict(training);
