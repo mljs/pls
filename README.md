@@ -25,7 +25,7 @@ __Example__
 var pls = new PLS();
 ```
 
-### train(trainingSet, predictions)
+### train(trainingSet, predictions, options)
 
 Train the PLS model to the given training set and predictions
 
@@ -79,10 +79,6 @@ Returns a new PLS with the given model.
 __Arguments__
 
 * `model` - Javascript Object generated from export() function.
-
-## Authors
-
-- [Jefferson Hernandez](https://github.com/JeffersonH44)
 
 ## License
 
