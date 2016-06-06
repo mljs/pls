@@ -15,37 +15,22 @@ PLS regression algorithm based on the Yi Cao Matlab implementation:
 
 ## Methods
 
-### new PLS()
+### new PLS(X, Y)
 
-Constructor that takes no arguments.
-
-__Example__
-
-```js
-var pls = new PLS();
-```
-
-### train(trainingSet, predictions, options)
-
-Train the PLS model to the given training set and predictions
-
-__Arguments__
-
-* `trainingSet` - A matrix of the training set.
-* `predictions` - A matrix of predictions with the same size of rows of the trainingSet.
-* `options` - A Javascript object with to values, latentVectors and the tolerance of each step of the PLS algorithm
+### pls.train(options)
 
 __Example__
 
 ```js
-var training = [[0.1, 0.02], [0.25, 1.01] ,[0.95, 0.01], [1.01, 0.96]];
-var predicted = [[1, 0], [1, 0], [1, 0], [0, 1]];
+var X = [[0.1, 0.02], [0.25, 1.01] ,[0.95, 0.01], [1.01, 0.96]];
+var Y = [[1, 0], [1, 0], [1, 0], [0, 1]];
 var options = {
   latentVectors: 10,
   tolerance: 1e-4
 };
 
-pls.train(trainingSet, predictions, options);
+var pls = new PLS(X, Y);
+pls.train(options);
 ```
 
 ### predict(dataset)
@@ -67,18 +52,6 @@ var ans = pls.predict(dataset);
 ### getExplainedVariance()
 
 Returns the explained variance on training
-
-### export()
-
-Exports the actual PLS to an Javascript Object.
-
-### load(model)
-
-Returns a new PLS with the given model.
-
-__Arguments__
-
-* `model` - Javascript Object generated from export() function.
 
 ## License
 
