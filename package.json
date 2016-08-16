@@ -37,8 +37,8 @@
   },
   "devDependencies": {
     "benchmark": "^2.1.0",
-    "mocha": "^2.3.4",
-    "mocha-better-spec-reporter": "^3.0.1",
-    "should": "^8.4.0"
+    "mocha": "^3.0.2",
+    "mocha-better-spec-reporter": "^3.0.2",
+    "should": "^11.1.0"
   }
 }
