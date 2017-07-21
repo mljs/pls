@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/mljs/pls",
   "dependencies": {
-    "ml-matrix": "^2.0.0",
+    "ml-matrix": "^5.0.0",
     "ml-stat": "^1.1.0"
   },
   "devDependencies": {

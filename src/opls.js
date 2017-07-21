@@ -1,13 +1,13 @@
 'use strict';
 
-var Matrix = require('ml-matrix');
+var Matrix = require('ml-matrix').Matrix;
 var Utils = require('./utils');
 
 module.exports = OPLS;
 
 function OPLS(dataset, predictions, numberOSC) {
-    var X = new Matrix(dataset);
-    var y = new Matrix(predictions);
+    var X = Matrix.checkMatrix(dataset);
+    var y = Matrix.checkMatrix(predictions);
 
     X = Utils.featureNormalize(X).result;
     y = Utils.featureNormalize(y).result;
@@ -16,7 +16,7 @@ function OPLS(dataset, predictions, numberOSC) {
     var columns = X.columns;
 
     var sumOfSquaresX = X.clone().mul(X).sum();
-    var w = X.transpose().mmul(y);
+    var w = X.transposeView().mmul(y);
     w.div(Utils.norm(w));
 
     var orthoW = new Array(numberOSC);
@@ -25,22 +25,22 @@ function OPLS(dataset, predictions, numberOSC) {
     for (var i = 0; i < numberOSC; i++) {
         var t = X.mmul(w);
 
-        var numerator = X.transpose().mmul(t);
-        var denominator = t.transpose().mmul(t)[0][0];
+        var numerator = X.transposeView().mmul(t);
+        var denominator = t.transposeView().mmul(t)[0][0];
         var p =  numerator.div(denominator);
 
-        numerator = w.transpose().mmul(p)[0][0];
-        denominator = w.transpose().mmul(w)[0][0];
+        numerator = w.transposeView().mmul(p)[0][0];
+        denominator = w.transposeView().mmul(w)[0][0];
         var wOsc = p.sub(w.clone().mul(numerator / denominator));
         wOsc.div(Utils.norm(wOsc));
 
         var tOsc = X.mmul(wOsc);
 
-        numerator = X.transpose().mmul(tOsc);
-        denominator = tOsc.transpose().mmul(tOsc)[0][0];
+        numerator = X.transposeView().mmul(tOsc);
+        denominator = tOsc.transposeView().mmul(tOsc)[0][0];
         var pOsc = numerator.div(denominator);
 
-        X.sub(tOsc.mmul(pOsc.transpose()));
+        X.sub(tOsc.mmul(pOsc.transposeView()));
         orthoW[i] = wOsc.getColumn(0);
         orthoT[i] = tOsc.getColumn(0);
         orthoP[i] = pOsc.getColumn(0);
