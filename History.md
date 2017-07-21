@@ -1,3 +1,18 @@
+<a name="0.2.0"></a>
+# [0.2.0](https://github.com/mljs/pls/compare/v0.1.1...v0.2.0) (2017-07-21)
+
+
+### Chores
+
+* update dependencies ([0e68484](https://github.com/mljs/pls/commit/0e68484))
+
+
+### BREAKING CHANGES
+
+* Removed support for Node 4
+
+
+
 <a name="0.1.1"></a>
 ## [0.1.1](https://github.com/mljs/pls/compare/v0.1.0...v0.1.1) (2016-08-16)
 
