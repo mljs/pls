@@ -5,12 +5,19 @@ var Utils = require('./utils');
 
 module.exports = OPLS;
 
-function OPLS(dataset, predictions, numberOSC) {
+function OPLS(dataset, predictions, options = {}) {
+    const {
+        numberOSC = 1,
+        scale = true
+    } = options;
+    
     var X = Matrix.checkMatrix(dataset);
     var y = Matrix.checkMatrix(predictions);
-
-    X = Utils.featureNormalize(X).result;
-    y = Utils.featureNormalize(y).result;
+    
+    if (scale) {
+        X = Utils.featureNormalize(X).result;
+        y = Utils.featureNormalize(y).result;
+    }
 
     var rows = X.rows;
     var columns = X.columns;
