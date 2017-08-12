@@ -2,14 +2,18 @@
   "name": "ml-pls",
   "version": "0.2.1",
   "description": "Partial least squares library",
-  "main": "src/index.js",
-  "directories": {
-    "lib": "src",
-    "test": "test"
-  },
+  "main": "lib/index.js",
+  "module": "src/index.js",
+  "files": [
+    "lib",
+    "src"
+  ],
   "scripts": {
-    "test": "mocha --require should --reporter mocha-better-spec-reporter --recursive",
-    "build": "gulp build"
+    "eslint": "eslint src",
+    "eslint-fix": "npm run eslint -- --fix",
+    "prepublish": "rollup -c",
+    "test": "run-s testonly eslint",
+    "testonly": "jest"
   },
   "repository": {
     "type": "git",
@@ -32,6 +36,7 @@
   },
   "homepage": "https://github.com/mljs/pls",
   "dependencies": {
+    "ml-kernel": "^2.3.4",
     "ml-matrix": "^5.0.0",
     "ml-stat": "^1.1.0"
   },
@@ -39,6 +44,13 @@
     "benchmark": "^2.1.0",
     "mocha": "^3.0.2",
     "mocha-better-spec-reporter": "^3.0.2",
-    "should": "^11.1.0"
+    "should": "^11.1.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.24.1",
+    "eslint": "^3.1.0",
+    "eslint-config-cheminfo": "^1.0.0",
+    "eslint-plugin-no-only-tests": "^1.1.0",
+    "npm-run-all": "^4.0.2",
+    "rollup": "^0.43.0",
+    "jest": "^20.0.4"
   }
 }
