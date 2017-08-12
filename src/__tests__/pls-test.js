@@ -12,16 +12,16 @@ describe("PLS-DA algorithm", function () {
         tolerance: 1e-5
     });
 
-    it("test with a pseudo-AND operator", function () {
+    test("test with a pseudo-AND operator", function () {
         var result = pls.predict(training);
 
-        (result[0][0]).should.be.greaterThan(result[0][1]);
-        (result[1][0]).should.be.greaterThan(result[1][1]);
-        (result[2][0]).should.be.greaterThan(result[2][1]);
-        (result[3][0]).should.be.lessThan(result[3][1]);
+        expect(result[0][0]).toBeGreaterThan(result[0][1]);
+        expect(result[1][0]).toBeGreaterThan(result[1][1]);
+        expect(result[2][0]).toBeGreaterThan(result[2][1]);
+        expect(result[3][0]).toBeLessThan(result[3][1]);
     });
 
-    it('Random points test', function () {
+    test('Random points test', function () {
         var training = [[0.323, 34, 56, 23], [2.23, 43, 32, 83]];
         var predicted = [[23], [15]];
 
@@ -32,22 +32,25 @@ describe("PLS-DA algorithm", function () {
         });
         var result = newPls.predict(training);
 
-        result[0][0].should.be.equal(predicted[0][0]);
-        result[1][0].should.be.equal(predicted[1][0]);
+        expect(result[0][0]).toEqual(predicted[0][0]);
+        expect(result[1][0]).toEqual(predicted[1][0]);
     });
 
-    it("Export and import", function () {
+    test("Export and import", function () {
         var model = JSON.parse(JSON.stringify(pls.toJSON()));
 
-        model.should.have.properties(['name', 'R2X', 'meanX', 'stdDevX', 'meanY', 'stdDevY', 'PBQ']);
+        var properties = ['name', 'R2X', 'meanX', 'stdDevX', 'meanY', 'stdDevY', 'PBQ'];
+        for (var prop of properties) {
+            expect(model).toHaveProperty(prop);
+        }
 
         var newpls = PLS.load(model);
         var result = newpls.predict(training);
 
-        (result[0][0]).should.be.greaterThan(result[0][1]);
-        (result[1][0]).should.be.greaterThan(result[1][1]);
-        (result[2][0]).should.be.greaterThan(result[2][1]);
-        (result[3][0]).should.be.lessThan(result[3][1]);
+        expect(result[0][0]).toBeGreaterThan(result[0][1]);
+        expect(result[1][0]).toBeGreaterThan(result[1][1]);
+        expect(result[2][0]).toBeGreaterThan(result[2][1]);
+        expect(result[3][0]).toBeLessThan(result[3][1]);
     });
 
     /*
@@ -57,7 +60,7 @@ describe("PLS-DA algorithm", function () {
     * https://www.utdallas.edu/~herve/Abdi-PLS-pretty.pdf
     *
     * */
-    it('Wine test with getExplainedVariance', function () {
+    test('Wine test with getExplainedVariance', function () {
         var dataset = [[7, 7, 13, 7],
                        [4, 3, 14, 7],
                        [10, 5, 12, 5],
@@ -78,10 +81,10 @@ describe("PLS-DA algorithm", function () {
         });
         var result = winePLS.predict(dataset);
 
-        result[2][0].should.be.approximately(predictions[2][0], 1);
-        result[2][1].should.be.approximately(predictions[2][1], 1);
-        result[2][2].should.be.approximately(predictions[2][2], 1);
-        winePLS.getExplainedVariance().should.be.approximately(0.02, 1e-2);
+        expect(result[2][0]).toBeCloseTo(predictions[2][0], -1);
+        expect(result[2][1]).toBeCloseTo(predictions[2][1], -1);
+        expect(result[2][2]).toBeCloseTo(predictions[2][2], -1);
+        expect(winePLS.getExplainedVariance()).toBeCloseTo(0.02, 1);
     });
 });
 
@@ -90,8 +93,8 @@ describe('OPLS', function () {
     var X1 = [[-2.18, -2.18], [1.84, -0.16], [-0.48, 1.52], [0.83, 0.83]];
     var y = [[2], [2], [0], [4]];
 
-    it('Main test', function () {
+    test('Main test', function () {
         var opls = new OPLS(X1, y, 1);
-        opls.R2X.should.be.approximately(0.7402, 1e-1);
+        expect(opls.R2X).toBeCloseTo(0.7402, 1);
     });
 });
