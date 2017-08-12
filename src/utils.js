@@ -1,14 +1,12 @@
-'use strict';
-
-const Matrix = require('ml-matrix').Matrix;
-const Stat = require('ml-stat/matrix');
+import Matrix from 'ml-matrix';
+import Stat from 'ml-stat/matrix';
 
 /**
  * Function that given vector, returns his norm
  * @param {Vector} X
  * @returns {number} Norm of the vector
  */
-function norm(X) {
+export function norm(X) {
     return Math.sqrt(X.clone().apply(pow2array).sum());
 }
 
@@ -19,7 +17,7 @@ function norm(X) {
  * @param j - index j.
  * @return The Matrix object modified at the index i, j.
  * */
-function pow2array(i, j) {
+export function pow2array(i, j) {
     this[i][j] = this[i][j] * this[i][j];
     return this;
 }
@@ -31,15 +29,9 @@ function pow2array(i, j) {
  * @returns {{result: Matrix, means: (*|number), std: Matrix}} dataset normalized, means
  *                                                             and standard deviations
  */
-function featureNormalize(dataset) {
+export function featureNormalize(dataset) {
     var means = Stat.mean(dataset);
     var std = Stat.standardDeviation(dataset, means, true);
     var result = Matrix.checkMatrix(dataset).subRowVector(means);
     return {result: result.divRowVector(std), means: means, std: std};
 }
-
-module.exports = {
-    norm: norm,
-    pow2array: pow2array,
-    featureNormalize: featureNormalize
-};

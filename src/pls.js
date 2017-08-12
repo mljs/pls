@@ -1,9 +1,7 @@
-'use strict';
-
-var Matrix = require('ml-matrix').Matrix;
+import Matrix from 'ml-matrix'
 var Utils = require('./utils');
 
-class PLS {
+export class PLS {
     constructor(X, Y) {
         if (X === true) {
             const model = Y;
@@ -189,8 +187,6 @@ class PLS {
         return new PLS(true, model);
     }
 }
-
-module.exports = PLS;
 
 /**
  * Retrieves the sum at the column of the given matrix.

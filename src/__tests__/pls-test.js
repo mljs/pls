@@ -1,7 +1,4 @@
-"use strict";
-
-var PLS = require("..");
-var OPLS = require("..").OPLS;
+import {PLS} from '..'
 
 describe("PLS-DA algorithm", function () {
     var training = [[0.1, 0.02], [0.25, 1.01] ,[0.95, 0.01], [1.01, 0.96]];
@@ -88,7 +85,7 @@ describe("PLS-DA algorithm", function () {
     });
 });
 
-describe('OPLS', function () {
+/*describe('OPLS', function () {
     var X0 = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
     var X1 = [[-2.18, -2.18], [1.84, -0.16], [-0.48, 1.52], [0.83, 0.83]];
     var y = [[2], [2], [0], [4]];
@@ -97,4 +94,4 @@ describe('OPLS', function () {
         var opls = new OPLS(X1, y, 1);
         expect(opls.R2X).toBeCloseTo(0.7402, 1);
     });
-});
+});*/
