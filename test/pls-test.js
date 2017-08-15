@@ -7,7 +7,7 @@ describe("PLS-DA algorithm", function () {
     var training = [[0.1, 0.02], [0.25, 1.01] ,[0.95, 0.01], [1.01, 0.96]];
     var predicted = [[1, 0], [1, 0], [1, 0], [0, 1]];
 
-    var pls = new PLS({latentVectors: 2, scale: true});
+    var pls = new PLS({latentVectors: 2});
     pls.train(training, predicted);
 
     it("test with a pseudo-AND operator", function () {
@@ -23,7 +23,7 @@ describe("PLS-DA algorithm", function () {
         var training = [[0.323, 34, 56, 23], [2.23, 43, 32, 83]];
         var predicted = [[23], [15]];
 
-        var newPls = new PLS({latentVectors: 2, scale: true});
+        var newPls = new PLS({latentVectors: 2});
         newPls.train(training, predicted);
         var result = newPls.predict(training);
 
@@ -64,7 +64,7 @@ describe("PLS-DA algorithm", function () {
                            [2, 4, 7],
                            [6, 2, 4]];
 
-        var winePLS = new PLS({latentVectors: 3, scale: true});
+        var winePLS = new PLS({latentVectors: 3});
         winePLS.train(dataset, predictions);
         var result = winePLS.predict(dataset);
 

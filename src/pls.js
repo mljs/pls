@@ -6,7 +6,7 @@ var Utils = require('./utils');
 
 class PLS {
     constructor(options = {}) {
-        if (options.model) {
+        if (options.load) {
             const model = options.model;
             this.meanX = model.meanX;
             this.stdDevX = model.stdDevX;
@@ -14,8 +14,19 @@ class PLS {
             this.stdDevY = model.stdDevY;
             this.PBQ = Matrix.checkMatrix(model.PBQ);
             this.R2X = model.R2X;
+            this.scale = model.scale;
+            this.scaleMethod = model.scaleMethod;
+            this.tolerance = model.tolerance;
         } else {
-            this.options = options;
+            var {
+                tolerance = 1e-5,
+                scale = true,
+                scaleMethod = 'auto'
+            } = options;
+            this.tolerance = tolerance;
+            this.scale = scale;
+            this.scaleMethod = scaleMethod;
+            this.latentVectors = options.latentVectors;
         }
     }
 
@@ -33,7 +44,6 @@ class PLS {
      * @param {Object} options - recieves the latentVectors and the tolerance of each step of the PLS
      */
     train(X, Y) {
-        console.log(this.options)
         X = Matrix.checkMatrix(X);
         Y = Matrix.checkMatrix(Y);
 
@@ -41,24 +51,18 @@ class PLS {
             throw new RangeError('The number of X rows must be equal to the number of Y rows');
         }
 
-        var {
-            latentVectors,
-            tolerance = 1e-5,
-            scale = false
-        } = this.options;
-
         this.meanX = Stat.mean(X);
         this.stdDevX = Stat.standardDeviation(X, this.meanX, true);
         this.meanY = Stat.mean(Y);
         this.stdDevY = Stat.standardDeviation(Y, this.meanY, true);
 
-        if (scale) { // here should be the ml-preprocess project
+        if (this.scale) { // here should be the ml-preprocess project
             X = X.clone().subRowVector(this.meanX).divRowVector(this.stdDevX);
             Y = Y.clone().subRowVector(this.meanY).divRowVector(this.stdDevY);
         }
 
-        if (latentVectors === undefined) {
-            latentVectors = Math.min(this.X.length - 1, this.X[0].length);
+        if (this.latentVectors === undefined) {
+            this.latentVectors = Math.min(X.length - 1, X[0].length);
         }
 
         var rx = X.rows;
@@ -69,7 +73,8 @@ class PLS {
         var ssqXcal = X.clone().mul(X).sum(); // for the r²
         var sumOfSquaresY = Y.clone().mul(Y).sum();
 
-        var n = latentVectors; //Math.max(cx, cy); // components of the pls
+        var tolerance = this.tolerance;
+        var n = this.latentVectors;
         var T = Matrix.zeros(rx, n);
         var P = Matrix.zeros(cx, n);
         var U = Matrix.zeros(ry, n);
@@ -155,7 +160,9 @@ class PLS {
      */
     predict(dataset) {
         var X = Matrix.checkMatrix(dataset);
-        X = X.subRowVector(this.meanX).divRowVector(this.stdDevX);
+        if (this.scale) {
+            X = X.subRowVector(this.meanX).divRowVector(this.stdDevX);
+        }
         var Y = X.mmul(this.PBQ);
         Y = Y.mulRowVector(this.stdDevY).addRowVector(this.meanY);
         return Y;
@@ -178,6 +185,9 @@ class PLS {
             meanY: this.meanY,
             stdDevY: this.stdDevY,
             PBQ: this.PBQ,
+            tolerance: this.tolerance,
+            scale: this.scale,
+            scaleMethod: this.scaleMethod,
         };
     }
 
