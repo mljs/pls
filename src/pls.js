@@ -1,31 +1,32 @@
 'use strict';
 
 var Matrix = require('ml-matrix').Matrix;
+const Stat = require('ml-stat/matrix');
 var Utils = require('./utils');
 
 class PLS {
-    constructor(X, Y) {
-        if (X === true) {
-            const model = Y;
+    constructor(options = {}) {
+        if (options.load) {
+            const model = options.model;
             this.meanX = model.meanX;
             this.stdDevX = model.stdDevX;
             this.meanY = model.meanY;
             this.stdDevY = model.stdDevY;
             this.PBQ = Matrix.checkMatrix(model.PBQ);
             this.R2X = model.R2X;
+            this.scale = model.scale;
+            this.scaleMethod = model.scaleMethod;
+            this.tolerance = model.tolerance;
         } else {
-            if (X.length !== Y.length)
-                throw new RangeError('The number of X rows must be equal to the number of Y rows');
-
-            const resultX = Utils.featureNormalize(X);
-            this.X = resultX.result;
-            this.meanX = resultX.means;
-            this.stdDevX = resultX.std;
-
-            const resultY = Utils.featureNormalize(Y);
-            this.Y = resultY.result;
-            this.meanY = resultY.means;
-            this.stdDevY = resultY.std;
+            var {
+                tolerance = 1e-5,
+                scale = true,
+                scaleMethod = 'auto'
+            } = options;
+            this.tolerance = tolerance;
+            this.scale = scale;
+            this.scaleMethod = scaleMethod;
+            this.latentVectors = options.latentVectors;
         }
     }
 
@@ -42,21 +43,27 @@ class PLS {
      *
      * @param {Object} options - recieves the latentVectors and the tolerance of each step of the PLS
      */
-    train(options) {
-        if(options === undefined) options = {};
+    train(X, Y) {
+        X = Matrix.checkMatrix(X);
+        Y = Matrix.checkMatrix(Y);
 
-        var latentVectors = options.latentVectors;
-        if (latentVectors === undefined) {
-            latentVectors = Math.min(this.X.length - 1, this.X[0].length);
+        if (X.length !== Y.length) {
+            throw new RangeError('The number of X rows must be equal to the number of Y rows');
         }
 
-        var tolerance = options.tolerance;
-        if (tolerance === undefined) {
-            tolerance = 1e-5;
+        this.meanX = Stat.mean(X);
+        this.stdDevX = Stat.standardDeviation(X, this.meanX, true);
+        this.meanY = Stat.mean(Y);
+        this.stdDevY = Stat.standardDeviation(Y, this.meanY, true);
+
+        if (this.scale) { // here should be the ml-preprocess project
+            X = X.clone().subRowVector(this.meanX).divRowVector(this.stdDevX);
+            Y = Y.clone().subRowVector(this.meanY).divRowVector(this.stdDevY);
         }
-        
-        var X = this.X;
-        var Y = this.Y;
+
+        if (this.latentVectors === undefined) {
+            this.latentVectors = Math.min(X.length - 1, X[0].length);
+        }
 
         var rx = X.rows;
         var cx = X.columns;
@@ -66,7 +73,8 @@ class PLS {
         var ssqXcal = X.clone().mul(X).sum(); // for the r²
         var sumOfSquaresY = Y.clone().mul(Y).sum();
 
-        var n = latentVectors; //Math.max(cx, cy); // components of the pls
+        var tolerance = this.tolerance;
+        var n = this.latentVectors;
         var T = Matrix.zeros(rx, n);
         var P = Matrix.zeros(cx, n);
         var U = Matrix.zeros(ry, n);
@@ -131,7 +139,7 @@ class PLS {
 
         // TODO: review of R2Y
         //this.R2Y = t.transpose().mmul(t).mul(q[k][0]*q[k][0]).divS(ssqYcal)[0][0];
-
+        //
         this.ssqYcal = sumOfSquaresY;
         this.E = X;
         this.F = Y;
@@ -152,7 +160,9 @@ class PLS {
      */
     predict(dataset) {
         var X = Matrix.checkMatrix(dataset);
-        X = X.subRowVector(this.meanX).divRowVector(this.stdDevX);
+        if (this.scale) {
+            X = X.subRowVector(this.meanX).divRowVector(this.stdDevX);
+        }
         var Y = X.mmul(this.PBQ);
         Y = Y.mulRowVector(this.stdDevY).addRowVector(this.meanY);
         return Y;
@@ -175,6 +185,9 @@ class PLS {
             meanY: this.meanY,
             stdDevY: this.stdDevY,
             PBQ: this.PBQ,
+            tolerance: this.tolerance,
+            scale: this.scale,
+            scaleMethod: this.scaleMethod,
         };
     }
 
@@ -186,7 +199,7 @@ class PLS {
     static load(model) {
         if (model.name !== 'PLS')
             throw new RangeError('Invalid model: ' + model.name);
-        return new PLS(true, model);
+        return new PLS({model, load: true});
     }
 }
 
