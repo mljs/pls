@@ -1,12 +1,13 @@
 'use strict';
 
 var Matrix = require('ml-matrix').Matrix;
+const Stat = require('ml-stat/matrix');
 var Utils = require('./utils');
 
 class PLS {
-    constructor(X, Y) {
-        if (X === true) {
-            const model = Y;
+    constructor(options = {}) {
+        if (options.model) {
+            const model = options.model;
             this.meanX = model.meanX;
             this.stdDevX = model.stdDevX;
             this.meanY = model.meanY;
@@ -14,18 +15,7 @@ class PLS {
             this.PBQ = Matrix.checkMatrix(model.PBQ);
             this.R2X = model.R2X;
         } else {
-            if (X.length !== Y.length)
-                throw new RangeError('The number of X rows must be equal to the number of Y rows');
-
-            const resultX = Utils.featureNormalize(X);
-            this.X = resultX.result;
-            this.meanX = resultX.means;
-            this.stdDevX = resultX.std;
-
-            const resultY = Utils.featureNormalize(Y);
-            this.Y = resultY.result;
-            this.meanY = resultY.means;
-            this.stdDevY = resultY.std;
+            this.options = options;
         }
     }
 
@@ -42,21 +32,34 @@ class PLS {
      *
      * @param {Object} options - recieves the latentVectors and the tolerance of each step of the PLS
      */
-    train(options) {
-        if(options === undefined) options = {};
+    train(X, Y) {
+        console.log(this.options)
+        X = Matrix.checkMatrix(X);
+        Y = Matrix.checkMatrix(Y);
 
-        var latentVectors = options.latentVectors;
+        if (X.length !== Y.length) {
+            throw new RangeError('The number of X rows must be equal to the number of Y rows');
+        }
+
+        var {
+            latentVectors,
+            tolerance = 1e-5,
+            scale = false
+        } = this.options;
+
+        this.meanX = Stat.mean(X);
+        this.stdDevX = Stat.standardDeviation(X, this.meanX, true);
+        this.meanY = Stat.mean(Y);
+        this.stdDevY = Stat.standardDeviation(Y, this.meanY, true);
+
+        if (scale) { // here should be the ml-preprocess project
+            X = X.clone().subRowVector(this.meanX).divRowVector(this.stdDevX);
+            Y = Y.clone().subRowVector(this.meanY).divRowVector(this.stdDevY);
+        }
+
         if (latentVectors === undefined) {
             latentVectors = Math.min(this.X.length - 1, this.X[0].length);
         }
-
-        var tolerance = options.tolerance;
-        if (tolerance === undefined) {
-            tolerance = 1e-5;
-        }
-        
-        var X = this.X;
-        var Y = this.Y;
 
         var rx = X.rows;
         var cx = X.columns;
@@ -131,7 +134,7 @@ class PLS {
 
         // TODO: review of R2Y
         //this.R2Y = t.transpose().mmul(t).mul(q[k][0]*q[k][0]).divS(ssqYcal)[0][0];
-
+        //
         this.ssqYcal = sumOfSquaresY;
         this.E = X;
         this.F = Y;
@@ -186,7 +189,7 @@ class PLS {
     static load(model) {
         if (model.name !== 'PLS')
             throw new RangeError('Invalid model: ' + model.name);
-        return new PLS(true, model);
+        return new PLS({model, load: true});
     }
 }
 
