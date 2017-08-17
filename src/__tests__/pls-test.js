@@ -1,7 +1,7 @@
-import {PLS} from '..'
+import {PLS} from '..';
 
-describe("PLS-DA algorithm", function () {
-    var training = [[0.1, 0.02], [0.25, 1.01] ,[0.95, 0.01], [1.01, 0.96]];
+describe('PLS-DA algorithm', function () {
+    var training = [[0.1, 0.02], [0.25, 1.01], [0.95, 0.01], [1.01, 0.96]];
     var predicted = [[1, 0], [1, 0], [1, 0], [0, 1]];
     var pls = new PLS(training, predicted);
     pls.train({
@@ -9,7 +9,7 @@ describe("PLS-DA algorithm", function () {
         tolerance: 1e-5
     });
 
-    test("test with a pseudo-AND operator", function () {
+    test('test with a pseudo-AND operator', function () {
         var result = pls.predict(training);
 
         expect(result[0][0]).toBeGreaterThan(result[0][1]);
@@ -33,7 +33,7 @@ describe("PLS-DA algorithm", function () {
         expect(result[1][0]).toEqual(predicted[1][0]);
     });
 
-    test("Export and import", function () {
+    test('Export and import', function () {
         var model = JSON.parse(JSON.stringify(pls.toJSON()));
 
         var properties = ['name', 'R2X', 'meanX', 'stdDevX', 'meanY', 'stdDevY', 'PBQ'];

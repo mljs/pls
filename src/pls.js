@@ -1,4 +1,4 @@
-import Matrix from 'ml-matrix'
+import Matrix from 'ml-matrix';
 var Utils = require('./utils');
 
 export class PLS {
@@ -12,8 +12,9 @@ export class PLS {
             this.PBQ = Matrix.checkMatrix(model.PBQ);
             this.R2X = model.R2X;
         } else {
-            if (X.length !== Y.length)
+            if (X.length !== Y.length) {
                 throw new RangeError('The number of X rows must be equal to the number of Y rows');
+            }
 
             const resultX = Utils.featureNormalize(X);
             this.X = resultX.result;
@@ -41,7 +42,7 @@ export class PLS {
      * @param {Object} options - recieves the latentVectors and the tolerance of each step of the PLS
      */
     train(options) {
-        if(options === undefined) options = {};
+        if (options === undefined) options = {};
 
         var latentVectors = options.latentVectors;
         if (latentVectors === undefined) {
@@ -52,7 +53,7 @@ export class PLS {
         if (tolerance === undefined) {
             tolerance = 1e-5;
         }
-        
+
         var X = this.X;
         var Y = this.Y;
 
@@ -73,7 +74,7 @@ export class PLS {
         var W = P.clone();
         var k = 0;
 
-        while(Utils.norm(Y) > tolerance && k < n) {
+        while (Utils.norm(Y) > tolerance && k < n) {
             var transposeX = X.transpose();
             var transposeY = Y.transpose();
 
@@ -84,7 +85,7 @@ export class PLS {
             var u = Y.getColumnVector(uIndex);
             var t = Matrix.zeros(rx, 1);
 
-            while(Utils.norm(t1.clone().sub(t)) > tolerance) {
+            while (Utils.norm(t1.clone().sub(t)) > tolerance) {
                 var w = transposeX.mmul(u);
                 w.div(Utils.norm(w));
                 t = t1;
@@ -163,7 +164,7 @@ export class PLS {
     getExplainedVariance() {
         return this.R2X;
     }
-    
+
     toJSON() {
         return {
             name: 'PLS',
@@ -182,8 +183,9 @@ export class PLS {
      * @return {PLS} - PLS object from the given model
      */
     static load(model) {
-        if (model.name !== 'PLS')
+        if (model.name !== 'PLS') {
             throw new RangeError('Invalid model: ' + model.name);
+        }
         return new PLS(true, model);
     }
 }
@@ -211,9 +213,9 @@ function getColSum(matrix, column) {
 function maxSumColIndex(data) {
     var maxIndex = 0;
     var maxSum = -Infinity;
-    for(var i = 0; i < data.columns; ++i) {
+    for (var i = 0; i < data.columns; ++i) {
         var currentSum = getColSum(data, i);
-        if(currentSum > maxSum) {
+        if (currentSum > maxSum) {
             maxSum = currentSum;
             maxIndex = i;
         }
