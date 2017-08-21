@@ -37,7 +37,7 @@
   "homepage": "https://github.com/mljs/pls",
   "dependencies": {
     "ml-kernel": "^2.3.4",
-    "ml-matrix": "^5.0.0",
+    "ml-matrix": "^5.0.1",
     "ml-stat": "^1.1.0"
   },
   "devDependencies": {

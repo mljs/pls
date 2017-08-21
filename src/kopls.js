@@ -30,8 +30,6 @@ export class KOPLS {
         KX = new Matrix(this.orthogonalComp + 1, this.orthogonalComp + 1);
         KX[0][0] = Kmc;
 
-        //var YOld = y.clone();
-
         var result = new SingularValueDecomposition(y.transpose().mmul(KX[0][0]).mmul(y));
         var Cp = result.leftSingularVectors;
         var Sp = result.diagonalMatrix;
@@ -52,18 +50,20 @@ export class KOPLS {
         for (var i = 0; i < this.orthogonalComp; ++i) {
             Tp[i] = KX[0][i].transpose().mmul(Up).mmul(SpPow);
 
-            var TpiTranpose = Tp[i].transpose();
-            Bt[i] = inverse(TpiTranpose.mmul(Tp[i])).mmul(TpiTranpose).mmul(Up);
+            var TpiPrime = Tp[i].transpose();
+            Bt[i] = inverse(TpiPrime.mmul(Tp[i])).mmul(TpiPrime).mmul(Up);
 
-            result = new SingularValueDecomposition(TpiTranpose.mmul(Matrix.sub(KX[i][i], Tp[i].mmul(TpiTranpose))).mmul(Tp[i]));
+            result = new SingularValueDecomposition(TpiPrime.mmul(Matrix.sub(KX[i][i], Tp[i].mmul(TpiPrime))).mmul(Tp[i]));
             var CoTemp = result.leftSingularVectors;
             var SoTemp = result.diagonalMatrix;
 
             co[i] = CoTemp.subMatrix(0, CoTemp.rows - 1, 0, 0);
             so[i] = SoTemp[0][0];
 
-            to[i] = Matrix.sub(KX[i][i], Tp[i].mmul(TpiTranpose)).mmul(Tp[i]).mmul(co[i]).mul(Math.pow(so[i], -0.5));
-            toNorm[i] = Matrix.sqrt(to[i].transpose().mmul(to[i]));
+            to[i] = Matrix.sub(KX[i][i], Tp[i].mmul(TpiPrime)).mmul(Tp[i]).mmul(co[i]).mul(Math.pow(so[i], -0.5));
+
+            var toiPrime = to[i].transpose();
+            toNorm[i] = Matrix.sqrt(toiPrime.mmul(to[i]));
 
             to[i] = to[i].divRowVector(toNorm[i]); // TODO: be careful
 
@@ -74,13 +74,15 @@ export class KOPLS {
         }
 
         var lastTp = Tp[this.orthogonalComp] = KX[0][this.orthogonalComp].transpose().mmul(Up).mul(Math.pow(Sp, -0.5));
-        Bt[this.orthogonalComp] = inverse(lastTp.transpose().mmul(lastTp)).mmul(lastTp.transpose()).mmul(Up);
+
+        var lastTpPrime = lastTp.transpose();
+        Bt[this.orthogonalComp] = inverse(lastTpPrime.mmul(lastTp)).mmul(lastTpPrime).mmul(Up);
 
         this.Cp = Cp;
         this.Sp = Sp;
         this.Up = Up;
         this.Tp = Tp;
-        this.T = lastTp;
+        // this.T = lastTp;
         this.co = co;
         this.so = so;
         this.to = to;
@@ -109,12 +111,12 @@ export class KOPLS {
 
             to[i] = to[i].divRowVector(this.toNorm[i]);
 
-            var toiTranspose = this.to[i].transpose();
-            KteTr[i + 1][0] = Matrix.sub(KteTr[i][0], to[i].mmul(toiTranspose).mmul(this.K[0][i].transpose()));
+            var toiPrime = this.to[i].transpose();
+            KteTr[i + 1][0] = Matrix.sub(KteTr[i][0], to[i].mmul(toiPrime).mmul(this.K[0][i].transpose()));
 
-            var p1 = Matrix.sub(KteTr[i][0], KteTr[i][i].mmul(this.to[i]).mmul(toiTranspose));
-            var p2 = to[i].mmul(toiTranspose).mmul(this.K[i][i]);
-            var p3 = p2.mmul(this.to[i]).mmul(toiTranspose);
+            var p1 = Matrix.sub(KteTr[i][0], KteTr[i][i].mmul(this.to[i]).mmul(toiPrime));
+            var p2 = to[i].mmul(toiPrime).mmul(this.K[i][i]);
+            var p3 = p2.mmul(this.to[i]).mmul(toiPrime);
 
             KteTr[i + 1][i + 1] = p1.sub(p2).add(p3);
         }
