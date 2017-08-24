@@ -1,25 +1,25 @@
-# Partial Least Squares (PLS)
+# Partial Least Squares (PLS) and Kernel-based Orthogonal Projections to Latent Structures (K-OPLS)
 
   [![NPM version][npm-image]][npm-url]
   [![build status][travis-image]][travis-url]
   [![David deps][david-image]][david-url]
   [![npm download][download-image]][download-url]
 
-PLS regression algorithm based on the Yi Cao Matlab implementation:
+PLS regression algorithm based on the Yi Cao implementation:
 
-[Partial Least-Squares and Discriminant Analysis](http://www.mathworks.com/matlabcentral/fileexchange/18760-partial-least-squares-and-discriminant-analysis)
+[PLS Matlab code](http://www.mathworks.com/matlabcentral/fileexchange/18760-partial-least-squares-and-discriminant-analysis)
+
+K-OPLS regression algorithm based on [this](http://onlinelibrary.wiley.com/doi/10.1002/cem.1071/abstract) paper, Matlab implementation here:
+
+[K-OPLS Matlab code](http://kopls.sourceforge.net/download.shtml)
 
 ## installation
 
 `$ npm install ml-pls`
 
-## Methods
+## Usage
 
-### new PLS(X, Y)
-
-### pls.train(options)
-
-__Example__
+### [PLS](./src/pls.js)
 
 ```js
 var X = [[0.1, 0.02], [0.25, 1.01] ,[0.95, 0.01], [1.01, 0.96]];
@@ -33,25 +33,32 @@ var pls = new PLS(X, Y);
 pls.train(options);
 ```
 
-### predict(dataset)
-
-Predict the values of the dataset.
-
-__Arguments__
-
-* `dataset` - A matrix that contains the dataset.
-
-__Example__
+### [K-OPLS](./src/kopls.js)
 
 ```js
-var dataset = [[0, 0], [0, 1], [1, 0], [1, 1]];
+// assuming that you created Xtrain, Xtest, Ytrain, Ytest
 
-var ans = pls.predict(dataset);
+import Kernel from 'ml-kernel'
+import KOPLS from 'ml-pls'
+
+var kernel = new Kernel('gaussian', {
+    sigma: 25
+});
+
+var cls = new KOPLS({
+    orthogonalComponents: 10,
+    predictiveComponents: 1,
+    kernel: kernel
+});
+
+cls.train(Xtrain, Ytrain);
+var predictions = cls.predict(Xtest)
+
+// just before predictions you can obtain also
+var predMat = cls.getPredictiveScoreMatrix();
+var orthVec = cls.getOrthogonalScoreVectors();
+// this ones are obtained over the test samples
 ```
-
-### getExplainedVariance()
-
-Returns the explained variance on training
 
 ## License
 
