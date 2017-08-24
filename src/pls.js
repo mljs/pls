@@ -39,7 +39,7 @@ export class PLS {
      * B - Matrix of regression coefficient
      * W - Weight matrix of X
      *
-     * @param {Object} options - recieves the latentVectors and the tolerance of each step of the PLS
+     * @param {object} options - recieves the latentVectors and the tolerance of each step of the PLS
      */
     train(options) {
         if (options === undefined) options = {};
@@ -146,8 +146,8 @@ export class PLS {
 
     /**
      * Predicts the behavior of the given dataset.
-     * @param dataset - data to be predicted.
-     * @returns {Matrix} - predictions of each element of the dataset.
+     * @param {Array|Matrix} dataset - data to be predicted.
+     * @return {Matrix} - predictions of each element of the dataset.
      */
     predict(dataset) {
         var X = Matrix.checkMatrix(dataset);
@@ -179,7 +179,7 @@ export class PLS {
 
     /**
      * Load a PLS model from a JSON Object
-     * @param model
+     * @param {object} model
      * @return {PLS} - PLS object from the given model
      */
     static load(model) {
@@ -191,10 +191,11 @@ export class PLS {
 }
 
 /**
+ * @private
  * Retrieves the sum at the column of the given matrix.
- * @param matrix
- * @param column
- * @returns {number}
+ * @param {Matrix} matrix
+ * @param {number} column
+ * @return {number}
  */
 function getColSum(matrix, column) {
     var sum = 0;
@@ -208,7 +209,7 @@ function getColSum(matrix, column) {
  * Function that returns the index where the sum of each
  * column vector is maximum.
  * @param {Matrix} data
- * @returns {number} index of the maximum
+ * @return {number} index of the maximum
  */
 function maxSumColIndex(data) {
     var maxIndex = 0;

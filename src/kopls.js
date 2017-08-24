@@ -1,43 +1,76 @@
 import {Matrix, SingularValueDecomposition, inverse} from 'ml-matrix';
-import Kernel from 'ml-kernel';
+import {initializeMatrices} from './utils';
 
 export class KOPLS {
-    constructor(options) {
-        if (options.predictiveComponents === undefined) {
-            throw new RangeError('no predicitive components found!');
-        }
-        if (options.orthogonalComponents === undefined) {
-            throw new RangeError('no orthogonal components found!');
-        }
 
-        this.orthogonalComp = options.orthogonalComponents;
-        this.predictiveComp = options.predictiveComponents;
-        if (options.kernel) {
-            this.kernel = new Kernel(options.kernel, options.kernelOptions);
-        }
+    /**
+     * Constructor for Kernel-based Orthogonal Projections to Latent Structures (K-OPLS)
+     * @param {object} options
+     * @param {number} [options.predictiveComponents] - Number of predictive components to use.
+     * @param {number} [options.orthogonalComponents] - Number of Y-Orthogonal components.
+     * @param {Kernel} [options.kernel] - Kernel object to apply.
+     * @param {object} model - for load purposes.
+     */
+    constructor(options, model) {
+        if (options === true) {
+            this.X = new Matrix(model.X);
+            this.Cp = new Matrix(model.Cp);
+            this.Sp = new Matrix(model.Sp);
+            this.Up = new Matrix(model.Up);
+            this.Tp = initializeMatrices(model.Tp, false);
+            this.co = initializeMatrices(model.co, false);
+            this.so = model.so;
+            this.to = initializeMatrices(model.to, false);
+            this.toNorm = initializeMatrices(model.toNorm, false);
+            this.Bt = initializeMatrices(model.Bt, false);
+            this.K = initializeMatrices(model.K, true);
+            this.kernel = model.kernel;
+            this.orthogonalComp = model.orthogonalComp;
+            this.predictiveComp = model.predictiveComp;
+        } else {
+            if (options.predictiveComponents === undefined) {
+                throw new RangeError('no predictive components found!');
+            }
+            if (options.orthogonalComponents === undefined) {
+                throw new RangeError('no orthogonal components found!');
+            }
+            if (options.kernel === undefined) {
+                throw new RangeError('no kernel found!');
+            }
 
+            this.orthogonalComp = options.orthogonalComponents;
+            this.predictiveComp = options.predictiveComponents;
+            this.kernel = options.kernel;
+        }
     }
 
-    train(X, y) {
-        X = Matrix.checkMatrix(X);
-        y = Matrix.checkMatrix(y);
+    /**
+     * Train the decision tree with the given training set and labels.
+     * @param {Matrix|Array} trainingSet
+     * @param {Matrix|Array} trainingValues
+     */
+    train(trainingSet, trainingValues) {
+        trainingSet = Matrix.checkMatrix(trainingSet);
+        trainingValues = Matrix.checkMatrix(trainingValues);
 
-        this.X = X.clone();
-        var KX = this.kernel ? this.kernel.compute(X, X) : X;
+        // to save and compute kernel with the prediction dataset.
+        this.X = trainingSet.clone();
+
+        var KX = this.kernel.compute(trainingSet);
 
         var I = Matrix.eye(KX.rows, KX.rows, 1);
         var Kmc = KX.clone();
         KX = new Matrix(this.orthogonalComp + 1, this.orthogonalComp + 1);
         KX[0][0] = Kmc;
 
-        var result = new SingularValueDecomposition(y.transpose().mmul(KX[0][0]).mmul(y));
+        var result = new SingularValueDecomposition(trainingValues.transpose().mmul(KX[0][0]).mmul(trainingValues));
         var Cp = result.leftSingularVectors;
         var Sp = result.diagonalMatrix;
 
         Cp = Cp.subMatrix(0, Cp.rows - 1, 0, this.predictiveComp - 1);
         Sp = Sp.subMatrix(0, this.predictiveComp - 1, 0, this.predictiveComp - 1);
 
-        var Up = y.mmul(Cp);
+        var Up = trainingValues.mmul(Cp);
 
         var Tp = new Array(this.orthogonalComp + 1);
         var Bt = new Array(this.orthogonalComp + 1);
@@ -65,7 +98,7 @@ export class KOPLS {
             var toiPrime = to[i].transpose();
             toNorm[i] = Matrix.sqrt(toiPrime.mmul(to[i]));
 
-            to[i] = to[i].divRowVector(toNorm[i]); // TODO: be careful
+            to[i] = to[i].divRowVector(toNorm[i]);
 
             var ITo = Matrix.sub(I, to[i].mmul(to[i].transpose()));
 
@@ -82,7 +115,6 @@ export class KOPLS {
         this.Sp = Sp;
         this.Up = Up;
         this.Tp = Tp;
-        // this.T = lastTp;
         this.co = co;
         this.so = so;
         this.to = to;
@@ -91,9 +123,14 @@ export class KOPLS {
         this.K = KX;
     }
 
-    predict(X) {
+    /**
+     * Predicts the output given the matrix to predict.
+     * @param {Matrix|Array} toPredict
+     * @return {Matrix} predictions
+     */
+    predict(toPredict) {
 
-        var KteTr = this.kernel ? this.kernel.compute(X, this.X) : X;
+        var KteTr = this.kernel.compute(toPredict, this.X);
 
         var KteTrMc = KteTr;
         KteTr = new Matrix(this.orthogonalComp + 1, this.orthogonalComp + 1);
@@ -122,12 +159,78 @@ export class KOPLS {
         }
 
         Tp[i] = KteTr[i][0].mmul(this.Up).mul(SpPow);
-        var YHat = Tp[i].mmul(this.Bt[i]).mmul(this.Cp.transpose());
+        var prediction = Tp[i].mmul(this.Bt[i]).mmul(this.Cp.transpose());
 
+        this.predScoreMat = Tp;
+        this.predYOrthVectors = to;
+
+        return prediction;
+    }
+
+    /**
+     * Get the predictive score matrix for all generations according to the number of orthogonal vectors.
+     * (this can be obtained only after a prediction)
+     * @return {Matrix}
+     */
+    getPredictiveScoreMatrix() {
+        if (!this.predScoreMat) {
+            throw new Error('you should run a prediction first!');
+        }
+
+        return this.predScoreMat;
+    }
+
+    /**
+     * Get the predicted Y-Orthogonal vectors. (this can be obtained only after a prediction)
+     * @return {Matrix}
+     */
+    getOrthogonalScoreVectors() {
+        if (!this.predYOrthVectors) {
+            throw new Error('you should run a prediction first!');
+        }
+
+        return this.predYOrthVectors;
+    }
+
+    /**
+     * Export the current model to JSON.
+     * @return {object} - Current model.
+     */
+    toJSON() {
         return {
-            Tp: Tp,
-            to: to,
-            YHat: YHat
+            name: 'K-OPLS',
+            Cp: this.Cp,
+            Sp: this.Sp,
+            Up: this.Up,
+            Tp: this.Tp,
+            co: this.co,
+            so: this.so,
+            to: this.to,
+            toNorm: this.toNorm,
+            Bt: this.Bt,
+            K: this.K,
+            X: this.X,
+            orthogonalComp: this.orthogonalComp,
+            predictiveComp: this.predictiveComp
         };
+    }
+
+    /**
+     * Load a K-OPLS with the given model.
+     * @param {object} model
+     * @param {Kernel} kernel
+     * @return {KOPLS}
+     */
+    static load(model, kernel) {
+        if (model.name !== 'K-OPLS') {
+            throw new RangeError('Invalid model: ' + model.name);
+        }
+
+        if (!kernel) {
+            throw new RangeError('You must provide a kernel for the model!');
+        }
+
+        model.kernel = kernel;
+        return new KOPLS(true, model);
     }
 }

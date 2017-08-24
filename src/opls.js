@@ -18,8 +18,8 @@ function OPLS(dataset, predictions, options = {}) {
         y = Utils.featureNormalize(y).result;
     }
 
-    var rows = X.rows;
-    var columns = X.columns;
+    // var rows = X.rows;
+    // var columns = X.columns;
 
     var sumOfSquaresX = X.clone().mul(X).sum();
     var w = X.transposeView().mmul(y);
