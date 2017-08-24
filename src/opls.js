@@ -1,5 +1,5 @@
 
-var Matrix = require('ml-matrix').Matrix;
+/*var Matrix = require('ml-matrix').Matrix;
 var Utils = require('./utils');
 
 module.exports = OPLS;
@@ -82,4 +82,4 @@ OPLS.prototype.correctDataset = function (dataset) {
         datasetOsc: X,
         R2Dataset: R2X
     };
-};
+};*/

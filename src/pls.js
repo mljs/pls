@@ -1,5 +1,5 @@
 import Matrix from 'ml-matrix';
-var Utils = require('./utils');
+import * as Utils from './utils';
 
 export class PLS {
     constructor(X, Y) {

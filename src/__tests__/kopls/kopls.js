@@ -19,6 +19,7 @@ describe('K-OPLS', () => {
         predictiveComponents: 1,
         kernel: kernel
     });
+
     cls.train(Xtrain, Ytrain);
 
     test('K-OPLS test with main features', () => {
@@ -57,5 +58,27 @@ describe('K-OPLS', () => {
                 expect(output[i][j]).toBeCloseTo(Ytest[i][j], 3);
             }
         }
+    });
+
+    test('Test with real dataset', () => {
+        var Xtest = new Matrix(require('./Xtest1.json'));
+        var Xtrain = new Matrix(require('./Xtrain1.json'));
+        var Ytest = new Matrix(require('./Ytest1.json'));
+        var Ytrain = new Matrix(require('./Ytrain1.json'));
+
+        var cls = new KOPLS({
+            orthogonalComponents: 10,
+            predictiveComponents: 2,
+            kernel: kernel
+        });
+
+        cls.train(Xtrain, Ytrain);
+        var output = cls.predict(Xtest);
+        for (var i = 0; i < output.rows; ++i) {
+            for (var j = 0; j < output.columns; ++j) {
+                expect(output[i][j]).toBeCloseTo(Ytest[i][j], 1);
+            }
+        }
+
     });
 });
