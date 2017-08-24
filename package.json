@@ -13,7 +13,8 @@
     "eslint-fix": "npm run eslint -- --fix",
     "prepublish": "rollup -c",
     "test": "run-s testonly eslint",
-    "testonly": "jest"
+    "testonly": "jest",
+    "bench": "node ./benchmark/transpose.js"
   },
   "repository": {
     "type": "git",
@@ -41,16 +42,14 @@
     "ml-stat": "^1.1.0"
   },
   "devDependencies": {
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
     "benchmark": "^2.1.0",
-    "mocha": "^3.0.2",
-    "mocha-better-spec-reporter": "^3.0.2",
-    "should": "^11.1.0",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.24.1",
     "eslint": "^3.1.0",
     "eslint-config-cheminfo": "^1.0.0",
     "eslint-plugin-no-only-tests": "^1.1.0",
+    "jest": "^20.0.4",
     "npm-run-all": "^4.0.2",
     "rollup": "^0.43.0",
-    "jest": "^20.0.4"
+    "should": "^11.1.0"
   }
 }
