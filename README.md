@@ -29,8 +29,8 @@ var options = {
   tolerance: 1e-4
 };
 
-var pls = new PLS(X, Y);
-pls.train(options);
+var pls = new PLS(options);
+pls.train(X, Y);
 ```
 
 ### [K-OPLS](./src/kopls.js)

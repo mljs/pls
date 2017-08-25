@@ -45,7 +45,7 @@ export class KOPLS {
     }
 
     /**
-     * Train the decision tree with the given training set and labels.
+     * Train the K-OPLS model with the given training set and labels.
      * @param {Matrix|Array} trainingSet
      * @param {Matrix|Array} trainingValues
      */
