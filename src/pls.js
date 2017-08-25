@@ -1,8 +1,8 @@
 'use strict';
 
-var Matrix = require('ml-matrix').Matrix;
+const Matrix = require('ml-matrix').Matrix;
 const Stat = require('ml-stat/matrix');
-var Utils = require('./utils');
+const Utils = require('./utils');
 
 class PLS {
     constructor(options = {}) {
@@ -160,11 +160,14 @@ class PLS {
      */
     predict(dataset) {
         var X = Matrix.checkMatrix(dataset);
+
         if (this.scale) {
             X = X.subRowVector(this.meanX).divRowVector(this.stdDevX);
         }
+
         var Y = X.mmul(this.PBQ);
         Y = Y.mulRowVector(this.stdDevY).addRowVector(this.meanY);
+
         return Y;
     }
 
@@ -175,7 +178,30 @@ class PLS {
     getExplainedVariance() {
         return this.R2X;
     }
-    
+
+    computeQ2(trueLabels, predictedLabels) {
+        trueLabels = Matrix.checkMatrix(trueLabels);
+        predictedLabels = Matrix.checkMatrix(predictedLabels);
+        let meansTrueLabels = Stat.mean(trueLabels);
+
+        let press = predictedLabels.map((row, rowIndex) => {
+            return row.map((element, colIndex) => {
+                return Math.pow(trueLabels[rowIndex][colIndex] - element, 2);
+            });
+        });
+
+        let tss = trueLabels.map((row) => {
+            return row.map((element, colIndex) => {
+                return Math.pow(element - meansTrueLabels[colIndex], 2);
+            });
+        });
+
+        press = Matrix.checkMatrix(press).sum();
+        tss = Matrix.checkMatrix(tss).sum();
+
+        return 1 - press / tss;
+    }
+
     toJSON() {
         return {
             name: 'PLS',
