@@ -1,6 +1,9 @@
 import {Matrix, SingularValueDecomposition, inverse} from 'ml-matrix';
 import {initializeMatrices} from './utils';
 
+/**
+ * @class KOPLS
+ */
 export class KOPLS {
 
     /**
@@ -13,17 +16,17 @@ export class KOPLS {
      */
     constructor(options, model) {
         if (options === true) {
-            this.X = new Matrix(model.X);
-            this.Cp = new Matrix(model.Cp);
-            this.SpPow = new Matrix(model.SpPow);
-            this.Up = new Matrix(model.Up);
-            this.Tp = initializeMatrices(model.Tp, false);
-            this.co = initializeMatrices(model.co, false);
-            this.so = model.so;
-            this.to = initializeMatrices(model.to, false);
+            this.trainingSet = new Matrix(model.trainingSet);
+            this.YLoadingMat = new Matrix(model.YLoadingMat);
+            this.SigmaPow = new Matrix(model.SigmaPow);
+            this.YScoreMat = new Matrix(model.YScoreMat);
+            this.predScoreMat = initializeMatrices(model.predScoreMat, false);
+            this.YOrthLoadingVec = initializeMatrices(model.YOrthLoadingVec, false);
+            this.YOrthEigen = model.YOrthEigen;
+            this.YOrthScoreMat = initializeMatrices(model.YOrthScoreMat, false);
             this.toNorm = initializeMatrices(model.toNorm, false);
-            this.Bt = initializeMatrices(model.Bt, false);
-            this.K = initializeMatrices(model.K, true);
+            this.TURegressionCoeff = initializeMatrices(model.TURegressionCoeff, false);
+            this.kernelX = initializeMatrices(model.kernelX, true);
             this.kernel = model.kernel;
             this.orthogonalComp = model.orthogonalComp;
             this.predictiveComp = model.predictiveComp;
@@ -54,86 +57,86 @@ export class KOPLS {
         trainingValues = Matrix.checkMatrix(trainingValues);
 
         // to save and compute kernel with the prediction dataset.
-        this.X = trainingSet.clone();
+        this.trainingSet = trainingSet.clone();
 
-        var KX = this.kernel.compute(trainingSet);
+        var kernelX = this.kernel.compute(trainingSet);
 
-        var I = Matrix.eye(KX.rows, KX.rows, 1);
-        var Kmc = KX.clone();
-        KX = new Matrix(this.orthogonalComp + 1, this.orthogonalComp + 1);
-        KX[0][0] = Kmc;
+        var Identity = Matrix.eye(kernelX.rows, kernelX.rows, 1);
+        var temp = kernelX;
+        kernelX = new Matrix(this.orthogonalComp + 1, this.orthogonalComp + 1);
+        kernelX[0][0] = temp;
 
-        var result = new SingularValueDecomposition(trainingValues.transpose().mmul(KX[0][0]).mmul(trainingValues), {
+        var result = new SingularValueDecomposition(trainingValues.transpose().mmul(kernelX[0][0]).mmul(trainingValues), {
             computeLeftSingularVectors: true,
             computeRightSingularVectors: false
         });
-        var Cp = result.leftSingularVectors;
-        var Sp = result.diagonalMatrix;
+        var YLoadingMat = result.leftSingularVectors;
+        var Sigma = result.diagonalMatrix;
 
-        Cp = Cp.subMatrix(0, Cp.rows - 1, 0, this.predictiveComp - 1);
-        Sp = Sp.subMatrix(0, this.predictiveComp - 1, 0, this.predictiveComp - 1);
+        YLoadingMat = YLoadingMat.subMatrix(0, YLoadingMat.rows - 1, 0, this.predictiveComp - 1);
+        Sigma = Sigma.subMatrix(0, this.predictiveComp - 1, 0, this.predictiveComp - 1);
 
-        var Up = trainingValues.mmul(Cp);
+        var YScoreMat = trainingValues.mmul(YLoadingMat);
 
-        var Tp = new Array(this.orthogonalComp + 1);
-        var Bt = new Array(this.orthogonalComp + 1);
-        var to = new Array(this.orthogonalComp);
-        var co = new Array(this.orthogonalComp);
-        var so = new Array(this.orthogonalComp);
-        var toNorm = new Array(this.orthogonalComp);
+        var predScoreMat = new Array(this.orthogonalComp + 1);
+        var TURegressionCoeff = new Array(this.orthogonalComp + 1);
+        var YOrthScoreMat = new Array(this.orthogonalComp);
+        var YOrthLoadingVec = new Array(this.orthogonalComp);
+        var YOrthEigen = new Array(this.orthogonalComp);
+        var YOrthScoreNorm = new Array(this.orthogonalComp);
 
-        var SpPow = Matrix.pow(Sp, -0.5);
+        var SigmaPow = Matrix.pow(Sigma, -0.5);
         // to avoid errors, check infinity
-        SpPow.apply(function (i, j) {
+        SigmaPow.apply(function (i, j) {
             if (this[i][j] === Infinity) {
                 this[i][j] = 0.0;
             }
         });
 
         for (var i = 0; i < this.orthogonalComp; ++i) {
-            Tp[i] = KX[0][i].transpose().mmul(Up).mmul(SpPow);
+            predScoreMat[i] = kernelX[0][i].transpose().mmul(YScoreMat).mmul(SigmaPow);
 
-            var TpiPrime = Tp[i].transpose();
-            Bt[i] = inverse(TpiPrime.mmul(Tp[i])).mmul(TpiPrime).mmul(Up);
+            var TpiPrime = predScoreMat[i].transpose();
+            TURegressionCoeff[i] = inverse(TpiPrime.mmul(predScoreMat[i])).mmul(TpiPrime).mmul(YScoreMat);
 
-            result = new SingularValueDecomposition(TpiPrime.mmul(Matrix.sub(KX[i][i], Tp[i].mmul(TpiPrime))).mmul(Tp[i]), {
+            result = new SingularValueDecomposition(TpiPrime.mmul(Matrix.sub(kernelX[i][i], predScoreMat[i].mmul(TpiPrime))).mmul(predScoreMat[i]), {
                 computeLeftSingularVectors: true,
                 computeRightSingularVectors: false
             });
             var CoTemp = result.leftSingularVectors;
             var SoTemp = result.diagonalMatrix;
 
-            co[i] = CoTemp.subMatrix(0, CoTemp.rows - 1, 0, 0);
-            so[i] = SoTemp[0][0];
+            YOrthLoadingVec[i] = CoTemp.subMatrix(0, CoTemp.rows - 1, 0, 0);
+            YOrthEigen[i] = SoTemp[0][0];
 
-            to[i] = Matrix.sub(KX[i][i], Tp[i].mmul(TpiPrime)).mmul(Tp[i]).mmul(co[i]).mul(Math.pow(so[i], -0.5));
+            YOrthScoreMat[i] = Matrix.sub(kernelX[i][i], predScoreMat[i].mmul(TpiPrime)).mmul(predScoreMat[i]).mmul(YOrthLoadingVec[i]).mul(Math.pow(YOrthEigen[i], -0.5));
 
-            var toiPrime = to[i].transpose();
-            toNorm[i] = Matrix.sqrt(toiPrime.mmul(to[i]));
+            var toiPrime = YOrthScoreMat[i].transpose();
+            YOrthScoreNorm[i] = Matrix.sqrt(toiPrime.mmul(YOrthScoreMat[i]));
 
-            to[i] = to[i].divRowVector(toNorm[i]);
+            YOrthScoreMat[i] = YOrthScoreMat[i].divRowVector(YOrthScoreNorm[i]);
 
-            var ITo = Matrix.sub(I, to[i].mmul(to[i].transpose()));
+            var ITo = Matrix.sub(Identity, YOrthScoreMat[i].mmul(YOrthScoreMat[i].transpose()));
 
-            KX[0][i + 1] = KX[0][i].mmul(ITo);
-            KX[i + 1][i + 1] = ITo.mmul(KX[i][i]).mmul(ITo);
+            kernelX[0][i + 1] = kernelX[0][i].mmul(ITo);
+            kernelX[i + 1][i + 1] = ITo.mmul(kernelX[i][i]).mmul(ITo);
         }
 
-        var lastTp = Tp[this.orthogonalComp] = KX[0][this.orthogonalComp].transpose().mmul(Up).mmul(SpPow);
+        var lastScoreMat = predScoreMat[this.orthogonalComp] = kernelX[0][this.orthogonalComp].transpose().mmul(YScoreMat).mmul(SigmaPow);
 
-        var lastTpPrime = lastTp.transpose();
-        Bt[this.orthogonalComp] = inverse(lastTpPrime.mmul(lastTp)).mmul(lastTpPrime).mmul(Up);
+        var lastTpPrime = lastScoreMat.transpose();
+        TURegressionCoeff[this.orthogonalComp] = inverse(lastTpPrime.mmul(lastScoreMat)).mmul(lastTpPrime).mmul(YScoreMat);
 
-        this.Cp = Cp;
-        this.SpPow = SpPow;
-        this.Up = Up;
-        this.Tp = Tp;
-        this.co = co;
-        this.so = so;
-        this.to = to;
-        this.toNorm = toNorm;
-        this.Bt = Bt;
-        this.K = KX;
+        this.YLoadingMat = YLoadingMat;
+        this.SigmaPow = SigmaPow;
+        this.YScoreMat = YScoreMat;
+        this.predScoreMat = predScoreMat;
+        this.YOrthLoadingVec = YOrthLoadingVec;
+        this.YOrthEigen = YOrthEigen;
+        this.YOrthScoreMat = YOrthScoreMat;
+        this.toNorm = YOrthScoreNorm;
+        this.TURegressionCoeff = TURegressionCoeff;
+        this.kernelX = kernelX;
     }
 
     /**
@@ -143,38 +146,38 @@ export class KOPLS {
      */
     predict(toPredict) {
 
-        var KteTr = this.kernel.compute(toPredict, this.X);
+        var KTestTrain = this.kernel.compute(toPredict, this.trainingSet);
 
-        var KteTrMc = KteTr;
-        KteTr = new Matrix(this.orthogonalComp + 1, this.orthogonalComp + 1);
-        KteTr[0][0] = KteTrMc;
+        var temp = KTestTrain;
+        KTestTrain = new Matrix(this.orthogonalComp + 1, this.orthogonalComp + 1);
+        KTestTrain[0][0] = temp;
 
-        var to = new Array(this.orthogonalComp);
-        var Tp = new Array(this.orthogonalComp);
+        var YOrthScoreVector = new Array(this.orthogonalComp);
+        var predScoreMat = new Array(this.orthogonalComp);
 
         var i;
         for (i = 0; i < this.orthogonalComp; ++i) {
-            Tp[i] = KteTr[i][0].mmul(this.Up).mmul(this.SpPow);
+            predScoreMat[i] = KTestTrain[i][0].mmul(this.YScoreMat).mmul(this.SigmaPow);
 
-            to[i] = Matrix.sub(KteTr[i][i], Tp[i].mmul(this.Tp[i].transpose())).mmul(this.Tp[i]).mmul(this.co[i]).mul(Math.pow(this.so[i], -0.5));
+            YOrthScoreVector[i] = Matrix.sub(KTestTrain[i][i], predScoreMat[i].mmul(this.predScoreMat[i].transpose())).mmul(this.predScoreMat[i]).mmul(this.YOrthLoadingVec[i]).mul(Math.pow(this.YOrthEigen[i], -0.5));
 
-            to[i] = to[i].divRowVector(this.toNorm[i]);
+            YOrthScoreVector[i] = YOrthScoreVector[i].divRowVector(this.toNorm[i]);
 
-            var toiPrime = this.to[i].transpose();
-            KteTr[i + 1][0] = Matrix.sub(KteTr[i][0], to[i].mmul(toiPrime).mmul(this.K[0][i].transpose()));
+            var scoreMatPrime = this.YOrthScoreMat[i].transpose();
+            KTestTrain[i + 1][0] = Matrix.sub(KTestTrain[i][0], YOrthScoreVector[i].mmul(scoreMatPrime).mmul(this.kernelX[0][i].transpose()));
 
-            var p1 = Matrix.sub(KteTr[i][0], KteTr[i][i].mmul(this.to[i]).mmul(toiPrime));
-            var p2 = to[i].mmul(toiPrime).mmul(this.K[i][i]);
-            var p3 = p2.mmul(this.to[i]).mmul(toiPrime);
+            var p1 = Matrix.sub(KTestTrain[i][0], KTestTrain[i][i].mmul(this.YOrthScoreMat[i]).mmul(scoreMatPrime));
+            var p2 = YOrthScoreVector[i].mmul(scoreMatPrime).mmul(this.kernelX[i][i]);
+            var p3 = p2.mmul(this.YOrthScoreMat[i]).mmul(scoreMatPrime);
 
-            KteTr[i + 1][i + 1] = p1.sub(p2).add(p3);
+            KTestTrain[i + 1][i + 1] = p1.sub(p2).add(p3);
         }
 
-        Tp[i] = KteTr[i][0].mmul(this.Up).mmul(this.SpPow);
-        var prediction = Tp[i].mmul(this.Bt[i]).mmul(this.Cp.transpose());
+        predScoreMat[i] = KTestTrain[i][0].mmul(this.YScoreMat).mmul(this.SigmaPow);
+        var prediction = predScoreMat[i].mmul(this.TURegressionCoeff[i]).mmul(this.YLoadingMat.transpose());
 
-        this.predScoreMat = Tp;
-        this.predYOrthVectors = to;
+        this.opredScoreMat = predScoreMat;
+        this.opredYOrthVectors = YOrthScoreVector;
 
         return prediction;
     }
@@ -185,11 +188,11 @@ export class KOPLS {
      * @return {Matrix}
      */
     getPredictiveScoreMatrix() {
-        if (!this.predScoreMat) {
-            throw new Error('you should run a prediction first!');
+        if (!this.opredScoreMat) {
+            throw new Error('you should run a prediction first');
         }
 
-        return this.predScoreMat;
+        return this.opredScoreMat;
     }
 
     /**
@@ -197,11 +200,11 @@ export class KOPLS {
      * @return {Matrix}
      */
     getOrthogonalScoreVectors() {
-        if (!this.predYOrthVectors) {
-            throw new Error('you should run a prediction first!');
+        if (!this.opredYOrthVectors) {
+            throw new Error('you should run a prediction first');
         }
 
-        return this.predYOrthVectors;
+        return this.opredYOrthVectors;
     }
 
     /**
@@ -211,17 +214,17 @@ export class KOPLS {
     toJSON() {
         return {
             name: 'K-OPLS',
-            Cp: this.Cp,
-            SpPow: this.SpPow,
-            Up: this.Up,
-            Tp: this.Tp,
-            co: this.co,
-            so: this.so,
-            to: this.to,
+            YLoadingMat: this.YLoadingMat,
+            SigmaPow: this.SigmaPow,
+            YScoreMat: this.YScoreMat,
+            predScoreMat: this.predScoreMat,
+            YOrthLoadingVec: this.YOrthLoadingVec,
+            YOrthEigen: this.YOrthEigen,
+            YOrthScoreMat: this.YOrthScoreMat,
             toNorm: this.toNorm,
-            Bt: this.Bt,
-            K: this.K,
-            X: this.X,
+            TURegressionCoeff: this.TURegressionCoeff,
+            kernelX: this.kernelX,
+            trainingSet: this.trainingSet,
             orthogonalComp: this.orthogonalComp,
             predictiveComp: this.predictiveComp
         };
