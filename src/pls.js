@@ -1,30 +1,32 @@
-import Matrix from 'ml-matrix';
-import * as Utils from './utils';
+'use strict';
 
-export class PLS {
-    constructor(X, Y) {
-        if (X === true) {
-            const model = Y;
+var Matrix = require('ml-matrix').Matrix;
+const Stat = require('ml-stat/matrix');
+var Utils = require('./utils');
+
+class PLS {
+    constructor(options = {}) {
+        if (options.load) {
+            const model = options.model;
             this.meanX = model.meanX;
             this.stdDevX = model.stdDevX;
             this.meanY = model.meanY;
             this.stdDevY = model.stdDevY;
             this.PBQ = Matrix.checkMatrix(model.PBQ);
             this.R2X = model.R2X;
+            this.scale = model.scale;
+            this.scaleMethod = model.scaleMethod;
+            this.tolerance = model.tolerance;
         } else {
-            if (X.length !== Y.length) {
-                throw new RangeError('The number of X rows must be equal to the number of Y rows');
-            }
-
-            const resultX = Utils.featureNormalize(X);
-            this.X = resultX.result;
-            this.meanX = resultX.means;
-            this.stdDevX = resultX.std;
-
-            const resultY = Utils.featureNormalize(Y);
-            this.Y = resultY.result;
-            this.meanY = resultY.means;
-            this.stdDevY = resultY.std;
+            var {
+                tolerance = 1e-5,
+                scale = true,
+                scaleMethod = 'auto'
+            } = options;
+            this.tolerance = tolerance;
+            this.scale = scale;
+            this.scaleMethod = scaleMethod;
+            this.latentVectors = options.latentVectors;
         }
     }
 
@@ -39,23 +41,29 @@ export class PLS {
      * B - Matrix of regression coefficient
      * W - Weight matrix of X
      *
-     * @param {object} options - recieves the latentVectors and the tolerance of each step of the PLS
+     * @param {Object} options - recieves the latentVectors and the tolerance of each step of the PLS
      */
-    train(options) {
-        if (options === undefined) options = {};
+    train(X, Y) {
+        X = Matrix.checkMatrix(X);
+        Y = Matrix.checkMatrix(Y);
 
-        var latentVectors = options.latentVectors;
-        if (latentVectors === undefined) {
-            latentVectors = Math.min(this.X.length - 1, this.X[0].length);
+        if (X.length !== Y.length) {
+            throw new RangeError('The number of X rows must be equal to the number of Y rows');
         }
 
-        var tolerance = options.tolerance;
-        if (tolerance === undefined) {
-            tolerance = 1e-5;
+        this.meanX = Stat.mean(X);
+        this.stdDevX = Stat.standardDeviation(X, this.meanX, true);
+        this.meanY = Stat.mean(Y);
+        this.stdDevY = Stat.standardDeviation(Y, this.meanY, true);
+
+        if (this.scale) { // here should be the ml-preprocess project
+            X = X.clone().subRowVector(this.meanX).divRowVector(this.stdDevX);
+            Y = Y.clone().subRowVector(this.meanY).divRowVector(this.stdDevY);
         }
 
-        var X = this.X;
-        var Y = this.Y;
+        if (this.latentVectors === undefined) {
+            this.latentVectors = Math.min(X.length - 1, X[0].length);
+        }
 
         var rx = X.rows;
         var cx = X.columns;
@@ -65,7 +73,8 @@ export class PLS {
         var ssqXcal = X.clone().mul(X).sum(); // for the r²
         var sumOfSquaresY = Y.clone().mul(Y).sum();
 
-        var n = latentVectors; //Math.max(cx, cy); // components of the pls
+        var tolerance = this.tolerance;
+        var n = this.latentVectors;
         var T = Matrix.zeros(rx, n);
         var P = Matrix.zeros(cx, n);
         var U = Matrix.zeros(ry, n);
@@ -74,7 +83,7 @@ export class PLS {
         var W = P.clone();
         var k = 0;
 
-        while (Utils.norm(Y) > tolerance && k < n) {
+        while(Utils.norm(Y) > tolerance && k < n) {
             var transposeX = X.transpose();
             var transposeY = Y.transpose();
 
@@ -85,7 +94,7 @@ export class PLS {
             var u = Y.getColumnVector(uIndex);
             var t = Matrix.zeros(rx, 1);
 
-            while (Utils.norm(t1.clone().sub(t)) > tolerance) {
+            while(Utils.norm(t1.clone().sub(t)) > tolerance) {
                 var w = transposeX.mmul(u);
                 w.div(Utils.norm(w));
                 t = t1;
@@ -130,7 +139,7 @@ export class PLS {
 
         // TODO: review of R2Y
         //this.R2Y = t.transpose().mmul(t).mul(q[k][0]*q[k][0]).divS(ssqYcal)[0][0];
-
+        //
         this.ssqYcal = sumOfSquaresY;
         this.E = X;
         this.F = Y;
@@ -146,12 +155,14 @@ export class PLS {
 
     /**
      * Predicts the behavior of the given dataset.
-     * @param {Array|Matrix} dataset - data to be predicted.
-     * @return {Matrix} - predictions of each element of the dataset.
+     * @param dataset - data to be predicted.
+     * @returns {Matrix} - predictions of each element of the dataset.
      */
     predict(dataset) {
         var X = Matrix.checkMatrix(dataset);
-        X = X.subRowVector(this.meanX).divRowVector(this.stdDevX);
+        if (this.scale) {
+            X = X.subRowVector(this.meanX).divRowVector(this.stdDevX);
+        }
         var Y = X.mmul(this.PBQ);
         Y = Y.mulRowVector(this.stdDevY).addRowVector(this.meanY);
         return Y;
@@ -164,7 +175,7 @@ export class PLS {
     getExplainedVariance() {
         return this.R2X;
     }
-
+    
     toJSON() {
         return {
             name: 'PLS',
@@ -174,28 +185,31 @@ export class PLS {
             meanY: this.meanY,
             stdDevY: this.stdDevY,
             PBQ: this.PBQ,
+            tolerance: this.tolerance,
+            scale: this.scale,
+            scaleMethod: this.scaleMethod,
         };
     }
 
     /**
      * Load a PLS model from a JSON Object
-     * @param {object} model
+     * @param model
      * @return {PLS} - PLS object from the given model
      */
     static load(model) {
-        if (model.name !== 'PLS') {
+        if (model.name !== 'PLS')
             throw new RangeError('Invalid model: ' + model.name);
-        }
-        return new PLS(true, model);
+        return new PLS({model, load: true});
     }
 }
 
+module.exports = PLS;
+
 /**
- * @private
  * Retrieves the sum at the column of the given matrix.
- * @param {Matrix} matrix
- * @param {number} column
- * @return {number}
+ * @param matrix
+ * @param column
+ * @returns {number}
  */
 function getColSum(matrix, column) {
     var sum = 0;
@@ -209,14 +223,14 @@ function getColSum(matrix, column) {
  * Function that returns the index where the sum of each
  * column vector is maximum.
  * @param {Matrix} data
- * @return {number} index of the maximum
+ * @returns {number} index of the maximum
  */
 function maxSumColIndex(data) {
     var maxIndex = 0;
     var maxSum = -Infinity;
-    for (var i = 0; i < data.columns; ++i) {
+    for(var i = 0; i < data.columns; ++i) {
         var currentSum = getColSum(data, i);
-        if (currentSum > maxSum) {
+        if(currentSum > maxSum) {
             maxSum = currentSum;
             maxIndex = i;
         }
