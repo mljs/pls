@@ -9,7 +9,7 @@ PLS regression algorithm based on the Yi Cao implementation:
 
 [PLS Matlab code](http://www.mathworks.com/matlabcentral/fileexchange/18760-partial-least-squares-and-discriminant-analysis)
 
-K-OPLS regression algorithm based on [this](http://onlinelibrary.wiley.com/doi/10.1002/cem.1071/abstract) paper, Matlab implementation here:
+K-OPLS regression algorithm based on [this paper](http://onlinelibrary.wiley.com/doi/10.1002/cem.1071/abstract).
 
 [K-OPLS Matlab code](http://kopls.sourceforge.net/download.shtml)
 
@@ -22,6 +22,8 @@ K-OPLS regression algorithm based on [this](http://onlinelibrary.wiley.com/doi/1
 ### [PLS](./src/pls.js)
 
 ```js
+import PLS from 'ml-pls'
+
 var X = [[0.1, 0.02], [0.25, 1.01] ,[0.95, 0.01], [1.01, 0.96]];
 var Y = [[1, 0], [1, 0], [1, 0], [0, 1]];
 var options = {
@@ -52,13 +54,14 @@ var cls = new KOPLS({
 });
 
 cls.train(Xtrain, Ytrain);
-var predictions = cls.predict(Xtest)
-
-// just before predictions you can obtain also
-var predMat = cls.getPredictiveScoreMatrix();
-var orthVec = cls.getOrthogonalScoreVectors();
-// this ones are obtained over the test samples
+var {
+    prediction, // prediction
+    predScoreMat, // Score matrix over prediction
+    predYOrthVectors // Y-Orthogonal vectors over prediction
+} = cls.predict(Xtest)
 ```
+
+## [API Documentation](./docs/index.html)
 
 ## License
 

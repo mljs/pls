@@ -11,7 +11,7 @@ export class KOPLS {
      * @param {object} options
      * @param {number} [options.predictiveComponents] - Number of predictive components to use.
      * @param {number} [options.orthogonalComponents] - Number of Y-Orthogonal components.
-     * @param {Kernel} [options.kernel] - Kernel object to apply.
+     * @param {Kernel} [options.kernel] - Kernel object to apply, see [ml-kernel](https://github.com/mljs/kernel).
      * @param {object} model - for load purposes.
      */
     constructor(options, model) {
@@ -142,7 +142,7 @@ export class KOPLS {
     /**
      * Predicts the output given the matrix to predict.
      * @param {Matrix|Array} toPredict
-     * @return {Matrix} predictions
+     * @return {{y: Matrix, predScoreMat: Array<Matrix>, predYOrthVectors: Array<Matrix>}} predictions
      */
     predict(toPredict) {
 
@@ -176,35 +176,11 @@ export class KOPLS {
         predScoreMat[i] = KTestTrain[i][0].mmul(this.YScoreMat).mmul(this.SigmaPow);
         var prediction = predScoreMat[i].mmul(this.TURegressionCoeff[i]).mmul(this.YLoadingMat.transpose());
 
-        this.opredScoreMat = predScoreMat;
-        this.opredYOrthVectors = YOrthScoreVector;
-
-        return prediction;
-    }
-
-    /**
-     * Get the predictive score matrix for all generations according to the number of orthogonal vectors.
-     * (this can be obtained only after a prediction)
-     * @return {Matrix}
-     */
-    getPredictiveScoreMatrix() {
-        if (!this.opredScoreMat) {
-            throw new Error('you should run a prediction first');
-        }
-
-        return this.opredScoreMat;
-    }
-
-    /**
-     * Get the predicted Y-Orthogonal vectors. (this can be obtained only after a prediction)
-     * @return {Matrix}
-     */
-    getOrthogonalScoreVectors() {
-        if (!this.opredYOrthVectors) {
-            throw new Error('you should run a prediction first');
-        }
-
-        return this.opredYOrthVectors;
+        return {
+            prediction: prediction,
+            predScoreMat: predScoreMat,
+            predYOrthVectors: YOrthScoreVector
+        };
     }
 
     /**
@@ -233,7 +209,7 @@ export class KOPLS {
     /**
      * Load a K-OPLS with the given model.
      * @param {object} model
-     * @param {Kernel} kernel
+     * @param {Kernel} kernel - kernel used on the model, see [ml-kernel](https://github.com/mljs/kernel).
      * @return {KOPLS}
      */
     static load(model, kernel) {

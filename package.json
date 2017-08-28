@@ -14,6 +14,7 @@
     "prepublish": "rollup -c",
     "test": "run-s testonly eslint",
     "testonly": "jest",
+    "coverage": "jest --coverage",
     "bench": "node ./benchmark/transpose.js"
   },
   "repository": {
@@ -48,8 +49,8 @@
     "eslint-config-cheminfo": "^1.0.0",
     "eslint-plugin-no-only-tests": "^1.1.0",
     "jest": "^20.0.4",
-    "npm-run-all": "^4.0.2",
-    "rollup": "^0.43.0",
-    "should": "^11.1.0"
+    "jest-matcher-deep-close-to": "^1.0.2",
+    "npm-run-all": "^4.1.0",
+    "rollup": "^0.43.0"
   }
 }

@@ -2,6 +2,9 @@ import Matrix from 'ml-matrix';
 import Stat from 'ml-stat/matrix';
 import * as Utils from './utils';
 
+/**
+ * @class PLS
+ */
 export class PLS {
 
     /**

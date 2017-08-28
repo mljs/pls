@@ -25,31 +25,30 @@ describe('K-OPLS', () => {
     cls.train(Xtrain, Ytrain);
 
     test('K-OPLS test with main features', () => {
-        expect(() => cls.getOrthogonalScoreVectors()).toThrowError('you should run a prediction first');
-        expect(() => cls.getPredictiveScoreMatrix()).toThrowError('you should run a prediction first');
+        var {
+            prediction,
+            predScoreMat,
+            predYOrthVectors
+        } = cls.predict(Xtest);
 
-        var output = cls.predict(Xtest);
-
-        var testTp = cls.getPredictiveScoreMatrix();
-        for (var i = 0; i < testTp.length; ++i) {
-            for (var j = 0; j < testTp[i].length; ++j) {
-                expect(testTp[i][j][0]).toBeCloseTo(Tp[i][j], 2);
+        for (var i = 0; i < predScoreMat.length; ++i) {
+            for (var j = 0; j < predScoreMat[i].length; ++j) {
+                expect(predScoreMat[i][j][0]).toBeCloseTo(Tp[i][j], 2);
             }
         }
 
-        var testTo = cls.getOrthogonalScoreVectors();
-        for (i = 0; i < testTo.length; ++i) {
-            for (j = 0; j < testTo[i].length; ++j) {
-                expect(testTo[i][j][0]).toBeCloseTo(to[i][j], 2);
+        for (i = 0; i < predYOrthVectors.length; ++i) {
+            for (j = 0; j < predYOrthVectors[i].length; ++j) {
+                expect(predYOrthVectors[i][j][0]).toBeCloseTo(to[i][j], 2);
             }
         }
 
-        expect(output).toBeDeepCloseTo(Ytest, 3);
+        expect(prediction).toBeDeepCloseTo(Ytest, 3);
     });
 
     test('Load and save', () => {
         var model = KOPLS.load(JSON.parse(JSON.stringify(cls)), kernel);
-        var output = model.predict(Xtest);
+        var output = model.predict(Xtest).prediction;
 
         expect(output).toBeDeepCloseTo(Ytest, 3);
     });
@@ -67,7 +66,7 @@ describe('K-OPLS', () => {
         });
 
         cls.train(Xtrain, Ytrain);
-        var output = cls.predict(Xtest);
+        var output = cls.predict(Xtest).prediction;
         expect(output).toBeDeepCloseTo(Ytest, 1);
     });
 });
