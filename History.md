@@ -1,3 +1,18 @@
+<a name="1.0.0"></a>
+# [1.0.0](https://github.com/mljs/pls/compare/v0.2.1...v1.0.0) (2017-08-30)
+
+
+### Features
+
+* K-OPLS model ([c5185c9](https://github.com/mljs/pls/commit/c5185c9))
+
+
+### Performance Improvements
+
+* apply matrix optimizations ([50cc39f](https://github.com/mljs/pls/commit/50cc39f))
+
+
+
 <a name="0.2.1"></a>
 ## [0.2.1](https://github.com/mljs/pls/compare/v0.2.0...v0.2.1) (2017-07-25)
 
