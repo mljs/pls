@@ -61,7 +61,7 @@ var {
 } = cls.predict(Xtest)
 ```
 
-## [API Documentation](./docs/index.html)
+## [API Documentation](http://mljs.github.io/pls/)
 
 ## License
 
