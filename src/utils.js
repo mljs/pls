@@ -1,45 +1,63 @@
-'use strict';
-
-const Matrix = require('ml-matrix').Matrix;
-const Stat = require('ml-stat/matrix');
+import Matrix from 'ml-matrix';
+import Stat from 'ml-stat/matrix';
 
 /**
+ * @private
  * Function that given vector, returns his norm
  * @param {Vector} X
- * @returns {number} Norm of the vector
+ * @return {number} Norm of the vector
  */
-function norm(X) {
+export function norm(X) {
     return Math.sqrt(X.clone().apply(pow2array).sum());
 }
 
 /**
+ * @private
  * Function that pow 2 each element of a Matrix or a Vector,
  * used in the apply method of the Matrix object
- * @param i - index i.
- * @param j - index j.
- * @return The Matrix object modified at the index i, j.
+ * @param {number} i - index i.
+ * @param {number} j - index j.
+ * @return {Matrix} The Matrix object modified at the index i, j.
  * */
-function pow2array(i, j) {
+export function pow2array(i, j) {
     this[i][j] = this[i][j] * this[i][j];
     return this;
 }
 
 /**
+ * @private
  * Function that normalize the dataset and return the means and
  * standard deviation of each feature.
- * @param dataset
- * @returns {{result: Matrix, means: (*|number), std: Matrix}} dataset normalized, means
- *                                                             and standard deviations
+ * @param {Matrix} dataset
+ * @return {object} dataset normalized, means and standard deviations
  */
-function featureNormalize(dataset) {
+export function featureNormalize(dataset) {
     var means = Stat.mean(dataset);
     var std = Stat.standardDeviation(dataset, means, true);
     var result = Matrix.checkMatrix(dataset).subRowVector(means);
     return {result: result.divRowVector(std), means: means, std: std};
 }
 
-module.exports = {
-    norm: norm,
-    pow2array: pow2array,
-    featureNormalize: featureNormalize
-};
+/**
+ * @private
+ * Function that initialize an array of matrices.
+ * @param {Array} array
+ * @param {boolean} isMatrix
+ * @return {Array} array with the matrices initialized.
+ */
+export function initializeMatrices(array, isMatrix) {
+    if (isMatrix) {
+        for (var i = 0; i < array.length; ++i) {
+            for (var j = 0; j < array[i].length; ++j) {
+                var elem = array[i][j];
+                array[i][j] = elem !== null ? new Matrix(array[i][j]) : undefined;
+            }
+        }
+    } else {
+        for (i = 0; i < array.length; ++i) {
+            array[i] = new Matrix(array[i]);
+        }
+    }
+
+    return array;
+}

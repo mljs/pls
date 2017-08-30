@@ -1,13 +1,22 @@
-'use strict';
+import Matrix from 'ml-matrix';
+import Stat from 'ml-stat/matrix';
+import * as Utils from './utils';
 
-var Matrix = require('ml-matrix').Matrix;
-const Stat = require('ml-stat/matrix');
-var Utils = require('./utils');
+/**
+ * @class PLS
+ */
+export class PLS {
 
-class PLS {
-    constructor(options = {}) {
-        if (options.load) {
-            const model = options.model;
+    /**
+     * Constructor for Partial Least Squares (PLS)
+     * @param {object} options
+     * @param {number} [options.latentVectors] - Number of latent vector to get (if the algorithm doesn't find a good model below the tolerance)
+     * @param {number} [options.tolerance=1e-5]
+     * @param {boolean} [options.scale=true] - rescale dataset using mean.
+     * @param {object} model - for load purposes.
+     */
+    constructor(options, model) {
+        if (options === true) {
             this.meanX = model.meanX;
             this.stdDevX = model.stdDevX;
             this.meanY = model.meanY;
@@ -21,11 +30,9 @@ class PLS {
             var {
                 tolerance = 1e-5,
                 scale = true,
-                scaleMethod = 'auto'
             } = options;
             this.tolerance = tolerance;
             this.scale = scale;
-            this.scaleMethod = scaleMethod;
             this.latentVectors = options.latentVectors;
         }
     }
@@ -41,37 +48,38 @@ class PLS {
      * B - Matrix of regression coefficient
      * W - Weight matrix of X
      *
-     * @param {Object} options - recieves the latentVectors and the tolerance of each step of the PLS
+     * @param {Matrix|Array} trainingSet
+     * @param {Matrix|Array} trainingValues
      */
-    train(X, Y) {
-        X = Matrix.checkMatrix(X);
-        Y = Matrix.checkMatrix(Y);
+    train(trainingSet, trainingValues) {
+        trainingSet = Matrix.checkMatrix(trainingSet);
+        trainingValues = Matrix.checkMatrix(trainingValues);
 
-        if (X.length !== Y.length) {
+        if (trainingSet.length !== trainingValues.length) {
             throw new RangeError('The number of X rows must be equal to the number of Y rows');
         }
 
-        this.meanX = Stat.mean(X);
-        this.stdDevX = Stat.standardDeviation(X, this.meanX, true);
-        this.meanY = Stat.mean(Y);
-        this.stdDevY = Stat.standardDeviation(Y, this.meanY, true);
+        this.meanX = Stat.mean(trainingSet);
+        this.stdDevX = Stat.standardDeviation(trainingSet, this.meanX, true);
+        this.meanY = Stat.mean(trainingValues);
+        this.stdDevY = Stat.standardDeviation(trainingValues, this.meanY, true);
 
         if (this.scale) { // here should be the ml-preprocess project
-            X = X.clone().subRowVector(this.meanX).divRowVector(this.stdDevX);
-            Y = Y.clone().subRowVector(this.meanY).divRowVector(this.stdDevY);
+            trainingSet = trainingSet.clone().subRowVector(this.meanX).divRowVector(this.stdDevX);
+            trainingValues = trainingValues.clone().subRowVector(this.meanY).divRowVector(this.stdDevY);
         }
 
         if (this.latentVectors === undefined) {
-            this.latentVectors = Math.min(X.length - 1, X[0].length);
+            this.latentVectors = Math.min(trainingSet.length - 1, trainingSet[0].length);
         }
 
-        var rx = X.rows;
-        var cx = X.columns;
-        var ry = Y.rows;
-        var cy = Y.columns;
+        var rx = trainingSet.rows;
+        var cx = trainingSet.columns;
+        var ry = trainingValues.rows;
+        var cy = trainingValues.columns;
 
-        var ssqXcal = X.clone().mul(X).sum(); // for the r²
-        var sumOfSquaresY = Y.clone().mul(Y).sum();
+        var ssqXcal = trainingSet.clone().mul(trainingSet).sum(); // for the r²
+        var sumOfSquaresY = trainingValues.clone().mul(trainingValues).sum();
 
         var tolerance = this.tolerance;
         var n = this.latentVectors;
@@ -83,25 +91,25 @@ class PLS {
         var W = P.clone();
         var k = 0;
 
-        while(Utils.norm(Y) > tolerance && k < n) {
-            var transposeX = X.transpose();
-            var transposeY = Y.transpose();
+        while (Utils.norm(trainingValues) > tolerance && k < n) {
+            var transposeX = trainingSet.transpose();
+            var transposeY = trainingValues.transpose();
 
-            var tIndex = maxSumColIndex(X.clone().mulM(X));
-            var uIndex = maxSumColIndex(Y.clone().mulM(Y));
+            var tIndex = maxSumColIndex(trainingSet.clone().mulM(trainingSet));
+            var uIndex = maxSumColIndex(trainingValues.clone().mulM(trainingValues));
 
-            var t1 = X.getColumnVector(tIndex);
-            var u = Y.getColumnVector(uIndex);
+            var t1 = trainingSet.getColumnVector(tIndex);
+            var u = trainingValues.getColumnVector(uIndex);
             var t = Matrix.zeros(rx, 1);
 
-            while(Utils.norm(t1.clone().sub(t)) > tolerance) {
+            while (Utils.norm(t1.clone().sub(t)) > tolerance) {
                 var w = transposeX.mmul(u);
                 w.div(Utils.norm(w));
                 t = t1;
-                t1 = X.mmul(w);
+                t1 = trainingSet.mmul(w);
                 var q = transposeY.mmul(t1);
                 q.div(Utils.norm(q));
-                u = Y.mmul(q);
+                u = trainingValues.mmul(q);
             }
 
             t = t1;
@@ -116,8 +124,8 @@ class PLS {
             num = u.transpose().mmul(t);
             den = (t.transpose().mmul(t))[0][0];
             var b = (num.div(den))[0][0];
-            X.sub(t.mmul(p.transpose()));
-            Y.sub(t.clone().mul(b).mmul(q.transpose()));
+            trainingSet.sub(t.mmul(p.transpose()));
+            trainingValues.sub(t.clone().mul(b).mmul(q.transpose()));
 
             T.setColumn(k, t);
             P.setColumn(k, p);
@@ -141,8 +149,8 @@ class PLS {
         //this.R2Y = t.transpose().mmul(t).mul(q[k][0]*q[k][0]).divS(ssqYcal)[0][0];
         //
         this.ssqYcal = sumOfSquaresY;
-        this.E = X;
-        this.F = Y;
+        this.E = trainingSet;
+        this.F = trainingValues;
         this.T = T;
         this.P = P;
         this.U = U;
@@ -155,8 +163,8 @@ class PLS {
 
     /**
      * Predicts the behavior of the given dataset.
-     * @param dataset - data to be predicted.
-     * @returns {Matrix} - predictions of each element of the dataset.
+     * @param {Matrix|Array} dataset - data to be predicted.
+     * @return {Matrix} - predictions of each element of the dataset.
      */
     predict(dataset) {
         var X = Matrix.checkMatrix(dataset);
@@ -175,7 +183,11 @@ class PLS {
     getExplainedVariance() {
         return this.R2X;
     }
-    
+
+    /**
+     * Export the current model to JSON.
+     * @return {object} - Current model.
+     */
     toJSON() {
         return {
             name: 'PLS',
@@ -187,53 +199,29 @@ class PLS {
             PBQ: this.PBQ,
             tolerance: this.tolerance,
             scale: this.scale,
-            scaleMethod: this.scaleMethod,
         };
     }
 
     /**
      * Load a PLS model from a JSON Object
-     * @param model
+     * @param {object} model
      * @return {PLS} - PLS object from the given model
      */
     static load(model) {
-        if (model.name !== 'PLS')
+        if (model.name !== 'PLS') {
             throw new RangeError('Invalid model: ' + model.name);
-        return new PLS({model, load: true});
+        }
+        return new PLS(true, model);
     }
 }
 
-module.exports = PLS;
-
 /**
- * Retrieves the sum at the column of the given matrix.
- * @param matrix
- * @param column
- * @returns {number}
- */
-function getColSum(matrix, column) {
-    var sum = 0;
-    for (var i = 0; i < matrix.rows; i++) {
-        sum += matrix[i][column];
-    }
-    return sum;
-}
-
-/**
+ * @private
  * Function that returns the index where the sum of each
  * column vector is maximum.
  * @param {Matrix} data
- * @returns {number} index of the maximum
+ * @return {number} index of the maximum
  */
 function maxSumColIndex(data) {
-    var maxIndex = 0;
-    var maxSum = -Infinity;
-    for(var i = 0; i < data.columns; ++i) {
-        var currentSum = getColSum(data, i);
-        if(currentSum > maxSum) {
-            maxSum = currentSum;
-            maxIndex = i;
-        }
-    }
-    return maxIndex;
+    return data.sum('column').maxIndex()[0];
 }
