@@ -1,2 +1,2 @@
-export {PLS} from './pls';
-export {KOPLS} from './kopls';
+export { PLS } from './pls';
+export { KOPLS } from './kopls';

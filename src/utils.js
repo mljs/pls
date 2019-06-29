@@ -1,14 +1,13 @@
 import Matrix from 'ml-matrix';
-import Stat from 'ml-stat/matrix';
 
 /**
  * @private
- * Function that given vector, returns his norm
+ * Function that given vector, returns its norm
  * @param {Vector} X
  * @return {number} Norm of the vector
  */
 export function norm(X) {
-    return Math.sqrt(X.clone().apply(pow2array).sum());
+  return Math.sqrt(X.clone().apply(pow2array).sum());
 }
 
 /**
@@ -20,8 +19,7 @@ export function norm(X) {
  * @return {Matrix} The Matrix object modified at the index i, j.
  * */
 export function pow2array(i, j) {
-    this[i][j] = this[i][j] * this[i][j];
-    return this;
+  this.set(i, j, this.get(i, j) ** 2);
 }
 
 /**
@@ -32,10 +30,10 @@ export function pow2array(i, j) {
  * @return {object} dataset normalized, means and standard deviations
  */
 export function featureNormalize(dataset) {
-    var means = Stat.mean(dataset);
-    var std = Stat.standardDeviation(dataset, means, true);
-    var result = Matrix.checkMatrix(dataset).subRowVector(means);
-    return {result: result.divRowVector(std), means: means, std: std};
+  var means = dataset.mean('column');
+  var std = dataset.standardDeviation('column', { mean: means, unbiased: true });
+  var result = Matrix.checkMatrix(dataset).subRowVector(means);
+  return { result: result.divRowVector(std), means: means, std: std };
 }
 
 /**
@@ -46,18 +44,18 @@ export function featureNormalize(dataset) {
  * @return {Array} array with the matrices initialized.
  */
 export function initializeMatrices(array, isMatrix) {
-    if (isMatrix) {
-        for (var i = 0; i < array.length; ++i) {
-            for (var j = 0; j < array[i].length; ++j) {
-                var elem = array[i][j];
-                array[i][j] = elem !== null ? new Matrix(array[i][j]) : undefined;
-            }
-        }
-    } else {
-        for (i = 0; i < array.length; ++i) {
-            array[i] = new Matrix(array[i]);
-        }
+  if (isMatrix) {
+    for (var i = 0; i < array.length; ++i) {
+      for (var j = 0; j < array[i].length; ++j) {
+        var elem = array[i][j];
+        array[i][j] = elem !== null ? new Matrix(array[i][j]) : undefined;
+      }
     }
+  } else {
+    for (i = 0; i < array.length; ++i) {
+      array[i] = new Matrix(array[i]);
+    }
+  }
 
-    return array;
+  return array;
 }
