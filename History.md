@@ -1,3 +1,17 @@
+# [2.0.0](https://github.com/mljs/pls/compare/v1.0.0...v2.0.0) (2019-06-29)
+
+
+### chore
+
+* remove support for Node.js 6 ([78af432](https://github.com/mljs/pls/commit/78af432))
+
+
+### BREAKING CHANGES
+
+* Support for Node.js 6 was removed
+
+
+
 <a name="1.0.0"></a>
 # [1.0.0](https://github.com/mljs/pls/compare/v0.2.1...v1.0.0) (2017-08-30)
 
