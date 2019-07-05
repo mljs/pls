@@ -9,7 +9,8 @@ import { norm } from './utils.js';
  * @param {Object} options an object with options
  * @return {Object} Object with model
  */
-export function PLS(dataset, predictions, options = {}) {
+
+export function plsNIPALS(dataset, predictions, options = {}) {
   const {
     numberOSC = 2,
     scale = false
@@ -19,12 +20,9 @@ export function PLS(dataset, predictions, options = {}) {
   var Y = Matrix.checkMatrix(predictions);
 
   if (scale) {
-    X = featureNormalize(X).result;
-    Y = featureNormalize(y).result;
+    X = X.center('column').scale('column');
+    Y = Y.center('column').scale('column');
   }
-  // console.log(X, Y);
-  var rows = X.rows;
-  var columns = X.columns;
 
   var u = Y.getColumnVector(0);
   let diff = 1;
@@ -50,7 +48,7 @@ export function PLS(dataset, predictions, options = {}) {
     q = q.div(norm(q));
 
     u = Y.mmul(q).div(q.transpose().mmul(q).get(0, 0));
-    console.log(`PLS iteration: ${i}`);
+    // console.log(`PLS iteration: ${i}`);
   }
   // calculate the X loadings and rescale scores and weights accordingly
   let xP = X.transpose().mmul(t).div(t.transpose().mmul(t).get(0, 0));
