@@ -1,6 +1,6 @@
 import Matrix from 'ml-matrix';
 
-import * as Utils from './utils';
+import * as Utils from './util/utils';
 
 /**
  * @class PLS
@@ -26,10 +26,7 @@ export class PLS {
       this.scaleMethod = model.scaleMethod;
       this.tolerance = model.tolerance;
     } else {
-      var {
-        tolerance = 1e-5,
-        scale = true,
-      } = options;
+      let { tolerance = 1e-5, scale = true } = options;
       this.tolerance = tolerance;
       this.scale = scale;
       this.latentVectors = options.latentVectors;
@@ -55,76 +52,111 @@ export class PLS {
     trainingValues = Matrix.checkMatrix(trainingValues);
 
     if (trainingSet.length !== trainingValues.length) {
-      throw new RangeError('The number of X rows must be equal to the number of Y rows');
+      throw new RangeError(
+        'The number of X rows must be equal to the number of Y rows',
+      );
     }
 
     this.meanX = trainingSet.mean('column');
-    this.stdDevX = trainingSet.standardDeviation('column', { mean: this.meanX, unbiased: true });
+    this.stdDevX = trainingSet.standardDeviation('column', {
+      mean: this.meanX,
+      unbiased: true,
+    });
     this.meanY = trainingValues.mean('column');
-    this.stdDevY = trainingValues.standardDeviation('column', { mean: this.meanY, unbiased: true });
+    this.stdDevY = trainingValues.standardDeviation('column', {
+      mean: this.meanY,
+      unbiased: true,
+    });
 
     if (this.scale) {
-      trainingSet = trainingSet.clone().subRowVector(this.meanX).divRowVector(this.stdDevX);
-      trainingValues = trainingValues.clone().subRowVector(this.meanY).divRowVector(this.stdDevY);
+      trainingSet = trainingSet
+        .clone()
+        .subRowVector(this.meanX)
+        .divRowVector(this.stdDevX);
+      trainingValues = trainingValues
+        .clone()
+        .subRowVector(this.meanY)
+        .divRowVector(this.stdDevY);
     }
 
     if (this.latentVectors === undefined) {
       this.latentVectors = Math.min(trainingSet.rows - 1, trainingSet.columns);
     }
 
-    var rx = trainingSet.rows;
-    var cx = trainingSet.columns;
-    var ry = trainingValues.rows;
-    var cy = trainingValues.columns;
+    let rx = trainingSet.rows;
+    let cx = trainingSet.columns;
+    let ry = trainingValues.rows;
+    let cy = trainingValues.columns;
 
-    var ssqXcal = trainingSet.clone().mul(trainingSet).sum(); // for the r²
-    var sumOfSquaresY = trainingValues.clone().mul(trainingValues).sum();
+    let ssqXcal = trainingSet
+      .clone()
+      .mul(trainingSet)
+      .sum(); // for the r²
+    let sumOfSquaresY = trainingValues
+      .clone()
+      .mul(trainingValues)
+      .sum();
 
-    var tolerance = this.tolerance;
-    var n = this.latentVectors;
-    var T = Matrix.zeros(rx, n);
-    var P = Matrix.zeros(cx, n);
-    var U = Matrix.zeros(ry, n);
-    var Q = Matrix.zeros(cy, n);
-    var B = Matrix.zeros(n, n);
-    var W = P.clone();
-    var k = 0;
+    let tolerance = this.tolerance;
+    let n = this.latentVectors;
+    let T = Matrix.zeros(rx, n);
+    let P = Matrix.zeros(cx, n);
+    let U = Matrix.zeros(ry, n);
+    let Q = Matrix.zeros(cy, n);
+    let B = Matrix.zeros(n, n);
+    let W = P.clone();
+    let k = 0;
+    let t;
+    let w;
+    let q;
+    let p;
 
     while (Utils.norm(trainingValues) > tolerance && k < n) {
-      var transposeX = trainingSet.transpose();
-      var transposeY = trainingValues.transpose();
+      let transposeX = trainingSet.transpose();
+      let transposeY = trainingValues.transpose();
 
-      var tIndex = maxSumColIndex(trainingSet.clone().mul(trainingSet));
-      var uIndex = maxSumColIndex(trainingValues.clone().mul(trainingValues));
+      let tIndex = maxSumColIndex(trainingSet.clone().mul(trainingSet));
+      let uIndex = maxSumColIndex(trainingValues.clone().mul(trainingValues));
 
-      var t1 = trainingSet.getColumnVector(tIndex);
-      var u = trainingValues.getColumnVector(uIndex);
-      var t = Matrix.zeros(rx, 1);
+      let t1 = trainingSet.getColumnVector(tIndex);
+      let u = trainingValues.getColumnVector(uIndex);
+      t = Matrix.zeros(rx, 1);
 
       while (Utils.norm(t1.clone().sub(t)) > tolerance) {
-        var w = transposeX.mmul(u);
+        w = transposeX.mmul(u);
         w.div(Utils.norm(w));
         t = t1;
         t1 = trainingSet.mmul(w);
-        var q = transposeY.mmul(t1);
+        q = transposeY.mmul(t1);
         q.div(Utils.norm(q));
         u = trainingValues.mmul(q);
       }
 
       t = t1;
-      var num = transposeX.mmul(t);
-      var den = t.transpose().mmul(t).get(0, 0);
-      var p = num.div(den);
-      var pnorm = Utils.norm(p);
+      let num = transposeX.mmul(t);
+      let den = t
+        .transpose()
+        .mmul(t)
+        .get(0, 0);
+      p = num.div(den);
+      let pnorm = Utils.norm(p);
       p.div(pnorm);
       t.mul(pnorm);
       w.mul(pnorm);
 
       num = u.transpose().mmul(t);
-      den = t.transpose().mmul(t).get(0, 0);
-      var b = num.div(den).get(0, 0);
+      den = t
+        .transpose()
+        .mmul(t)
+        .get(0, 0);
+      let b = num.div(den).get(0, 0);
       trainingSet.sub(t.mmul(p.transpose()));
-      trainingValues.sub(t.clone().mul(b).mmul(q.transpose()));
+      trainingValues.sub(
+        t
+          .clone()
+          .mul(b)
+          .mmul(q.transpose()),
+      );
 
       T.setColumn(k, t);
       P.setColumn(k, p);
@@ -144,9 +176,6 @@ export class PLS {
     W = W.subMatrix(0, W.rows - 1, 0, k);
     B = B.subMatrix(0, k, 0, k);
 
-    // TODO: review of R2Y
-    // this.R2Y = t.transpose().mmul(t).mul(q[k][0]*q[k][0]).divS(ssqYcal)[0][0];
-    //
     this.ssqYcal = sumOfSquaresY;
     this.E = trainingSet;
     this.F = trainingValues;
@@ -157,7 +186,12 @@ export class PLS {
     this.W = W;
     this.B = B;
     this.PBQ = P.mmul(B).mmul(Q.transpose());
-    this.R2X = t.transpose().mmul(t).mmul(p.transpose().mmul(p)).div(ssqXcal).get(0, 0);
+    this.R2X = t
+      .transpose()
+      .mmul(t)
+      .mmul(p.transpose().mmul(p))
+      .div(ssqXcal)
+      .get(0, 0);
   }
 
   /**
@@ -166,11 +200,11 @@ export class PLS {
    * @return {Matrix} - predictions of each element of the dataset.
    */
   predict(dataset) {
-    var X = Matrix.checkMatrix(dataset);
+    let X = Matrix.checkMatrix(dataset);
     if (this.scale) {
       X = X.subRowVector(this.meanX).divRowVector(this.stdDevX);
     }
-    var Y = X.mmul(this.PBQ);
+    let Y = X.mmul(this.PBQ);
     Y = Y.mulRowVector(this.stdDevY).addRowVector(this.meanY);
     return Y;
   }
