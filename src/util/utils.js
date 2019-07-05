@@ -7,7 +7,11 @@ import Matrix from 'ml-matrix';
  * @return {number} Norm of the vector
  */
 export function norm(X) {
-  return Math.sqrt(X.clone().apply(pow2array).sum());
+  return Math.sqrt(
+    X.clone()
+      .apply(pow2array)
+      .sum(),
+  );
 }
 
 /**
@@ -30,9 +34,12 @@ export function pow2array(i, j) {
  * @return {object} dataset normalized, means and standard deviations
  */
 export function featureNormalize(dataset) {
-  var means = dataset.mean('column');
-  var std = dataset.standardDeviation('column', { mean: means, unbiased: true });
-  var result = Matrix.checkMatrix(dataset).subRowVector(means);
+  let means = dataset.mean('column');
+  let std = dataset.standardDeviation('column', {
+    mean: means,
+    unbiased: true,
+  });
+  let result = Matrix.checkMatrix(dataset).subRowVector(means);
   return { result: result.divRowVector(std), means: means, std: std };
 }
 
@@ -45,14 +52,14 @@ export function featureNormalize(dataset) {
  */
 export function initializeMatrices(array, isMatrix) {
   if (isMatrix) {
-    for (var i = 0; i < array.length; ++i) {
-      for (var j = 0; j < array[i].length; ++j) {
-        var elem = array[i][j];
+    for (let i = 0; i < array.length; ++i) {
+      for (let j = 0; j < array[i].length; ++j) {
+        let elem = array[i][j];
         array[i][j] = elem !== null ? new Matrix(array[i][j]) : undefined;
       }
     }
   } else {
-    for (i = 0; i < array.length; ++i) {
+    for (let i = 0; i < array.length; ++i) {
       array[i] = new Matrix(array[i]);
     }
   }
