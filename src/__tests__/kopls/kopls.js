@@ -6,7 +6,7 @@ import { KOPLS } from '../../index';
 
 expect.extend({ toBeDeepCloseTo });
 
-describe('K-OPLS', () => {
+describe.skip('K-OPLS', () => {
   var Xtest = new Matrix(require('../../../data/Xtest.json'));
   var Xtrain = new Matrix(require('../../../data/Xtrain.json'));
   var Ytest = require('../../../data/Ytest.json');
