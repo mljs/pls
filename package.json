@@ -38,6 +38,7 @@
   },
   "homepage": "https://github.com/mljs/pls",
   "dependencies": {
+    "ml-cross-validation": "^1.2.0",
     "ml-matrix": "^6.1.2",
     "ml-stat": "^1.3.3"
   },

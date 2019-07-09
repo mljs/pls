@@ -1,6 +1,6 @@
 import { Matrix } from 'ml-matrix';
 
-import { plsNIPALS } from '../pls-nipals';
+import { plsNIPALS } from '../plsNIPALS';
 import { tss } from '../utils';
 
 

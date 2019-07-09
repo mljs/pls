@@ -375,12 +375,12 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
   });
 };
 
-/**
+/* *
  * @private
  * Shuffles array for permutation (from ml knn.js)
  * @param {Array} array
  */
-export function shuffleArray(array) {
+/* export function shuffleArray(array) {
   for (var i = array.length - 1; i > 0; i--) {
     var j = Math.floor(Math.random() * (i + 1));
     var temp = array[i];
@@ -388,7 +388,7 @@ export function shuffleArray(array) {
     array[j] = temp;
   }
   return array;
-}
+} */
 
 /**
  * @private
@@ -396,7 +396,7 @@ export function shuffleArray(array) {
  * @param {String} title a title for the class
  * @param {*} value
  */
-export const DataClass = (title, value) => {
+/* export const DataClass = (title, value) => {
   let dataClasses = [];
   dataClasses.push({ title, value });
   return ({
@@ -408,10 +408,10 @@ export const DataClass = (title, value) => {
       return this;
     }
   });
-};
+}; */
 
 
-/* export function sampleClass(classVector, fraction) {
+export function sampleAClass(classVector, fraction) {
   // sort the vector
   let classVectorSorted = JSON.parse(JSON.stringify(classVector));
   let result = Array.from(Array(classVectorSorted.length).keys())
@@ -444,8 +444,122 @@ export const DataClass = (title, value) => {
   });
 
   // sort back the index
-  let indexBack = [];
-  indexOfSelected.forEach((e) => indexBack.push(result[e]));
+  let trainIndex = [];
+  indexOfSelected.forEach((e) => trainIndex.push(result[e]));
 
-  return indexBack;
-} */
+  let testIndex = [];
+  let mask = [];
+  classVector.forEach((el, idx) => {
+    if (trainIndex.includes(idx)) {
+      mask.push(true);
+    } else {
+      mask.push(false);
+      testIndex.push(idx);
+    }
+  });
+  return { trainIndex, testIndex, mask };
+}
+
+export function summaryMetadata(classVector) {
+  let nObs = classVector.length;
+  let type = typeof (classVector[0]);
+  let counts = {};
+  switch (type) {
+    case 'string':
+      counts = {};
+      classVector.forEach((x) => counts[x] = (counts[x] || 0) + 1);
+      break;
+    case 'number':
+      classVector = classVector.map((x) => x.toString());
+      counts = {};
+      classVector.forEach((x) => counts[x] = (counts[x] || 0) + 1);
+      break;
+    default:
+  }
+  let groupIDs = Object.keys(counts);
+  let nClass = groupIDs.length;
+  let classFactor = classVector.map((x) => groupIDs.indexOf(x));
+  let classMatrix = Matrix.from1DArray(nObs, 1, classFactor);
+  return ({ groupIDs,
+    nClass,
+    classVector,
+    classFactor,
+    classMatrix
+  });
+}
+
+/**
+ * Creates new PCA (Principal Component Analysis) from the dataset
+ * @param {Array} labels - an aray with class/groups/labels
+  * */
+export class METADATA {
+  constructor(metadata, options = {}) {
+    if (metadata === true) {
+      const model = options;
+      this.center = model.center;
+      this.scale = model.scale;
+      this.means = model.means;
+      this.stdevs = model.stdevs;
+      this.U = Matrix.checkMatrix(model.U);
+      this.S = model.S;
+      return;
+    }
+
+    const {
+      isCovarianceMatrix = false,
+      center = true,
+      scale = false
+    } = options;
+
+    this.metadata = [];
+  }
+  /**
+   * listMetadata
+   */
+  listMetadata() {
+    return this.metadata.map((x) => x.title);
+  }
+  /**
+   * add metadata
+   * @param {String} title - a title
+   * @param {Array} value - an array with metadata
+   */
+  addMetadata(title, value) {
+    this.metadata.push({ title, value });
+    return this;
+  }
+  /**
+   *
+   * @param {String} title - a title
+   * @return {Object} return { title, groupIDs, nClass, classVector, classFactor, classMatrix }
+   */
+  getMetadata(title) {
+    let classVector = this.metadata.filter((x) => x.title === title)[0].value;
+    let nObs = classVector.length;
+    let type = typeof (classVector[0]);
+    let counts = {};
+    switch (type) {
+      case 'string':
+        counts = {};
+        classVector.forEach((x) => counts[x] = (counts[x] || 0) + 1);
+        break;
+      case 'number':
+        classVector = classVector.map((x) => x.toString());
+        counts = {};
+        classVector.forEach((x) => counts[x] = (counts[x] || 0) + 1);
+        break;
+      default:
+    }
+    let groupIDs = Object.keys(counts);
+    let nClass = groupIDs.length;
+    let classFactor = classVector.map((x) => groupIDs.indexOf(x));
+    let classMatrix = Matrix.from1DArray(nObs, 1, classFactor);
+    return ({ title,
+      groupIDs,
+      nClass,
+      classVector,
+      classFactor,
+      classMatrix
+    });
+  }
+}
