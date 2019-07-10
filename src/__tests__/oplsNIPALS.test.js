@@ -17,44 +17,26 @@ describe('opls-nipals', () => {
     rawData.forEach((el, i) => dataArray.setRow(i, rawData[i]));
     let y = Matrix.from1DArray(150, 1, metadata);
     let x = dataArray;
+
+    x = x.center('column').scale('column');
+    y = y.center('column').scale('column');
+
     let model = oplsNIPALS(x, y);
     // let resTot = oplsWrapper(irisDataset);
     // let scoresTot = resTot.scoresExport;
-    expect(model.tOrtho.to1DArray()).toHaveLength(150);
+    expect(model.scoresXOrtho.to1DArray()).toHaveLength(150);
   });
   it('test pls-nipals simpleDataset', () => {
     let rawData = require('../../data/simpleDataset.json');
     let x = new Matrix(8, 4);
     rawData.forEach((el, i) => x.setRow(i, rawData[i]));
     let y = Matrix.from1DArray(8, 1, [1, 1, 2, 2, 3, 1, 3, 3]);
+
+    x = x.center('column').scale('column');
+    y = y.center('column').scale('column');
+
     let model = oplsNIPALS(x, y);
-    expect(model.tOrtho.to1DArray()).toHaveLength(8);
-    expect(model.w.to1DArray()).toStrictEqual([0.5, -0.5, 0.5, 0.5]);
+    expect(model.scoresXOrtho.to1DArray()).toHaveLength(8);
+    expect(model.weightsPred.to1DArray()).toStrictEqual([0.5, -0.5, 0.5, 0.5]);
   });
 });
-
-
-/*
-
-let scoresTot = resTot.getScores('circle', 2);
-API.createData('totScoresPlot', scoresTot.scoresPlot);
-API.createData('totPcaResult', scoresTot.scoresPlot[0].chart.chart);
-API.createData('totPcaResult' + 'ellipse', scoresTot.scoresPlot[0].chart.ellipse);
-
-let index = fh.sampleClass(classVector, 0.25);
-console.log(index);
-
-let newSet = data.sample(index);
-console.log(newSet.train.summary(1));
-console.log(newSet.test.summary(1));
-
-let res = fh.oplsWrapper(newSet);
-let scores = res.getScores('circle', 4);
-
-API.createData('scoresPlot', scores.scoresPlot);
-API.createData('pcaResult', scores.scoresPlot[0].chart.chart);
-API.createData('pcaResult' + 'ellipse', scores.scoresPlot[0].chart.ellipse);
-
-API.createData('testScoresPlot', scores.testScoresPlot);
-API.createData('testPcaResult', scores.testScoresPlot[0].chart.chart);
- */

@@ -1,11 +1,14 @@
 import Matrix from 'ml-matrix';
 
-import { Q2 } from '../utils';
+import { Q2, getFolds } from '../utils';
 
-describe.skip('utils', () => {
-  it('test Q2', () => {
-    let t = Q2([[1], [2]], [[1], [2]]);
-    console.log(t);
-    expect(t).toStrictEqual(1);
+describe('utils', () => {
+  it('test getFolds', () => {
+    let rawData = require('../../data/irisDataset.json');
+    let metadata = rawData.map((d) => d[4]);
+    let folds = getFolds(metadata, 5);
+    expect(folds.length).toStrictEqual(5);
+    expect(folds[0].testIndex.length).toStrictEqual(30);
+    expect(folds[0].trainIndex.length).toStrictEqual(120);
   });
 });

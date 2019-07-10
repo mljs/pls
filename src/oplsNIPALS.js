@@ -8,21 +8,6 @@ Utils.norm = function norm(X) {
 };
 
 /**
- * @private
- * normalize dataset
- * @param {Dataset} dataset a dataset object
- * @return {Object} an object with a scaled dataset
- */
-function featureNormalize(dataset) {
-  let means = dataset.mean('column');
-  let std = dataset.standardDeviation('column');
-  let result = Matrix.checkMatrix(dataset)
-    .subRowVector(means)
-    .divRowVector(std);
-  return { result: result, means: means, std: std };
-}
-
-/**
  * OPLS loop
  * @param {Array} x a dataset object
  * @param {Array} y an array with responses (dependent variable)
@@ -31,16 +16,10 @@ function featureNormalize(dataset) {
 export function oplsNIPALS(x, y, options = {}) {
   const {
     numberOSC = 100,
-    scale = true,
   } = options;
 
   let X = Matrix.checkMatrix(x);
   let Y = Matrix.checkMatrix(y);
-
-  if (scale) {
-    X = featureNormalize(X).result;
-    Y = featureNormalize(Y).result;
-  }
 
   let u = Y.getColumnVector(0);
 
@@ -54,7 +33,6 @@ export function oplsNIPALS(x, y, options = {}) {
     t = X.mmul(w).div(w.transpose().mmul(w).get(0, 0));// t_h paso 3
 
     // calc loading
-
     c = t.transpose().mmul(Y).div(t.transpose().mmul(t).get(0, 0));
 
     // calc new u and compare with one in previus iteration (stop criterion)
@@ -66,7 +44,7 @@ export function oplsNIPALS(x, y, options = {}) {
     }
 
     u = uNew.clone();
-    console.log(`OPLS iteration: ${i}`);
+    // console.log('OPLS iteration', i, diff);
   }
 
   // calc loadings
@@ -76,13 +54,20 @@ export function oplsNIPALS(x, y, options = {}) {
   wOrtho.div(Utils.norm(wOrtho));
 
   // orthogonal scores
-  let tOrtho = X.mmul(wOrtho.transpose()).div(wOrtho.transpose().mmul(wOrtho).get(0, 0));
+  let tOrtho = X.mmul(wOrtho.transpose()).div(wOrtho.mmul(wOrtho.transpose()).get(0, 0));
 
   // orthogonal loadings
   let pOrtho = tOrtho.transpose().mmul(X).div(tOrtho.transpose().mmul(tOrtho).get(0, 0));
 
   // filtered data
   let err = X.sub(tOrtho.mmul(pOrtho));
-  return { err, pOrtho, tOrtho, wOrtho, w, p, t, c };
+  return { filteredX: err,
+    loadingsXOrtho: pOrtho, // bizarre
+    scoresXOrtho: tOrtho, // bizarre
+    weightsXOrtho: wOrtho,
+    weightsPred: w,
+    loadingsXpred: p,
+    scoresXpred: t,
+    loadingsY: c };
 }
 

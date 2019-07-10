@@ -68,7 +68,7 @@ export function initializeMatrices(array, isMatrix) {
  * @param {Array} x an array
  */
 export function tss(x) {
-  return x.mul(x).sum();
+  return x.clone().mul(x.clone()).sum();
 }
 
 /**
@@ -102,37 +102,6 @@ export function Q2(realY, predictedY) {
   return 1 - press / tss;
 }
 
-
-/**
- * @private
- * scales a dataset
- * @param {*} dataset
- * @param {*} options
- */
-export function scale(dataset, options) {
-  let center = !!options.center;
-  let scale = !!options.scale;
-
-  dataset = new Matrix(dataset);
-
-  if (center) {
-    const means = dataset.mean('column');
-    const stdevs = scale ? dataset.standardDeviation('column') : null;
-    // means = means;
-    dataset.subRowVector(means);
-    if (scale) {
-      for (var i = 0; i < stdevs.length; i++) {
-        if (stdevs[i] === 0) {
-          throw new RangeError(`Cannot scale the dataset (standard deviation is zero at index ${i}`);
-        }
-      }
-      // stdevs = stdevs;
-      dataset.divRowVector(stdevs);
-    }
-  }
-
-  return dataset;
-}
 
 /**
  * @private
@@ -488,78 +457,33 @@ export function summaryMetadata(classVector) {
   });
 }
 
-/**
- * Creates new PCA (Principal Component Analysis) from the dataset
- * @param {Array} labels - an aray with class/groups/labels
-  * */
-export class METADATA {
-  constructor(metadata, options = {}) {
-    if (metadata === true) {
-      const model = options;
-      this.center = model.center;
-      this.scale = model.scale;
-      this.means = model.means;
-      this.stdevs = model.stdevs;
-      this.U = Matrix.checkMatrix(model.U);
-      this.S = model.S;
-      return;
-    }
+export function getFolds(features, k) {
+  var N = features.length;
+  var allIdx = new Array(N);
+  for (var i = 0; i < N; i++) {
+    allIdx[i] = i;
+  }
 
-    const {
-      isCovarianceMatrix = false,
-      center = true,
-      scale = false
-    } = options;
-
-    this.metadata = [];
-  }
-  /**
-   * listMetadata
-   */
-  listMetadata() {
-    return this.metadata.map((x) => x.title);
-  }
-  /**
-   * add metadata
-   * @param {String} title - a title
-   * @param {Array} value - an array with metadata
-   */
-  addMetadata(title, value) {
-    this.metadata.push({ title, value });
-    return this;
-  }
-  /**
-   *
-   * @param {String} title - a title
-   * @return {Object} return { title, groupIDs, nClass, classVector, classFactor, classMatrix }
-   */
-  getMetadata(title) {
-    let classVector = this.metadata.filter((x) => x.title === title)[0].value;
-    let nObs = classVector.length;
-    let type = typeof (classVector[0]);
-    let counts = {};
-    switch (type) {
-      case 'string':
-        counts = {};
-        classVector.forEach((x) => counts[x] = (counts[x] || 0) + 1);
-        break;
-      case 'number':
-        classVector = classVector.map((x) => x.toString());
-        counts = {};
-        classVector.forEach((x) => counts[x] = (counts[x] || 0) + 1);
-        break;
-      default:
+  var l = Math.floor(N / k);
+  // create random k-folds
+  var current = [];
+  var folds = [];
+  while (allIdx.length) {
+    var randi = Math.floor(Math.random() * allIdx.length);
+    current.push(allIdx[randi]);
+    allIdx.splice(randi, 1);
+    if (current.length === l) {
+      folds.push(current);
+      current = [];
     }
-    let groupIDs = Object.keys(counts);
-    let nClass = groupIDs.length;
-    let classFactor = classVector.map((x) => groupIDs.indexOf(x));
-    let classMatrix = Matrix.from1DArray(nObs, 1, classFactor);
-    return ({ title,
-      groupIDs,
-      nClass,
-      classVector,
-      classFactor,
-      classMatrix
-    });
   }
+  if (current.length) folds.push(current);
+  folds = folds.slice(0, k);
+
+  let foldsIndex = folds.map((x, idx) => ({
+    testIndex: x,
+    trainIndex: [].concat(...folds.filter((el, idx2) => (idx2 !== idx)))
+  }));
+
+  return foldsIndex;
 }

@@ -33,7 +33,9 @@ describe('pls-nipals', () => {
     let x = new Matrix(8, 4);
     rawData.forEach((el, i) => x.setRow(i, rawData[i]));
     let y = Matrix.from1DArray(8, 1, [1, 1, 1, 1, -2, -2, -2, -2]);
-    let model = plsNIPALS(x, y, { scale: 'TRUE' });
+    x = x.center('column').scale('column');
+    y = y.center('column').scale('column');
+    let model = plsNIPALS(x, y);
 
     expect(model.scores.to1DArray()).toHaveLength(8);
     expect(model.loadings.to1DArray()).toHaveLength(4);
