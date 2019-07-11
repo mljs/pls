@@ -216,7 +216,7 @@ describe('OPLS', () => {
     x.center('column').scale('column');
     let oplsOptions = { cvFolds, trainFraction: 0, nComp: 1 };
     let opls = new OPLS(x, metadata, oplsOptions);
-    console.log(opls.model());
+    console.log(opls.getResult());
     expect(cvScores.get(0, 0)).toBeCloseTo(-1.42935863, 6);
     expect(cvScores.get(3, 0)).toBeCloseTo(-1.16151882, 6);
     expect(tss(y.sub(cvScores))).toBeCloseTo(11.78251, 5);

@@ -136,7 +136,7 @@ export class OPLS {
 
     return { R2y, R2x, resX, scorePred: tPred, totalPred: Yhat, oplsC, plsC };
   }
-  static model() {
+  getResult() {
     return this.model;
   }
 }
