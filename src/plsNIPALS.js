@@ -11,8 +11,8 @@ import { nipals } from './nipals.js';
  */
 
 export function plsNIPALS(features, labels,) {
-  var X = Matrix.checkMatrix(features);
-  var Y = Matrix.checkMatrix(labels);
+  var X = Matrix.checkMatrix(features.clone());
+  var Y = Matrix.checkMatrix(labels.clone());
 
   var u = Y.getColumnVector(0);
   let ls = nipals(X, Y, u);

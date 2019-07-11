@@ -14,22 +14,13 @@ export class OPLS {
       nComp = 6,
       center = true,
       scale = true,
+      cvFolds = [],
       observations = Array(features.rows).fill(null).map((x, i) => `OBS${i + 1}`),
       variables = Array(features.columns).fill(null).map((x, i) => `VAR${i + 1}`),
     } = options;
 
     let matrixYData = features;
     let dataClass = summaryMetadata(labels).classMatrix;
-
-    if (center) {
-      matrixYData = matrixYData.center('column');
-      dataClass = dataClass.center();
-    }
-
-    if (scale) {
-      matrixYData.scale('column');
-      dataClass = dataClass.scale();
-    }
 
     // check and remove for features with sd = 0 TODO here
     // check opls.R line 70
@@ -59,6 +50,7 @@ export class OPLS {
     } else {
       trainMatrixYData = matrixYData;
       trainDataClass = dataClass;
+      trainDataLabels = labels;
     }
 
     this.R2Y = [];
@@ -66,6 +58,7 @@ export class OPLS {
     this.Q2 = [];
     let Q2k = [];
     let RR;
+    // let pred;
     let { xResidual,
       testxResidual,
       scores,
@@ -84,21 +77,52 @@ export class OPLS {
       plsCompV = [],
       testPlsCompV = [] } = [];
 
+    let folds;
+    if (cvFolds.length > 0) {
+      folds = cvFolds;
+    } else {
+      folds = getFolds(trainDataLabels, 5);
+    }
+
     for (let i = 1; i < nComp; i++) {
-      let folds = getFolds(trainDataLabels, 5);
+      console.log('ITERATION I', i);
       let { testMatrixYDataK,
         trainMatrixYDataK,
         testDataClassK,
         trainDataClassK } = [];
 
-      Q2k = [];
+      Q2k = []; let kCounter = 0;
+      let pred = new Matrix(trainDataClass.rows, 1);
       for (let k of folds) {
+        kCounter++;
+        console.log('ITERATION K', kCounter);
+
         testMatrixYDataK = getTrainTest(trainMatrixYData, dataClass, k).testFeatures;
         testDataClassK = getTrainTest(trainMatrixYData, dataClass, k).testLabels;
 
         trainMatrixYDataK = getTrainTest(trainMatrixYData, dataClass, k).trainFeatures;
         trainDataClassK = getTrainTest(trainMatrixYData, dataClass, k).trainLabels;
 
+        // determine center and scale of training set
+        let dataCenter = trainMatrixYDataK.mean('column');
+        let dataSD = trainMatrixYDataK.standardDeviation('column');
+
+        // center and scale training set
+        if (center) {
+          trainMatrixYDataK.center('column');
+          trainDataClassK.center('column');
+        }
+
+        if (scale) {
+          trainMatrixYDataK.scale('column');
+          trainDataClassK.scale('column');
+        }
+
+        // scaling the test dataset with respect to the train
+        testMatrixYDataK.center('column', { center: dataCenter });
+        testMatrixYDataK.scale('column', { scale: dataSD });
+
+        // start opls
         if (i === 1) {
           oplsResult = oplsNIPALS(trainMatrixYDataK, trainDataClassK);
         } else {
@@ -114,23 +138,25 @@ export class OPLS {
         Eh = testMatrixYDataK;
         // removing the orthogonal components from PLS
         for (let idx = 0; idx < i; idx++) {
-          scores = Eh.mmul(plsComp.weights.transpose()); // ok
-          Eh = Eh.clone().sub(scores.clone().mmul(plsComp.loadings)); // ok
+          scores = Eh.mmul(oplsResult.weightsXOrtho.transpose()); // ok
+          Eh = Eh.clone().sub(scores.clone().mmul(oplsResult.loadingsXOrtho)); // ok
         }
         // prediction
-        Yhat = scores.clone().mul(plsComp.betas); // ok
+        let tPred = Eh.clone().mmul(plsComp.weights.transpose());
+        Yhat = tPred.clone().mul(plsComp.betas); // ok
 
-        // calculate Q2y for each folds
-        // ROC for DA is not implmented (check opls.R line 183) TODO
-        let testTssy = tss(testDataClassK.clone());
-        let testRss = testDataClassK.clone().sub(Yhat);
-        testRss = testRss.clone().mul(testRss).sum();
-        let Q2y = 1 - (testRss / testTssy);
-        Q2k.push({ folds: k, Q2y });
+        // adding all prediction from all folds
+        for (let i = 0; i < k.testIndex.length; i++) {
+          pred.setRow(k.testIndex[i], [Yhat.get(i, 0)]);
+        }
       }
-      this.Q2.push({ i, Q2: Q2k, mean: array.mean(Q2k.map((x) => x.Q2y)) });
-      console.log(this.Q2.map((x) => x.mean));
-      // console.log(this.R2X.map((x) => x.R2x).reduce((a, b) => a + b).toFixed(3));
+      // calculate Q2y for all the prediction (all folds)
+      // ROC for DA is not implmented (check opls.R line 183) TODO
+      let tssy = tss(trainDataClass.center('column').scale('column'));
+      let press = tss(trainDataClass.clone().sub(pred));
+      let Q2y = 1 - (press / tssy);
+      this.Q2.push({ i, Q2y });
+      console.log('Q2', this.Q2);
 
       // calculate the R2y for the complete data
 
@@ -140,7 +166,7 @@ export class OPLS {
         RR = this.predictAll(RR.xRes, trainDataClass);
       }
       this.R2Y.push(RR.R2y);
-      console.log(this.R2Y);
+      console.log('R2y', this.R2Y);
 
 
       /*         let tssx = tss(trainMatrixYDataK.clone());
@@ -209,14 +235,12 @@ export class OPLS {
     let res = oplsNIPALS(features, labels);
     let xRes = res.filteredX;
     let plsC = plsNIPALS(xRes, labels);
-    // removing the orthogonal components from PLS
-    let scores = features.mmul(plsC.weights.transpose()); // ok
-    let Eh = features.clone().sub(scores.clone().mmul(plsC.loadings)); // ok
-    // prediction
-    let Yhat = scores.clone().mul(plsC.betas); // ok
-    let tssy = tss(labels.clone());
-    let rss = labels.clone().sub(Yhat);
-    rss = rss.clone().mul(rss).sum();
+
+    let tPred = xRes.mmul(plsC.weights.transpose());
+    let Yhat = tPred.clone().mul(plsC.betas);
+    let tssy = tss(labels);
+    let rss = tss(labels.clone().sub(Yhat));
+
     let R2y = 1 - (rss / tssy);
     return { R2y, xRes };
   }

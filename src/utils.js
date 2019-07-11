@@ -484,6 +484,5 @@ export function getFolds(features, k) {
     testIndex: x,
     trainIndex: [].concat(...folds.filter((el, idx2) => (idx2 !== idx)))
   }));
-
   return foldsIndex;
 }

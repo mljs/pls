@@ -18,8 +18,8 @@ export function oplsNIPALS(x, y, options = {}) {
     numberOSC = 100,
   } = options;
 
-  let X = Matrix.checkMatrix(x);
-  let Y = Matrix.checkMatrix(y);
+  let X = Matrix.checkMatrix(x.clone());
+  let Y = Matrix.checkMatrix(y.clone());
 
   let u = Y.getColumnVector(0);
 

@@ -4,37 +4,50 @@ import { CV } from 'ml-cross-validation';
 import { OPLS, getTrainTest } from '../OPLS.js';
 import { oplsNIPALS } from '../oplsNIPALS.js';
 import { plsNIPALS } from '../plsNIPALS.js';
-import { sampleAClass, summaryMetadata, tss } from '../utils.js';
+import { sampleAClass, summaryMetadata, tss, getFolds } from '../utils.js';
 import { METADATA } from '../METADATA.js';
 
-describe('OPLS', () => {
-  it('test iris retrieval', () => {
-    let rawData = require('../../data/irisDataset.json');
-    rawData = rawData.map((d) => d.slice(0, 4));
-    let x = new Matrix(150, 4);
-    rawData.forEach((el, i) => x.setRow(i, rawData[i]));
-    expect(x.get(0, 0)).toStrictEqual(5.1);
-  });
-  it('test iris X scaling', () => {
-    let rawData = require('../../data/irisDataset.json');
-    rawData = rawData.map((d) => d.slice(0, 4));
-    let x = new Matrix(150, 4);
-    rawData.forEach((el, i) => x.setRow(i, rawData[i]));
+describe('OPLS preparation', () => {
+  let rawData = require('../../data/irisDataset.json');
+  rawData = rawData.map((d) => d.slice(0, 4));
+  let x = new Matrix(150, 4);
+  rawData.forEach((el, i) => x.setRow(i, rawData[i]));
+  it('test that iris X scaling is similar to scaling in R', () => {
     x = x.center('column').scale('column');
     expect(x.get(0, 0)).toBeCloseTo(-0.8976739, 6);
   });
-  it('test iris Y scaling', () => {
+  it('test that iris Y scaling is similar to scaling in R', () => {
     let rawData = require('../../data/irisDataset.json');
     let metadata = rawData.map((d) => d[4]);
     let y = summaryMetadata(metadata).classMatrix;
     y = y.center('column').scale('column');
     expect(y.get(0, 0)).toBeCloseTo(-1.220656, 6);
   });
-  it('test first opls steps', () => {
+  it('create cvFolds', () => {
+    let cvSet = require('../../data/cvSets.json');
+    cvSet[0] = cvSet[0].map((x) => x.map((y) => y - 1));
+    let cvFold = [];
+    for (let cv of cvSet[0]) {
+      let testCv = [];
+      for (let j = 0; j < 150; j++) {
+        if (!cv.includes(j)) {
+          testCv.push(j);
+        }
+      }
+      cvFold.push({ testIndex: testCv, trainIndex: cv });
+    }
+    // console.log(JSON.stringify(cvFold));
+    expect(cvFold).toHaveLength(7);
+  });
+});
+
+
+describe('OPLS', () => {
+  it('test first opls loop nComp = 1 and fold = 1', () => {
     let rawData = require('../../data/irisDataset.json');
     let cvSet = require('../../data/cvSets.json');
-    let testRawData = rawData.filter((el, idx) => !cvSet[0][0].includes(idx + 1));
-    rawData = rawData.filter((el, idx) => cvSet[0][0].includes(idx + 1));
+    let testRawData = rawData.filter((el, idx) => !cvSet[0][0].includes(idx));
+    rawData = rawData.filter((el, idx) => cvSet[0][0].includes(idx));
     let metadata = rawData.map((d) => d[4]);
     let y = summaryMetadata(metadata).classMatrix;
     y = y.center('column').scale('column');
@@ -93,6 +106,7 @@ describe('OPLS', () => {
     expect(plsComp.weights.get(0, 2)).toBeCloseTo(0.5910032, 6);
     expect(plsComp.betas).toBeCloseTo(0.5779294, 3);
 
+    // scaling of the test dataset with respect to the train
     testRawData = testRawData.map((d) => d.slice(0, 4));
     let testx = new Matrix(23, 4);
     testRawData.forEach((el, i) => testx.setRow(i, testRawData[i]));
@@ -120,14 +134,14 @@ describe('OPLS', () => {
     expect(Yhat.get(0, 0)).toBeCloseTo(-1.21268611, 6);
     expect(Yhat.get(7, 0)).toBeCloseTo(-1.40578061, 6);
   });
-  it('test first opls loop', () => {
+  it('test first opls loop nComp = 1 with all folds', () => {
     let cvSet = require('../../data/cvSets.json');
     let cvScores = new Matrix(150, 1);
     for (let cv of cvSet[0]) {
       let rawData = require('../../data/irisDataset.json');
-      let testRawData = rawData.filter((el, idx) => !cv.includes(idx + 1));
+      let testRawData = rawData.filter((el, idx) => !cv.includes(idx));
 
-      rawData = rawData.filter((el, idx) => cv.includes(idx + 1));
+      rawData = rawData.filter((el, idx) => cv.includes(idx));
 
       let metadata = rawData.map((d) => d[4]);
       let y = summaryMetadata(metadata).classMatrix;
@@ -156,16 +170,12 @@ describe('OPLS', () => {
       Eh = Eh.clone().sub(scores.clone().mmul(opls.loadingsXOrtho));
 
       let tPred = Eh.clone().mmul(plsComp.weights.transpose());
-      // let R = plsComp.betas.clone().mmul(tPred).mul(plsComp.qPC);
       let Yhat = tPred.clone().mul(plsComp.betas);
-      // eslint-disable-next-line no-return-assign
-      // Yhat.forEach((el, idx) => cvScores[cv[idx]] = el);
-      // eslint-disable-next-line no-return-assign
 
       let testCv = [];
-      for (let j = 1; j < 151; j++) {
+      for (let j = 0; j < 150; j++) {
         if (!cv.includes(j)) {
-          testCv.push(j - 1);
+          testCv.push(j);
         }
       }
 
@@ -174,12 +184,46 @@ describe('OPLS', () => {
     let rawData = require('../../data/irisDataset.json');
     let metadata = rawData.map((d) => d[4]);
     let y = summaryMetadata(metadata).classMatrix;
-    y = y.center('column').scale('column');
+    y.center('column').scale('column');
+    let tssy = tss(y);
+    let press = tss(y.clone().sub(cvScores));
+    expect(cvScores.get(0, 0)).toBeCloseTo(-1.42935863, 6);
+    expect(cvScores.get(3, 0)).toBeCloseTo(-1.16151882, 6);
+    expect(press).toBeCloseTo(11.78251, 5);
+    expect(tssy).toBeCloseTo(149, 10);
+    expect(1 - (press / tssy)).toBeCloseTo(0.9209228, 6);
 
+    // expect(tss(1 - (y.sub(cvScores)) / tss(y))).toBeCloseTo(11.78251, 5);
+  });
+  it('test first OPLS loop nComp = 1 with all folds', () => {
+    let cvFolds = require('../../data/cvFolds.json');
+
+    let rawData = require('../../data/irisDataset.json');
+
+    // prep Y (labels)
+    let metadata = rawData.map((d) => d[4]);
+    // let y = summaryMetadata(metadata).classMatrix;
+    // y.center('column').scale('column');
+
+    // prep x (features)
+    rawData = rawData.map((d) => d.slice(0, 4));
+    let x = new Matrix(rawData.length, 4);
+    rawData.forEach((el, i) => x.setRow(i, rawData[i]));
+    // get center and scale for later
+    let center = x.mean('column');
+    let sd = x.standardDeviation('column');
+    // center and scale x
+    x.center('column').scale('column');
+
+    let opls = new OPLS(x, metadata, { cvFolds, trainFraction: 0 });
+    console.log(opls);
     expect(cvScores.get(0, 0)).toBeCloseTo(-1.42935863, 6);
     expect(cvScores.get(3, 0)).toBeCloseTo(-1.16151882, 6);
     expect(tss(y.sub(cvScores))).toBeCloseTo(11.78251, 5);
   });
+});
+
+describe('OPLS utility functions', () => {
   it('test tss', () => {
     let rawData = require('../../data/irisDataset.json');
     let metadata = rawData.map((d) => d[4]);
@@ -189,8 +233,8 @@ describe('OPLS', () => {
     let x = new Matrix(150, 4);
     rawData.forEach((el, i) => x.setRow(i, rawData[i]));
     x = x.center('column').scale('column');
-    expect(tss(x.clone())).toBeCloseTo(596, 6);
-    expect(tss(y.clone())).toStrictEqual(149);
+    expect(tss(x)).toBeCloseTo(596, 6);
+    expect(tss(y)).toStrictEqual(149);
   });
   it('test total prediction', () => {
     let rawData = require('../../data/irisDataset.json');
@@ -203,14 +247,12 @@ describe('OPLS', () => {
     rawData.forEach((el, i) => x.setRow(i, rawData[i]));
     x = x.center('column').scale('column');
 
-    let res = oplsNIPALS(x.clone(), y.clone());
+    let res = oplsNIPALS(x, y);
     let xRes = res.filteredX;
     expect(xRes.get(0, 0)).toBeCloseTo(-0.99598366, 6);
     expect(res.scoresXOrtho.get(0, 0)).toBeCloseTo(0.074537852, 6);
 
-    let plsComp = plsNIPALS(xRes.clone(), y.clone());
-
-    // removing the orthogonal components from PLS
+    let plsComp = plsNIPALS(xRes, y);
     expect(plsComp.scores.get(0, 0)).toBeCloseTo(-2.32295367, 6);
     expect(plsComp.xRes.get(0, 1)).toBeCloseTo(0.340980373, 3);
     expect(plsComp.yRes.get(0, 0)).toBeCloseTo(0.1143555571, 6);
@@ -222,7 +264,7 @@ describe('OPLS', () => {
     let Yhat = tPred.clone().mul(plsComp.betas);
     expect(Yhat.get(0, 0)).toBeCloseTo(-1.33501112, 6);
 
-    let tssy = tss(y.clone());
+    let tssy = tss(y);
     expect(tssy).toBeCloseTo(149, 6);
     let rss = y.clone().sub(Yhat);
     rss = rss.clone().mul(rss).sum();
@@ -278,7 +320,7 @@ describe('OPLS', () => {
     // console.log(getTrainTest(rawData, metadata, trainTestLabels.testIndex, trainTestLabels.trainIndex));
     let options = { trainTestLabels, nComp: 6 };
     let model = new OPLS(x, metadata, options);
-    console.log(model);
+
     expect(model.getResult()).toHaveLength(5);
     /* expect(model.scoresExport).toHaveLength(5);
     expect(model.scoresExport[0].scoresX).toHaveLength(120);
