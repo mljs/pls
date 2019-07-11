@@ -166,8 +166,8 @@ describe('OPLS', () => {
 
       let Eh = testx;
       // removing the orthogonal components from PLS
-      let scores = Eh.mmul(opls.weightsXOrtho.transpose());
-      Eh = Eh.clone().sub(scores.clone().mmul(opls.loadingsXOrtho));
+      let scores = Eh.clone().mmul(opls.weightsXOrtho.transpose());
+      Eh.sub(scores.clone().mmul(opls.loadingsXOrtho));
 
       let tPred = Eh.clone().mmul(plsComp.weights.transpose());
       let Yhat = tPred.clone().mul(plsComp.betas);
@@ -214,9 +214,9 @@ describe('OPLS', () => {
     let sd = x.standardDeviation('column');
     // center and scale x
     x.center('column').scale('column');
-
-    let opls = new OPLS(x, metadata, { cvFolds, trainFraction: 0 });
-    console.log(opls);
+    let oplsOptions = { cvFolds, trainFraction: 0, nComp: 1 };
+    let opls = new OPLS(x, metadata, oplsOptions);
+    console.log(opls.model());
     expect(cvScores.get(0, 0)).toBeCloseTo(-1.42935863, 6);
     expect(cvScores.get(3, 0)).toBeCloseTo(-1.16151882, 6);
     expect(tss(y.sub(cvScores))).toBeCloseTo(11.78251, 5);
