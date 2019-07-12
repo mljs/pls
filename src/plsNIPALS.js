@@ -4,13 +4,12 @@ import { nipals } from './nipals.js';
 
 /**
  * PLS nipals
- * @param {Dataset} dataset a dataset object
- * @param {Matrix} predictions an matrix with predictions
- * @param {Object} options an object with options
- * @return {Object} Object with model
+ * @param {Matrix} features a matrix with features
+ * @param {Matrix} labels an matrix with labels
+ * @return {Object} Object with model (xRes, yRes, scores, loadings, weights, betas, qPC)
  */
 
-export function plsNIPALS(features, labels,) {
+export function plsNIPALS(features, labels) {
   var X = Matrix.checkMatrix(features.clone());
   var Y = Matrix.checkMatrix(labels.clone());
 
@@ -27,5 +26,12 @@ export function plsNIPALS(features, labels,) {
   // calc residual matrice X and Y
   let xRes = X.sub(ls.t.clone().mmul(xP.transpose()));
   let yRes = Y.sub(ls.t.clone().mulS(residual.get(0, 0)).mmul(ls.q.transpose()));
-  return { xRes, yRes, scores: ls.t, loadings: xP.transpose(), weights: ls.w.transpose(), betas: residual.get(0, 0), qPC: ls.q };
+
+  return { xRes,
+    yRes,
+    scores: ls.t,
+    loadings: xP.transpose(),
+    weights: ls.w.transpose(),
+    betas: residual.get(0, 0),
+    qPC: ls.q };
 }

@@ -9,9 +9,17 @@ Utils.norm = function norm(X) {
 
 /**
  * OPLS loop
- * @param {Array} x a dataset object
- * @param {Array} y an array with responses (dependent variable)
+ * @param {Array} x a matrix with features
+ * @param {Array} y an array of labels (dependent variable)
  * @param {Object} options an object with options
+ * @return {Object} an object with model (filteredX: err,
+    loadingsXOrtho: pOrtho,
+    scoresXOrtho: tOrtho,
+    weightsXOrtho: wOrtho,
+    weightsPred: w,
+    loadingsXpred: p,
+    scoresXpred: t,
+    loadingsY:)
  */
 export function oplsNIPALS(x, y, options = {}) {
   const {
@@ -27,7 +35,6 @@ export function oplsNIPALS(x, y, options = {}) {
   let t, c, w, uNew;
   for (let i = 0; i < numberOSC && diff > 1e-10; i++) {
     w = u.transpose().mmul(X).div(u.transpose().mmul(u).get(0, 0));
-
     w = w.transpose().div(norm(w));
 
     t = X.mmul(w).div(w.transpose().mmul(w).get(0, 0));// t_h paso 3
@@ -44,7 +51,6 @@ export function oplsNIPALS(x, y, options = {}) {
     }
 
     u = uNew.clone();
-    // console.log('OPLS iteration', i, diff);
   }
 
   // calc loadings
@@ -62,8 +68,8 @@ export function oplsNIPALS(x, y, options = {}) {
   // filtered data
   let err = X.sub(tOrtho.mmul(pOrtho));
   return { filteredX: err,
-    loadingsXOrtho: pOrtho, // bizarre
-    scoresXOrtho: tOrtho, // bizarre
+    loadingsXOrtho: pOrtho,
+    scoresXOrtho: tOrtho,
     weightsXOrtho: wOrtho,
     weightsPred: w,
     loadingsXpred: p,

@@ -36,13 +36,16 @@ export class OPLS {
     let matrixYData = features;
     let oplsResult;
     let xresCv = [];
+    let plsC;
     let modelNcomp = [];
     let xres;
 
+    let ncCounter = 0;
     for (let i = 1; i < nComp + 1; i++) {
       let totalPred = new Matrix(dataClass.rows, 1);
       let scorePred = new Matrix(dataClass.rows, 1);
       let scoreOrtho = new Matrix(dataClass.rows, 1);
+
       let counter = 0;
       for (let k of folds) {
         let testXk = getTrainTest(matrixYData, dataClass, k).testFeatures;
@@ -84,6 +87,7 @@ export class OPLS {
         // removing the orthogonal components from PLS
         let scores;
         for (let idx = 0; idx < i; idx++) {
+          console.log('idx', idx);
           scores = Eh.clone().mmul(oplsResult.weightsXOrtho.transpose()); // ok
           Eh.sub(scores.clone().mmul(oplsResult.loadingsXOrtho));
         }
@@ -100,9 +104,9 @@ export class OPLS {
         }
       } // end of loop over folds
 
-      this.predictedScores.push(scorePred);
-      this.orthScores.push(scoreOrtho);
-      this.predictions.push(totalPred);
+      this.predictedScores.push(scorePred.to1DArray()); // could be done as a matrix
+      this.orthScores.push(scoreOrtho.to1DArray());
+      this.predictions.push(totalPred.to1DArray());
       // calculate Q2y for all the prediction (all folds)
       // ROC for DA is not implmented (check opls.R line 183) TODO
       let tssy = tss(dataClass.center('column').scale('column'));
@@ -113,25 +117,68 @@ export class OPLS {
       // calculate the R2y for the complete data
       if (i === 1) {
         modelNcomp = this.predictAll(matrixYData, dataClass);
+        // oplsC = oplsNIPALS(features, labels);
       } else {
         modelNcomp = this.predictAll(xres, dataClass);
+        // oplsC = oplsNIPALS(xres, labels);
       }
+      // Deflated matrix for next compoment
       xres = modelNcomp.xRes;
+      // Let last pls model for output
+      plsC = modelNcomp.plsC;
       modelNcomp.Q2y = this.Q2;
       this.model.push(modelNcomp);
       // console.log('model', this.model);
-      console.log(`OPLS iteration over #ofComponents: ${i}`);
+      console.log(`OPLS iteration over # of Components: ${i}`);
+      ncCounter++;
     } // end of loop
+
+    let tCV = this.predictedScores; // could be done as a matrix
+    let tOrthCV = this.orthScores;
+    let tOrth = this.model[ncCounter - 1].tOrth;
+    let pOrth = this.model[ncCounter - 1].pOrth;
+    let wOrth = this.model[ncCounter - 1].wOrth;
+    let XOrth = this.model[ncCounter - 1].XOrth;
+    let FeaturesCS = matrixYData.center('column').scale('column');
+    let labelsCS = dataClass.center('column').scale('column');
+    let Xres = FeaturesCS.clone().sub(XOrth);
+    let plsCall = plsNIPALS(Xres, labelsCS);
+    let Q2y = this.Q2;
+    let R2x = this.model.map((x) => x.R2x);
+    let R2y = this.model.map((x) => x.R2y);
+
+    let E = Xres.sub(plsCall.scores.clone().mmul(plsCall.loadings));
+    let output = { Q2y,
+      R2x,
+      R2y,
+      tPred: plsC.scores.to1DArray(), // ok
+      pPred: plsC.loadings.to1DArray(), // ok
+      wPred: plsC.weights.to1DArray(), // ok
+      betasPred: plsC.betas, // ok
+      Qpc: plsC.qPC, // ok
+      tCV,
+      tOrthCV,
+      tOrth, // ok
+      pOrth, // ok
+      wOrth, // ok
+      XOrth, // ok
+      Yres: plsC.yRes.to1DArray(),
+      E }; // ok
+    console.log(output);
   }
   predictAll(features, labels) {
+    features.center('column').scale('column');
+    labels.center('column').scale('column');
+
     let oplsC = oplsNIPALS(features, labels);
+
     let plsC = plsNIPALS(oplsC.filteredX, labels);
 
-    let tOrth = features.clone().mmul(oplsC.weightsXOrtho.transpose());
     let tPred = oplsC.filteredX.clone().mmul(plsC.weights.transpose());
     let Yhat = tPred.clone().mul(plsC.betas);
-    let tssy = tss(labels);
-    let rss = tss(labels.clone().sub(Yhat));
+
+    let tssy = tss(labels); // should we center and scale?
+    let rss = tss(labels.sub(Yhat)); // should we center and scale?
 
     let R2y = 1 - (rss / tssy);
 
@@ -143,9 +190,12 @@ export class OPLS {
     return { R2y,
       R2x,
       xRes: oplsC.filteredX,
-      tOrth: tOrth.to1DArray(),
+      tOrth: oplsC.scoresXOrtho.to1DArray(),
+      pOrth: oplsC.loadingsXOrtho.to1DArray(),
+      wOrth: oplsC.weightsXOrtho.to1DArray(),
       tPred: tPred.to1DArray(),
       totalPred: Yhat.to1DArray(),
+      XOrth: oplsC.scoresXOrtho.clone().mmul(oplsC.loadingsXOrtho),
       oplsC,
       plsC };
   }
@@ -165,6 +215,9 @@ export class OPLS {
   getPredictions() {
     let predictions = this.predictions.map((x) => x.to1DArray());
     return predictions;
+  }
+  getResults() {
+    return output;
   }
 }
 
