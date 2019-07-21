@@ -2,7 +2,7 @@
 /**
  * PCA NIPALS
  * @param {Matrix} X - a matrix to be factorized
- * @return {Object} - an model (scores, loadings, residual)
+ * @return {Object} - an model (t, w, residual)
  */
 export function pcaNIPALS(X) {
   let diff = 1;
@@ -20,6 +20,7 @@ export function pcaNIPALS(X) {
     }
 
     tOld = t.clone();
+
     counter++;
     if (counter > 1000) break;
   }

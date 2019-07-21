@@ -10,22 +10,22 @@ import { nipals } from './nipals.js';
  */
 
 export function plsNIPALS(features, labels) {
-  var X = Matrix.checkMatrix(features.clone());
-  var Y = Matrix.checkMatrix(labels.clone());
+  let X = Matrix.checkMatrix(features.clone());
+  let Y = Matrix.checkMatrix(labels.clone());
 
-  var u = Y.getColumnVector(0);
-  let ls = nipals(X, Y, u);
+  // var u = Y.getColumnVector(0);
+  let ls = nipals(X, { Y });
 
   // calculate the X loadings and rescale scores and weights accordingly
   let xP = X.transpose().mmul(ls.t).div(ls.t.transpose().mmul(ls.t).get(0, 0));
   xP = xP.div(xP.norm());
 
   // calculate beta (regression coefficient) via inverse insted of subtracting q_h directly
-  let residual = u.transpose().mmul(ls.t).div(ls.t.transpose().mmul(ls.t).get(0, 0));
+  let residual = ls.u.transpose().mmul(ls.t).div(ls.t.transpose().mmul(ls.t).get(0, 0));
 
   // calc residual matrice X and Y
-  let xRes = X.sub(ls.t.clone().mmul(xP.transpose()));
-  let yRes = Y.sub(ls.t.clone().mulS(residual.get(0, 0)).mmul(ls.q.transpose()));
+  let xRes = X.clone().sub(ls.t.clone().mmul(xP.transpose()));
+  let yRes = Y.clone().sub(ls.t.clone().mulS(residual.get(0, 0)).mmul(ls.q.transpose()));
 
   return { xRes,
     yRes,

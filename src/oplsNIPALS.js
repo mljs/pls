@@ -66,7 +66,7 @@ export function oplsNIPALS(x, y, options = {}) {
   let pOrtho = tOrtho.transpose().mmul(X).div(tOrtho.transpose().mmul(tOrtho).get(0, 0));
 
   // filtered data
-  let err = X.sub(tOrtho.mmul(pOrtho));
+  let err = X.clone().sub(tOrtho.mmul(pOrtho));
   return { filteredX: err,
     loadingsXOrtho: pOrtho,
     scoresXOrtho: tOrtho,

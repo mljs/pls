@@ -1,6 +1,6 @@
 import Matrix from 'ml-matrix';
 
-import { plsNIPALS } from './plsNIPALS.js';
+import { nipals } from './nipals.js';
 import { oplsNIPALS } from './oplsNIPALS.js';
 import { tss, summaryMetadata, getFolds } from './utils.js';
 
@@ -81,20 +81,20 @@ export class OPLS {
         xresCv[counter] = oplsResult.filteredX;
         counter++;
 
-        let plsComp = plsNIPALS(oplsResult.filteredX, Yk);
+        let plsComp = nipals(oplsResult.filteredX, { Y: Yk });
 
         let Eh = testXk;
         // removing the orthogonal components from PLS
         let scores;
         for (let idx = 0; idx < i; idx++) {
-          console.log('idx', idx);
+          // console.log('idx', idx);
           scores = Eh.clone().mmul(oplsResult.weightsXOrtho.transpose()); // ok
           Eh.sub(scores.clone().mmul(oplsResult.loadingsXOrtho));
         }
         // prediction
-        let tPred = Eh.clone().mmul(plsComp.weights.transpose());
+        let tPred = Eh.clone().mmul(plsComp.w.transpose());
         // this should be summed over ncomp (pls_prediction.R line 23)
-        let Yhat = tPred.clone().mul(plsComp.betas);
+        let Yhat = tPred.clone().mmul(plsComp.betas);
 
         // adding all prediction from all folds
         for (let i = 0; i < k.testIndex.length; i++) {
@@ -113,7 +113,7 @@ export class OPLS {
       let press = tss(dataClass.clone().sub(totalPred));
       let Q2y = 1 - (press / tssy);
       this.Q2.push(Q2y);
-
+      
       // calculate the R2y for the complete data
       if (i === 1) {
         modelNcomp = this.predictAll(matrixYData, dataClass);
@@ -142,50 +142,53 @@ export class OPLS {
     let FeaturesCS = matrixYData.center('column').scale('column');
     let labelsCS = dataClass.center('column').scale('column');
     let Xres = FeaturesCS.clone().sub(XOrth);
-    let plsCall = plsNIPALS(Xres, labelsCS);
+    let plsCall = nipals(Xres, { Y: labelsCS });
     let Q2y = this.Q2;
     let R2x = this.model.map((x) => x.R2x);
     let R2y = this.model.map((x) => x.R2y);
 
-    let E = Xres.sub(plsCall.scores.clone().mmul(plsCall.loadings));
-    let output = { Q2y,
+    let E = Xres.clone().sub(plsCall.t.clone().mmul(plsCall.p));
+    this.output = { Q2y,
       R2x,
       R2y,
-      tPred: plsC.scores.to1DArray(), // ok
-      pPred: plsC.loadings.to1DArray(), // ok
-      wPred: plsC.weights.to1DArray(), // ok
+      tPred: plsC.t.to1DArray(), // ok
+      pPred: plsC.p.to1DArray(), // ok
+      wPred: plsC.w.to1DArray(), // ok
       betasPred: plsC.betas, // ok
-      Qpc: plsC.qPC, // ok
+      Qpc: plsC.q, // ok
       tCV,
       tOrthCV,
       tOrth, // ok
       pOrth, // ok
       wOrth, // ok
       XOrth, // ok
-      Yres: plsC.yRes.to1DArray(),
+      Yres: plsC.yResidual.to1DArray(),
       E }; // ok
-    console.log(output);
   }
   predictAll(features, labels) {
     features.center('column').scale('column');
     labels.center('column').scale('column');
-
+    console.log('features', features);
     let oplsC = oplsNIPALS(features, labels);
-
-    let plsC = plsNIPALS(oplsC.filteredX, labels);
-
-    let tPred = oplsC.filteredX.clone().mmul(plsC.weights.transpose());
-    let Yhat = tPred.clone().mul(plsC.betas);
-
-    let tssy = tss(labels); // should we center and scale?
-    let rss = tss(labels.sub(Yhat)); // should we center and scale?
+    
+    
+    let plsC = nipals(oplsC.filteredX, { Y: labels });
+    
+    let tPred = oplsC.filteredX.clone().mmul(plsC.w.transpose());
+    let Yhat = tPred.clone().mmul(plsC.betas);
+    
+    let tssy = tss(labels);
+    console.log('tssy', tssy);
+    let rss = tss(labels.clone().sub(Yhat));
 
     let R2y = 1 - (rss / tssy);
 
-    let xEx = plsC.scores.clone().mmul(plsC.loadings.clone());
+    let xEx = plsC.t.clone().mmul(plsC.p.clone());
     let rssx = tss(xEx);
-    let tssx = tss(features);
+    let tssx = tss(features.clone());
+    console.log('tssx', tssx);
     let R2x = (rssx / tssx);
+
 
     return { R2y,
       R2x,
@@ -217,7 +220,7 @@ export class OPLS {
     return predictions;
   }
   getResults() {
-    return output;
+    return this.output;
   }
 }
 
