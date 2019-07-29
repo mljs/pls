@@ -1,6 +1,5 @@
-import Matrix from 'ml-matrix';
+import { Matrix, NIPALS } from 'ml-matrix';
 
-import { nipals } from './nipals.js';
 import { oplsNIPALS } from './oplsNIPALS.js';
 import { tss, summaryMetadata, getFolds } from './utils.js';
 
@@ -81,7 +80,7 @@ export class OPLS {
         xresCv[counter] = oplsResult.filteredX;
         counter++;
 
-        let plsComp = nipals(oplsResult.filteredX, { Y: Yk });
+        let plsComp = new NIPALS(oplsResult.filteredX, { Y: Yk });
 
         let Eh = testXk;
         // removing the orthogonal components from PLS
@@ -113,7 +112,7 @@ export class OPLS {
       let press = tss(dataClass.clone().sub(totalPred));
       let Q2y = 1 - (press / tssy);
       this.Q2.push(Q2y);
-      
+
       // calculate the R2y for the complete data
       if (i === 1) {
         modelNcomp = this.predictAll(matrixYData, dataClass);
@@ -142,7 +141,7 @@ export class OPLS {
     let FeaturesCS = matrixYData.center('column').scale('column');
     let labelsCS = dataClass.center('column').scale('column');
     let Xres = FeaturesCS.clone().sub(XOrth);
-    let plsCall = nipals(Xres, { Y: labelsCS });
+    let plsCall = new NIPALS(Xres, { Y: labelsCS });
     let Q2y = this.Q2;
     let R2x = this.model.map((x) => x.R2x);
     let R2y = this.model.map((x) => x.R2y);
@@ -168,17 +167,17 @@ export class OPLS {
   predictAll(features, labels) {
     features.center('column').scale('column');
     labels.center('column').scale('column');
-    console.log('features', features);
+    // console.log('features', features);
     let oplsC = oplsNIPALS(features, labels);
-    
-    
-    let plsC = nipals(oplsC.filteredX, { Y: labels });
-    
+
+
+    let plsC = new NIPALS(oplsC.filteredX, { Y: labels });
+
     let tPred = oplsC.filteredX.clone().mmul(plsC.w.transpose());
     let Yhat = tPred.clone().mmul(plsC.betas);
-    
+
     let tssy = tss(labels);
-    console.log('tssy', tssy);
+    // console.log('tssy', tssy);
     let rss = tss(labels.clone().sub(Yhat));
 
     let R2y = 1 - (rss / tssy);
@@ -186,7 +185,7 @@ export class OPLS {
     let xEx = plsC.t.clone().mmul(plsC.p.clone());
     let rssx = tss(xEx);
     let tssx = tss(features.clone());
-    console.log('tssx', tssx);
+    // console.log('tssx', tssx);
     let R2x = (rssx / tssx);
 
 

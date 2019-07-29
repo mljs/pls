@@ -457,6 +457,7 @@ export function summaryMetadata(classVector) {
   });
 }
 
+// from CV.kfold
 export function getFolds(features, k) {
   var N = features.length;
   var allIdx = new Array(N);
