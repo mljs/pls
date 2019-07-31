@@ -49,7 +49,7 @@ describe('OPLS nipals components', () => {
 
     let opls = oplsNIPALS(x, y);
 
-    expect(opls.filteredX.get(0, 0)).toBeCloseTo(-1.055718013, 8);
+    expect(opls.filteredX.get(0, 0)).toBeCloseTo(-1.055718013, 8); // ok
     expect(opls.filteredX.get(3, 3)).toBeCloseTo(-1.316108827, 8);
     expect(opls.filteredX.get(126, 2)).toBeCloseTo(0.949878685, 8);
 
@@ -193,7 +193,8 @@ describe('OPLS nipals components', () => {
       trainFraction: 0,
       nComp: 1 };
 
-    let opls = new OPLS(x, metadata, oplsOptions);
+    let labels = summaryMetadata(metadata).classFactor;
+    let opls = new OPLS(x, labels, oplsOptions);
 
     expect(opls.summary()[0].Q2y[0]).toBeCloseTo(0.9209228, 6);
     expect(opls.summary()[0].R2y).toBeCloseTo(0.9284787, 6);
@@ -288,7 +289,8 @@ describe('OPLS utility functions', () => {
 
     let trainTestLabels = require('../../data/trainTestLabels.json');
     let options = { trainTestLabels, nComp: 3 };
-    let model = new OPLS(x, metadata, options);
+    let labels = summaryMetadata(metadata).classFactor;
+    let model = new OPLS(x, labels, options);
     expect(model.summary()).toHaveLength(3);
   });
 });
@@ -297,7 +299,7 @@ describe('OPLS', () => {
   it('test nComp = 1', () => {
     let x = new Matrix(iris);
 
-    let trainTestLabels = require('../../data/trainTestLabels.json');
+    // let trainTestLabels = require('../../data/trainTestLabels.json');
     // let options = { trainTestLabels, nComp: 1, folds };
 
     let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
@@ -306,7 +308,8 @@ describe('OPLS', () => {
       trainFraction: 0,
       nComp: 1 };
 
-    let model = new OPLS(x, metadata, options);
+    let labels = summaryMetadata(metadata).classFactor;
+    let model = new OPLS(x, labels, options);
 
     expect(model.summary()).toHaveLength(1);
     expect(model.getResults().tPred[0]).toBeCloseTo(-2.32295367, 6);
@@ -328,7 +331,7 @@ describe('OPLS', () => {
   it('test nComp = 2', () => {
     let x = new Matrix(iris);
 
-    let trainTestLabels = require('../../data/trainTestLabels.json');
+    // let trainTestLabels = require('../../data/trainTestLabels.json');
     // let options = { trainTestLabels, nComp: 1, folds };
 
     let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
@@ -337,23 +340,42 @@ describe('OPLS', () => {
       trainFraction: 0,
       nComp: 2 };
 
-    let model = new OPLS(x, metadata, options);
-
-    expect(model.summary()).toHaveLength(2);
-    expect(model.getResults().tPred[0]).toBeCloseTo(-2.32295367, 6);
-    expect(model.getResults().pPred[0]).toBeCloseTo(0.4777117, 3);
-    expect(model.getResults().wPred[0]).toBeCloseTo(0.484385, 6);
-    expect(model.getResults().tOrth[0]).toBeCloseTo(0.074537852, 6);
-    expect(model.getResults().pOrth[0]).toBeCloseTo(1.318924, 3);
-    expect(model.getResults().wOrth[0]).toBeCloseTo(0.7888785, 6);
-    expect(model.getResults().betasPred.get(0, 0)).toBeCloseTo(0.5747042, 6);
-    expect(model.getResults().Qpc.get(0, 0)).toBeCloseTo(1, 6);
-    expect(model.getResults().R2x[0]).toBeCloseTo(0.7031765, 2);
-    expect(model.getResults().R2y[0]).toBeCloseTo(0.9284787, 6);
-    expect(model.getResults().Yres[0]).toBeCloseTo(0.1143555571, 6);
-    expect(model.getResults().E.get(0, 0)).toBeCloseTo(0.113718555, 3);
-    expect(model.getResults().tOrthCV[0][0]).toBeCloseTo(0.078273936, 6);
-    expect(model.getResults().Q2y[0]).toBeCloseTo(0.9209228, 6);
+    let labels = summaryMetadata(getClasses()).classFactor;
+    let model = new OPLS(x, labels, options);
+    // onsole.log(model.model.map((x) => x.pslC.yResidual));
+    // expect(model.summary()).toHaveLength(2);
     expect(model.getResults().tCV[0][0]).toBeCloseTo(-2.48581401, 6);
+    expect(model.getResults().tOrthCV[0][0]).toBeCloseTo(0.078273936, 6);
+    expect(model.getResults().tOrthCV[1][0]).toBeCloseTo(-0.439656132, 6);
+    expect(model.getResults().tCV[1][0]).toBeCloseTo(-2.453147, 6);
+    expect(model.getResults().Q2y[0]).toBeCloseTo(0.9209228, 6);
+    expect(model.getResults().Q2y[1]).toBeCloseTo(0.9263751, 6);
+    expect(model.getResults().R2y[0]).toBeCloseTo(0.9284787, 6);
+    expect(model.getResults().R2y[1]).toBeCloseTo(0.9301693, 6);
+    expect(model.getResults().R2x[0]).toBeCloseTo(0.7031765, 3);
+    expect(model.getResults().R2x[1]).toBeCloseTo(0.7015103, 3);
+    expect(model.model[0].tPred[0]).toBeCloseTo(-2.32295367, 6);
+    expect(model.model[1].tPred[0]).toBeCloseTo(-2.290801, 6);
+    expect(model.model[0].tOrth[0]).toBeCloseTo(0.074537852, 6);
+    expect(model.model[1].tOrth[0]).toBeCloseTo(-0.416881408, 6);
+    expect(model.model[0].pOrth[0]).toBeCloseTo(1.318924, 6);
+    expect(model.model[1].pOrth[0]).toBeCloseTo(-0.2600433, 6);
+    expect(model.model[0].wOrth[0]).toBeCloseTo(0.7888785, 6);
+    expect(model.model[1].wOrth[0]).toBeCloseTo(-0.2831915, 6);
+    expect(model.model[0].plsC.betas.get(0, 0)).toBeCloseTo(0.5747042, 6);
+    expect(model.model[1].plsC.betas.get(0, 0)).toBeCloseTo(0.5758896, 3);
+    expect(model.model[0].plsC.q.get(0, 0)).toBeCloseTo(1, 6);
+    expect(model.model[1].plsC.q.get(0, 0)).toBeCloseTo(1, 6);
+    expect(model.model[0].plsC.p.get(0, 0)).toBeCloseTo(0.4777117, 3);
+    expect(model.model[1].plsC.p.get(0, 0)).toBeCloseTo(0.484385, 3);
+    expect(model.model[0].plsC.w.get(0, 0)).toBeCloseTo(0.484385, 6);
+    expect(model.model[1].plsC.w.get(0, 0)).toBeCloseTo(0.484385, 6);
+    expect(model.model[0].plsC.t.get(0, 0)).toBeCloseTo(-2.32295367, 6);
+    expect(model.model[1].plsC.t.get(0, 0)).toBeCloseTo(-2.290801, 6);
+    expect(model.model[0].plsC.yResidual.get(0, 0)).toBeCloseTo(0.1143555571, 6);
+    expect(model.model[1].plsC.yResidual.get(0, 0)).toBeCloseTo(0.09827427, 6);
+
+    expect(model.model[0].plsC.xResidual.get(0, 0)).toBeCloseTo(0.113718555, 3);
+    expect(model.model[1].plsC.xResidual.get(0, 0)).toBeCloseTo(0.006007284, 3);
   });
 });
