@@ -1,6 +1,8 @@
+import ConfusionMatrix from 'ml-confusion-matrix';
 import { Matrix, NIPALS } from 'ml-matrix';
 import { getNumbers, getClasses, getCrossValidationSets } from 'ml-dataset-iris';
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
+// import { METADATA } from 'dataset-metadata';
 
 import { OPLS } from '../OPLS.js';
 import { oplsNIPALS } from '../oplsNIPALS.js';
@@ -61,8 +63,8 @@ describe('OPLS nipals components', () => {
     expect(opls.loadingsXpred.get(0, 1)).toBeCloseTo(-0.2431478, 6);
     expect(opls.loadingsXpred.get(0, 3)).toBeCloseTo(0.5698576, 6);
 
-    expect(opls.weightsPred.get(0, 0)).toBeCloseTo(0.4852953, 6);
-    expect(opls.weightsPred.get(1, 0)).toBeCloseTo(-0.2406125, 6);
+    expect(opls.weightsXPred.get(0, 0)).toBeCloseTo(0.4852953, 6);
+    expect(opls.weightsXPred.get(1, 0)).toBeCloseTo(-0.2406125, 6);
 
     expect(opls.weightsXOrtho.get(0, 0)).toBeCloseTo(0.8165095, 6);
     expect(opls.weightsXOrtho.get(0, 2)).toBeCloseTo(-0.1230943, 6);
@@ -196,17 +198,17 @@ describe('OPLS nipals components', () => {
     let labels = summaryMetadata(metadata).classFactor;
     let opls = new OPLS(x, labels, oplsOptions);
 
-    expect(opls.summary()[0].Q2y[0]).toBeCloseTo(0.9209228, 6);
-    expect(opls.summary()[0].R2y).toBeCloseTo(0.9284787, 6);
-    expect(opls.summary()[0].tPred[0]).toBeCloseTo(-2.32295367, 6);
-    expect(opls.summary()[0].tOrth[0]).toBeCloseTo(0.074537852, 6);
-    expect(opls.summary()[0].tOrth[149]).toBeCloseTo(-0.486465664, 6);
-    expect(opls.summary()[0].pOrth[0]).toBeCloseTo(1.318924, 6);
-    expect(opls.summary()[0].wOrth[0]).toBeCloseTo(0.7888785, 6);
-    expect(opls.output.XOrth.get(0, 0)).toBeCloseTo(0.09830979, 6);
-    expect(opls.summary()[0].totalPred[0]).toBeCloseTo(-1.33501112, 6);
-    expect(opls.summary()[0].oplsC.filteredX.get(0, 0)).toBeCloseTo(-0.99598366, 6);
-    expect(opls.summary()[0].oplsC.scoresXOrtho.get(0, 0)).toBeCloseTo(0.074537852, 6);
+    expect(opls.model[0].Q2y[0]).toBeCloseTo(0.9209228, 6);
+    expect(opls.model[0].R2y).toBeCloseTo(0.9284787, 6);
+    expect(opls.model[0].tPred[0]).toBeCloseTo(-2.32295367, 6);
+    expect(opls.model[0].tOrth[0]).toBeCloseTo(0.074537852, 6);
+    expect(opls.model[0].tOrth[149]).toBeCloseTo(-0.486465664, 6);
+    expect(opls.model[0].pOrth[0]).toBeCloseTo(1.318924, 6);
+    expect(opls.model[0].wOrth[0]).toBeCloseTo(0.7888785, 6);
+    expect(opls.model[0].XOrth.get(0, 0)).toBeCloseTo(0.09830979, 6);
+    expect(opls.model[0].totalPred[0]).toBeCloseTo(-1.33501112, 6);
+    expect(opls.model[0].oplsC.filteredX.get(0, 0)).toBeCloseTo(-0.99598366, 6);
+    expect(opls.model[0].oplsC.scoresXOrtho.get(0, 0)).toBeCloseTo(0.074537852, 6);
   });
 });
 
@@ -291,7 +293,7 @@ describe('OPLS utility functions', () => {
     let options = { trainTestLabels, nComp: 3 };
     let labels = summaryMetadata(metadata).classFactor;
     let model = new OPLS(x, labels, options);
-    expect(model.summary()).toHaveLength(3);
+    expect(model.model).toHaveLength(3);
   });
 });
 
@@ -311,7 +313,7 @@ describe('OPLS', () => {
     let labels = summaryMetadata(metadata).classFactor;
     let model = new OPLS(x, labels, options);
 
-    expect(model.summary()).toHaveLength(1);
+    expect(model.model).toHaveLength(1);
     expect(model.getResults().tPred[0]).toBeCloseTo(-2.32295367, 6);
     expect(model.getResults().pPred[0]).toBeCloseTo(0.4777117, 3);
     expect(model.getResults().wPred[0]).toBeCloseTo(0.484385, 6);
@@ -377,5 +379,57 @@ describe('OPLS', () => {
 
     expect(model.model[0].plsC.xResidual.get(0, 0)).toBeCloseTo(0.113718555, 3);
     expect(model.model[1].plsC.xResidual.get(0, 0)).toBeCloseTo(0.006007284, 3);
+  });
+});
+
+describe('confusion matrix', () => {
+  const trueLabels = [1];
+  const predictedLabels = [1];
+
+  let CM2 = ConfusionMatrix.fromLabels(trueLabels, predictedLabels);
+  it('test confusion matrix works even with length 1', () => {
+    expect(CM2.getAccuracy()).toStrictEqual(1);
+  });
+});
+
+describe('import / export model', () => {
+  let x = new Matrix(iris);
+
+  let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+
+  let options = { cvFolds,
+    trainFraction: 0,
+    nComp: 2 };
+
+  let labels = summaryMetadata(getClasses()).classFactor;
+  let model = new OPLS(x, labels, options);
+  let exportedModel = JSON.stringify(model.toJSON());
+
+  let newModel = OPLS.load(JSON.parse(exportedModel));
+  it('test export', () => {
+    expect(JSON.parse(exportedModel).name).toStrictEqual('OPLS');
+  });
+  it('test import', () => {
+    expect(Object.keys(newModel)[0]).toStrictEqual('center');
+  });
+});
+
+describe('prediction', () => {
+  let x = new Matrix(iris);
+
+  let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+
+  let options = { cvFolds,
+    trainFraction: 0,
+    nComp: 1 };
+
+  let labels = summaryMetadata(getClasses()).classFactor;
+  let model = new OPLS(x, labels, options);
+  it('test prediction', () => {
+    expect(model.predict(x).tPred.rows).toStrictEqual(150);
+  });
+  it('test prediction with confusion', () => {
+    expect(model.predict(x, { trueLabels: labels })
+      .confusionMatrix.getAccuracy()).toStrictEqual(0);
   });
 });

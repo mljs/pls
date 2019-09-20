@@ -39,7 +39,7 @@ describe('opls-nipals', () => {
     expect(model.scoresXOrtho.to1DArray())
       .toHaveLength(8);
 
-    expect(model.weightsPred.to1DArray())
+    expect(model.weightsXPred.to1DArray())
       .toStrictEqual([0.5, -0.5, 0.5, 0.5]);
   });
 });

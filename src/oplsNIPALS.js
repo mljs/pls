@@ -68,10 +68,10 @@ export function oplsNIPALS(x, y, options = {}) {
   // filtered data
   let err = X.clone().sub(tOrtho.mmul(pOrtho));
   return { filteredX: err,
+    weightsXOrtho: wOrtho,
     loadingsXOrtho: pOrtho,
     scoresXOrtho: tOrtho,
-    weightsXOrtho: wOrtho,
-    weightsPred: w,
+    weightsXPred: w,
     loadingsXpred: p,
     scoresXpred: t,
     loadingsY: c };
