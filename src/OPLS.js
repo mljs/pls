@@ -19,10 +19,6 @@ export class OPLS {
       return;
     }
 
-    this.tCV = [];
-    this.tOrthCV = [];
-    this.model = [];
-
     const {
       nComp = 3,
       center = true,
@@ -67,6 +63,10 @@ export class OPLS {
 
     let yHatNC = [];
     let oplsNC = [];
+
+    this.tCV = [];
+    this.tOrthCV = [];
+    this.model = [];
 
     for (var nc = 0; nc < nComp; nc++) {
       let yHatCV = new Matrix(group.rows, 1);
@@ -132,9 +132,8 @@ export class OPLS {
         fold++;
       } // end of loop over folds
 
-      this.tCV.push(tPredCV); // could be done as a matrix
-      // this.tOrthCV.push(scoresCV);
-      this.tOrthCV.setRow(nc, scoresCV);
+      this.tCV.push(tPredCV);
+      this.tOrthCV.push(scoresCV);
       yHatNC.push(yHatCV);
 
       // calculate Q2y for all the prediction (all folds)
@@ -157,7 +156,6 @@ export class OPLS {
 
       modelNC.Q2y = Q2;
       this.model.push(modelNC);
-
       console.warn(`OPLS iteration over # of Components: ${nc + 1}`);
     } // end of loop over nc
 
@@ -166,36 +164,47 @@ export class OPLS {
     let tOrthCV = this.tOrthCV;
 
     let m = this.model[nc - 1];
-    let tOrth = m.tOrth;
-    let pOrth = m.pOrth;
-    let wOrth = m.wOrth;
     let XOrth = m.XOrth;
     let FeaturesCS = features.center('column').scale('column');
     let labelsCS = group.center('column').scale('column');
     let Xres = FeaturesCS.clone().sub(XOrth);
     let plsCall = new NIPALS(Xres, { Y: labelsCS });
-    let Q2y = Q2;
+    let E = Xres.clone().sub(plsCall.t.clone().mmul(plsCall.p));
+
     let R2x = this.model.map((x) => x.R2x);
     let R2y = this.model.map((x) => x.R2y);
 
-    let E = Xres.clone().sub(plsCall.t.clone().mmul(plsCall.p));
-
-    this.output = { Q2y, // ok
+    this.output = { Q2y: Q2, // ok
       R2x, // ok
       R2y, // ok
-      tPred: m.plsC.t.to1DArray(),
-      pPred: m.plsC.p.to1DArray(),
-      wPred: m.plsC.w.to1DArray(),
+      tPred: m.plsC.t,
+      pPred: m.plsC.p,
+      wPred: m.plsC.w,
       betasPred: m.plsC.betas,
       Qpc: m.plsC.q,
       tCV, // ok
       tOrthCV, // ok
-      tOrth,
-      pOrth,
-      wOrth,
+      tOrth: m.tOrth,
+      pOrth: m.pOrth,
+      wOrth: m.wOrth,
       XOrth,
-      Yres: m.plsC.yResidual.to1DArray(),
+      Yres: m.plsC.yResidual,
       E };
+  }
+
+  /**
+   * get access to all the computed elements
+   * Mainly for debug and testing
+   * @return {Object} output object
+   */
+  getResults() {
+    return this.output;
+  }
+
+  getScores() {
+    let scoresX = this.tCV.map((x) => x.to1DArray());
+    let scoresY = this.tOrthCV.map((x) => x.to1DArray());
+    return { scoresX, scoresY };
   }
 
   /**
@@ -224,7 +233,9 @@ export class OPLS {
       scale: this.scale,
       means: this.means,
       stdevs: this.stdevs,
-      model: this.model
+      model: this.model,
+      tCV: this.tCV,
+      tOrthCV: this.tOrthCV
     };
   }
 
@@ -267,8 +278,8 @@ export class OPLS {
     let tPred;
 
     for (let idx = 0; idx < nc; idx++) {
-      wOrth = Matrix.from1DArray(4, 1, this.model[idx].wOrth);
-      pOrth = Matrix.from1DArray(1, 4, this.model[idx].pOrth);
+      wOrth = this.model[idx].wOrth.transpose();
+      pOrth = this.model[idx].pOrth;
       tOrth = Eh.clone().mmul(wOrth);
       Eh.sub(tOrth.clone().mmul(pOrth));
       // prediction
@@ -309,52 +320,29 @@ export class OPLS {
     }
 
     let oplsC = oplsNIPALS(features, labels);
-
     let plsC = new NIPALS(oplsC.filteredX, { Y: labels });
 
     let tPred = oplsC.filteredX.clone().mmul(plsC.w.transpose());
     let yHat = tPred.clone().mmul(plsC.betas);
 
     let rss = tss(labels.clone().sub(yHat));
-
     let R2y = 1 - (rss / this.tssy);
 
     let xEx = plsC.t.clone().mmul(plsC.p.clone());
     let rssx = tss(xEx);
-
     let R2x = (rssx / this.tssx);
 
     return { R2y,
       R2x,
       xRes: oplsC.filteredX,
-      tOrth: oplsC.scoresXOrtho.to1DArray(),
-      pOrth: oplsC.loadingsXOrtho.to1DArray(),
-      wOrth: oplsC.weightsXOrtho.to1DArray(),
-      tPred: tPred.to1DArray(),
-      totalPred: yHat.to1DArray(),
+      tOrth: oplsC.scoresXOrtho,
+      pOrth: oplsC.loadingsXOrtho,
+      wOrth: oplsC.weightsXOrtho,
+      tPred: tPred,
+      totalPred: yHat,
       XOrth: oplsC.scoresXOrtho.clone().mmul(oplsC.loadingsXOrtho),
       oplsC,
       plsC };
-  }
-
-  summary() {
-    let model = this.model;
-    return { nc: model.length };
-  }
-
-  getScores() {
-    let scoresX = this.tCV.map((x) => x.to1DArray());
-    let scoresY = this.tOrthCV.map((x) => x.to1DArray());
-    return { scoresX, scoresY };
-  }
-
-  getyHatNC() {
-    let yHatNC = yHatNC.map((x) => x.to1DArray());
-    return yHatNC;
-  }
-
-  getResults() {
-    return this.output;
   }
 
   _getTrainTest(X, group, index) {
