@@ -9,6 +9,7 @@
     "src"
   ],
   "scripts": {
+    "build": "rollup -c && cheminfo-build",
     "eslint": "eslint src",
     "eslint-fix": "npm run eslint -- --fix",
     "prepublishOnly": "rollup -c",
@@ -38,22 +39,24 @@
   },
   "homepage": "https://github.com/mljs/pls",
   "dependencies": {
+    "ml": "^5.0.0",
     "ml-confusion-matrix": "^0.3.0",
-    "ml-cross-validation": "^1.2.0",
-    "ml-matrix": "^6.2.0",
-    "ml-stat": "^1.3.3"
+    "ml-dataset-iris": "^1.1.1",
+    "ml-matrix": "^6.1.2"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.4.4",
     "benchmark": "^2.1.4",
+    "cheminfo-build": "^1.0.3",
     "eslint": "^6.0.1",
     "eslint-config-cheminfo": "^1.20.1",
     "eslint-plugin-import": "^2.18.0",
     "eslint-plugin-jest": "^22.7.1",
     "jest": "^24.8.0",
     "jest-matcher-deep-close-to": "^1.3.0",
-    "ml-dataset-iris": "^1.0.0",
     "ml-kernel": "^3.0.0",
-    "rollup": "^1.16.3"
+    "rollup": "^1.16.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0"
   }
 }

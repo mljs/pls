@@ -19,6 +19,8 @@ export class OPLS {
       return;
     }
 
+    console.log(typeof labels);
+
     const {
       nComp = 3,
       center = true,
@@ -39,10 +41,12 @@ export class OPLS {
       this.means = null;
     }
 
-    if (typeof (labels[0]) === 'number') {
+    if (typeof (labels.get(0, 0)) === 'number') {
       console.warn('numeric labels: OPLS regression is used');
-      var group = Matrix
-        .from1DArray(labels.length, 1, labels);
+      // var group = Matrix
+      //   .from1DArray(labels.length, 1, labels);
+      var group = labels;
+      console.log(group);
     } else if (typeof (labels[0]) === 'string') {
       console.warn('non-numeric labels: OPLS-DA is used');
     }

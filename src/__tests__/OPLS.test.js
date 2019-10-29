@@ -196,6 +196,7 @@ describe('OPLS nipals components', () => {
       nComp: 1 };
 
     let labels = summaryMetadata(metadata).classFactor;
+
     let opls = new OPLS(x, labels, oplsOptions);
 
     expect(opls.model[0].Q2y[0]).toBeCloseTo(0.9209228, 6);
