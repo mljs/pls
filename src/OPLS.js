@@ -32,12 +32,7 @@ export class OPLS {
 
     // set default values
     // cvFolds allows to define folds for testing purpose
-    const {
-      nComp = 3,
-      center = true,
-      scale = true,
-      cvFolds = [],
-    } = options;
+    const { nComp = 3, center = true, scale = true, cvFolds = [] } = options;
 
     // check types of features and labels
     // if (!(features instanceof Matrix)) {
@@ -58,10 +53,10 @@ export class OPLS {
       this.means = null;
     }
 
-    if (typeof (labels[0]) === 'number') {
+    if (typeof labels[0] === 'number') {
       console.warn('numeric labels: OPLS regression is used');
       var group = Matrix.from1DArray(labels.length, 1, labels);
-    } else if (typeof (labels[0]) === 'string') {
+    } else if (typeof labels[0] === 'string') {
       console.warn('non-numeric labels: OPLS-DA is used');
       group = labels;
     }
@@ -162,16 +157,18 @@ export class OPLS {
       // ROC for DA is not implemented (check opls.R line 183) TODO
       let tssy = tss(group.center('column').scale('column'));
       let press = tss(group.clone().sub(yHatCV));
-      let Q2y = 1 - (press / tssy);
+      let Q2y = 1 - press / tssy;
       Q2.push(Q2y); // ok
 
       // calculate the R2y for the complete data
       if (nc === 0) {
         modelNC = this._predictAll(features, group);
       } else {
-        modelNC = this._predictAll(modelNC.xRes,
+        modelNC = this._predictAll(
+          modelNC.xRes,
           group,
-          options = { scale: false, center: false });
+          (options = { scale: false, center: false }),
+        );
       }
       // Deflated matrix for next compoment
       // Let last pls model for output
@@ -196,7 +193,8 @@ export class OPLS {
     let R2x = this.model.map((x) => x.R2x);
     let R2y = this.model.map((x) => x.R2y);
 
-    this.output = { Q2y: Q2, // ok
+    this.output = {
+      Q2y: Q2, // ok
       R2x, // ok
       R2y, // ok
       tPred: m.plsC.t,
@@ -211,7 +209,8 @@ export class OPLS {
       wOrth: m.wOrth,
       XOrth,
       Yres: m.plsC.yResidual,
-      E };
+      E,
+    };
   }
 
   /**
@@ -257,7 +256,7 @@ export class OPLS {
       stdevs: this.stdevs,
       model: this.model,
       tCV: this.tCV,
-      tOrthCV: this.tOrthCV
+      tOrthCV: this.tOrthCV,
     };
   }
 
@@ -270,7 +269,7 @@ export class OPLS {
    * @return {Object} - predictions
    */
   predict(features, options = {}) {
-    var { trueLabels = [], nc = 1 } = options;
+    let { trueLabels = [], nc = 1 } = options;
     let confusion = false;
     if (trueLabels.length > 0) {
       trueLabels = Matrix.from1DArray(150, 1, trueLabels);
@@ -311,13 +310,12 @@ export class OPLS {
     }
     let confusionMatrix = [];
     if (confusion) {
-      confusionMatrix = ConfusionMatrix
-        .fromLabels(trueLabels.to1DArray(), yHat.to1DArray());
+      confusionMatrix = ConfusionMatrix.fromLabels(
+        trueLabels.to1DArray(),
+        yHat.to1DArray(),
+      );
     }
-    return { tPred,
-      tOrth,
-      yHat,
-      confusionMatrix };
+    return { tPred, tOrth, yHat, confusionMatrix };
   }
 
   _predictAll(features, labels, options = {}) {
@@ -325,8 +323,7 @@ export class OPLS {
     // since it is used in the NC loop and
     // centering and scaling should only be
     // performed once
-    const { center = true,
-      scale = true } = options;
+    const { center = true, scale = true } = options;
 
     if (center) {
       features.center('column');
@@ -348,13 +345,14 @@ export class OPLS {
     let yHat = tPred.clone().mmul(plsC.betas);
 
     let rss = tss(labels.clone().sub(yHat));
-    let R2y = 1 - (rss / this.tssy);
+    let R2y = 1 - rss / this.tssy;
 
     let xEx = plsC.t.clone().mmul(plsC.p.clone());
     let rssx = tss(xEx);
-    let R2x = (rssx / this.tssx);
+    let R2x = rssx / this.tssx;
 
-    return { R2y,
+    return {
+      R2y,
       R2x,
       xRes: oplsC.filteredX,
       tOrth: oplsC.scoresXOrtho,
@@ -364,7 +362,8 @@ export class OPLS {
       totalPred: yHat,
       XOrth: oplsC.scoresXOrtho.clone().mmul(oplsC.loadingsXOrtho),
       oplsC,
-      plsC };
+      plsC,
+    };
   }
 
   _getTrainTest(X, group, index) {
@@ -382,12 +381,11 @@ export class OPLS {
       trainLabels.setRow(idx, group.getRow(el));
     });
 
-    return ({
+    return {
       trainFeatures,
       testFeatures,
       trainLabels,
-      testLabels
-    });
+      testLabels,
+    };
   }
 }
-

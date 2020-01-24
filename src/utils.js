@@ -1,7 +1,6 @@
 import Matrix from 'ml-matrix';
 import Stat from 'ml-stat';
 
-
 /**
  * @private
  * Function that given vector, returns its norm
@@ -9,7 +8,11 @@ import Stat from 'ml-stat';
  * @return {number} Norm of the vector
  */
 export function norm(X) {
-  return Math.sqrt(X.clone().apply(pow2array).sum());
+  return Math.sqrt(
+    X.clone()
+      .apply(pow2array)
+      .sum(),
+  );
 }
 
 /**
@@ -32,9 +35,12 @@ export function pow2array(i, j) {
  * @return {object} dataset normalized, means and standard deviations
  */
 export function featureNormalize(dataset) {
-  var means = dataset.mean('column');
-  var std = dataset.standardDeviation('column', { mean: means, unbiased: true });
-  var result = Matrix.checkMatrix(dataset).subRowVector(means);
+  let means = dataset.mean('column');
+  let std = dataset.standardDeviation('column', {
+    mean: means,
+    unbiased: true,
+  });
+  let result = Matrix.checkMatrix(dataset).subRowVector(means);
   return { result: result.divRowVector(std), means: means, std: std };
 }
 
@@ -48,8 +54,8 @@ export function featureNormalize(dataset) {
 export function initializeMatrices(array, isMatrix) {
   if (isMatrix) {
     for (var i = 0; i < array.length; ++i) {
-      for (var j = 0; j < array[i].length; ++j) {
-        var elem = array[i][j];
+      for (let j = 0; j < array[i].length; ++j) {
+        let elem = array[i][j];
         array[i][j] = elem !== null ? new Matrix(array[i][j]) : undefined;
       }
     }
@@ -68,7 +74,10 @@ export function initializeMatrices(array, isMatrix) {
  * @param {Array} x an array
  */
 export function tss(x) {
-  return x.clone().mul(x.clone()).sum();
+  return x
+    .clone()
+    .mul(x.clone())
+    .sum();
 }
 
 /**
@@ -89,7 +98,6 @@ export function Q2(realY, predictedY) {
     });
   });
 
-
   let tss = Y.map((row) => {
     return row.map((element, colIndex) => {
       return Math.pow(element - meansY[colIndex], 2);
@@ -101,7 +109,6 @@ export function Q2(realY, predictedY) {
 
   return 1 - press / tss;
 }
-
 
 /**
  * @private
@@ -116,7 +123,7 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
 
   let aa = {};
   const {
-    descriptio = 123
+    descriptio = 123,
     // observations = Array(nObs).fill(null).map((x, i) => 'OBS' + (i + 1)),
     // variables = Array(nVar).fill(null).map((x, i) => 'VAR' + (i + 1)),
     // description = 'NA'
@@ -125,11 +132,15 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
   } = aa;
 
   let defaults = {
-    observations: Array(nObs).fill(null).map((x, i) => `OBS${i + 1}`),
-    variables: Array(nVar).fill(null).map((x, i) => `VAR${i + 1}`),
+    observations: Array(nObs)
+      .fill(null)
+      .map((x, i) => `OBS${i + 1}`),
+    variables: Array(nVar)
+      .fill(null)
+      .map((x, i) => `VAR${i + 1}`),
     description: 'NA',
     metadata: [],
-    outliers: []
+    outliers: [],
   };
 
   options = Object.assign({}, defaults, options);
@@ -141,10 +152,14 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
   let metadata = options.metadata;
   let outliers = options.outliers;
 
-  if (options.observations.length !== nObs ||
-        options.variables.length !== nVar ||
-        options.dataClass[0].value.length !== nObs) {
-    throw new RangeError('observations and dataMatrix have different number of rows');
+  if (
+    options.observations.length !== nObs ||
+    options.variables.length !== nVar ||
+    options.dataClass[0].value.length !== nObs
+  ) {
+    throw new RangeError(
+      'observations and dataMatrix have different number of rows',
+    );
   }
 
   // private util functions
@@ -159,17 +174,17 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
   function getClassVector(dataClass) {
     let title = dataClass.title;
     let classVector = dataClass.value;
-    let type = typeof (classVector[0]);
+    let type = typeof classVector[0];
     let counts = {};
     switch (type) {
       case 'string':
         counts = {};
-        classVector.forEach((x) => counts[x] = (counts[x] || 0) + 1);
+        classVector.forEach((x) => (counts[x] = (counts[x] || 0) + 1));
         break;
       case 'number':
         classVector = classVector.map((x) => x.toString());
         counts = {};
-        classVector.forEach((x) => counts[x] = (counts[x] || 0) + 1);
+        classVector.forEach((x) => (counts[x] = (counts[x] || 0) + 1));
         break;
       default:
     }
@@ -177,16 +192,11 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
     let nClass = groupIDs.length;
     let classFactor = classVector.map((x) => groupIDs.indexOf(x));
     let classMatrix = Matrix.from1DArray(nObs, 1, classFactor);
-    return ({ title,
-      groupIDs,
-      nClass,
-      classVector,
-      classFactor,
-      classMatrix
-    });
+    return { title, groupIDs, nClass, classVector, classFactor, classMatrix };
   }
 
-  return ({ description,
+  return {
+    description,
 
     // API exposed functions
 
@@ -232,8 +242,10 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
         });
 
         let cleanDataClass = dataClass.map((x) => {
-          return { title: x.title,
-            value: x.value.filter((e, i) => !ind.includes(i)) };
+          return {
+            title: x.title,
+            value: x.value.filter((e, i) => !ind.includes(i)),
+          };
         });
         // let cleanMetadata = metadata.filter((e, i) => !ind.includes(i));
 
@@ -245,7 +257,9 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
             dataClass: cleanDataClass,
             outliers: [],
             // metadata: cleanMetadata, // lack of test for dimensions
-            description: `clean ${description}` } });
+            description: `clean ${description}`,
+          },
+        });
       } else {
         return this;
       }
@@ -283,13 +297,17 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
 
         // filter class vector
         let trainDataClass = dataClass.map((x) => {
-          return { title: x.title,
-            value: x.value.filter((e, i) => !ind.includes(i)) };
+          return {
+            title: x.title,
+            value: x.value.filter((e, i) => !ind.includes(i)),
+          };
         });
 
         let testDataClass = dataClass.map((x) => {
-          return { title: x.title,
-            value: x.value.filter((e, i) => ind.includes(i)) };
+          return {
+            title: x.title,
+            value: x.value.filter((e, i) => ind.includes(i)),
+          };
         });
 
         // let cleanMetadata = metadata.filter((e, i) => !ind.includes(i));
@@ -302,7 +320,9 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
             dataClass: trainDataClass,
             outliers: [],
             // metadata: cleanMetadata, // lack of test for dimensions
-            description: `train ${description}` } });
+            description: `train ${description}`,
+          },
+        });
 
         let test = Dataset({
           dataMatrix: testDataMatrix,
@@ -312,7 +332,9 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
             dataClass: testDataClass,
             outliers: [],
             // metadata: cleanMetadata, // lack of test for dimensions
-            description: `test ${description}` } });
+            description: `test ${description}`,
+          },
+        });
 
         return { train, test };
       } else {
@@ -323,25 +345,25 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
     // return everything but cannot be changed
     summary(verbose = 0) {
       if (verbose === 1) {
-        console.log(`Description: ${description
-        }\nNumber of variables: ${nVar
-        }\nNumber of observations: ${nObs
-        }\nNumber of outliers:${outliers.length
-        }\nHas class: ${dataClass.length
-        }\nHas metadata: ${metadata.length > 0}`);
+        console.log(
+          `Description: ${description}\nNumber of variables: ${nVar}\nNumber of observations: ${nObs}\nNumber of outliers:${
+            outliers.length
+          }\nHas class: ${dataClass.length}\nHas metadata: ${metadata.length >
+            0}`,
+        );
       }
-      return ({ dataMatrix,
+      return {
+        dataMatrix,
         dataClass,
         nObs,
         nVar,
         observations,
         variables,
         metadata,
-        description
-      });
-    }
-
-  });
+        description,
+      };
+    },
+  };
 };
 
 /* *
@@ -379,25 +401,26 @@ export const Dataset = ({ dataMatrix, options } = {}) => {
   });
 }; */
 
-
 export function sampleAClass(classVector, fraction) {
   // sort the vector
   let classVectorSorted = JSON.parse(JSON.stringify(classVector));
-  let result = Array.from(Array(classVectorSorted.length).keys())
-    .sort((a, b) => (classVectorSorted[a] < classVectorSorted[b] ? -1 :
-      (classVectorSorted[b] < classVectorSorted[a]) | 0));
+  let result = Array.from(Array(classVectorSorted.length).keys()).sort((a, b) =>
+    classVectorSorted[a] < classVectorSorted[b]
+      ? -1
+      : (classVectorSorted[b] < classVectorSorted[a]) | 0,
+  );
   classVectorSorted.sort((a, b) => (a < b ? -1 : (b < a) | 0));
 
   // counts the class elements
   let counts = {};
-  classVectorSorted.forEach((x) => counts[x] = (counts[x] || 0) + 1);
+  classVectorSorted.forEach((x) => (counts[x] = (counts[x] || 0) + 1));
 
   // pick a few per class
   let indexOfSelected = [];
 
   Object.keys(counts).forEach((e, i) => {
     let shift = [];
-    Object.values(counts).reduce((a, c, i) => shift[i] = a + c, 0);
+    Object.values(counts).reduce((a, c, i) => (shift[i] = a + c), 0);
 
     let arr = [...Array(counts[e]).keys()];
 
@@ -409,7 +432,11 @@ export function sampleAClass(classVector, fraction) {
       arr.splice(ind, 1);
     }
 
-    (i == 0) ? indexOfSelected = indexOfSelected.concat(r) : indexOfSelected = indexOfSelected.concat(r.map((x) => x + shift[i - 1]));
+    i == 0
+      ? (indexOfSelected = indexOfSelected.concat(r))
+      : (indexOfSelected = indexOfSelected.concat(
+          r.map((x) => x + shift[i - 1]),
+        ));
   });
 
   // sort back the index
@@ -431,17 +458,17 @@ export function sampleAClass(classVector, fraction) {
 
 export function summaryMetadata(classVector) {
   let nObs = classVector.length;
-  let type = typeof (classVector[0]);
+  let type = typeof classVector[0];
   let counts = {};
   switch (type) {
     case 'string':
       counts = {};
-      classVector.forEach((x) => counts[x] = (counts[x] || 0) + 1);
+      classVector.forEach((x) => (counts[x] = (counts[x] || 0) + 1));
       break;
     case 'number':
       classVector = classVector.map((x) => x.toString());
       counts = {};
-      classVector.forEach((x) => counts[x] = (counts[x] || 0) + 1);
+      classVector.forEach((x) => (counts[x] = (counts[x] || 0) + 1));
       break;
     default:
   }
@@ -449,28 +476,23 @@ export function summaryMetadata(classVector) {
   let nClass = groupIDs.length;
   let classFactor = classVector.map((x) => groupIDs.indexOf(x));
   let classMatrix = Matrix.from1DArray(nObs, 1, classFactor);
-  return ({ groupIDs,
-    nClass,
-    classVector,
-    classFactor,
-    classMatrix
-  });
+  return { groupIDs, nClass, classVector, classFactor, classMatrix };
 }
 
 // from CV.kfold
 export function getFolds(features, k) {
-  var N = features.length;
-  var allIdx = new Array(N);
-  for (var i = 0; i < N; i++) {
+  let N = features.length;
+  let allIdx = new Array(N);
+  for (let i = 0; i < N; i++) {
     allIdx[i] = i;
   }
 
-  var l = Math.floor(N / k);
+  let l = Math.floor(N / k);
   // create random k-folds
-  var current = [];
-  var folds = [];
+  let current = [];
+  let folds = [];
   while (allIdx.length) {
-    var randi = Math.floor(Math.random() * allIdx.length);
+    let randi = Math.floor(Math.random() * allIdx.length);
     current.push(allIdx[randi]);
     allIdx.splice(randi, 1);
     if (current.length === l) {
@@ -483,7 +505,7 @@ export function getFolds(features, k) {
 
   let foldsIndex = folds.map((x, idx) => ({
     testIndex: x,
-    trainIndex: [].concat(...folds.filter((el, idx2) => (idx2 !== idx)))
+    trainIndex: [].concat(...folds.filter((el, idx2) => idx2 !== idx)),
   }));
   return foldsIndex;
 }

@@ -23,8 +23,7 @@ describe('opls-nipals', () => {
 
     let model = oplsNIPALS(x, y);
 
-    expect(model.scoresXOrtho.to1DArray())
-      .toHaveLength(150);
+    expect(model.scoresXOrtho.to1DArray()).toHaveLength(150);
   });
   it('test pls-nipals simpleDataset', () => {
     let rawData = require('../../data/simpleDataset.json');
@@ -36,10 +35,8 @@ describe('opls-nipals', () => {
 
     let model = oplsNIPALS(x, y);
 
-    expect(model.scoresXOrtho.to1DArray())
-      .toHaveLength(8);
+    expect(model.scoresXOrtho.to1DArray()).toHaveLength(8);
 
-    expect(model.weightsXPred.to1DArray())
-      .toStrictEqual([0.5, -0.5, 0.5, 0.5]);
+    expect(model.weightsXPred.to1DArray()).toStrictEqual([0.5, -0.5, 0.5, 0.5]);
   });
 });
