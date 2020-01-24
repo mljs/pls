@@ -1,9 +1,9 @@
-import { Matrix, NIPALS } from "ml-matrix";
-import ConfusionMatrix from "ml-confusion-matrix";
+import { Matrix, NIPALS } from 'ml-matrix';
+import ConfusionMatrix from 'ml-confusion-matrix';
 // import { getTrainTest } from 'ml-cross-validation';
 
-import { oplsNIPALS } from "./oplsNIPALS.js";
-import { tss, getFolds } from "./utils.js";
+import { oplsNIPALS } from './oplsNIPALS.js';
+import { tss, getFolds } from './utils.js';
 
 /**
  * Creates new OPLS (orthogonal partial latent structures) from features and labels.
@@ -42,22 +42,22 @@ export class OPLS {
     // centering and scaling the features (all)
     this.center = center;
     if (this.center) {
-      this.means = features.mean("column");
+      this.means = features.mean('column');
     } else {
       this.stdevs = null;
     }
     this.scale = scale;
     if (this.scale) {
-      this.stdevs = features.standardDeviation("column");
+      this.stdevs = features.standardDeviation('column');
     } else {
       this.means = null;
     }
 
-    if (typeof labels[0] === "number") {
-      console.warn("numeric labels: OPLS regression is used");
+    if (typeof labels[0] === 'number') {
+      console.warn('numeric labels: OPLS regression is used');
       var group = Matrix.from1DArray(labels.length, 1, labels);
-    } else if (typeof labels[0] === "string") {
-      console.warn("non-numeric labels: OPLS-DA is used");
+    } else if (typeof labels[0] === 'string') {
+      console.warn('non-numeric labels: OPLS-DA is used');
       group = labels;
     }
 
@@ -85,7 +85,8 @@ export class OPLS {
     // this is a legacy loop to be consistent with R code from MetaboMate package
     // this allows for having statistic (R2) from CV to decide wether to continue
     // with more latent structures
-    for (let nc = 0; nc < nComp; nc++) {
+    let nc;
+    for (nc = 0; nc < nComp; nc++) {
       let yHatCV = new Matrix(group.rows, 1);
       let tPredCV = new Matrix(group.rows, 1);
       let scoresCV = new Matrix(group.rows, 1);
@@ -99,18 +100,18 @@ export class OPLS {
         let Yk = trainTest.trainLabels;
 
         // determine center and scale of training set
-        let dataCenter = Xk.mean("column");
-        let dataSD = Xk.standardDeviation("column");
+        let dataCenter = Xk.mean('column');
+        let dataSD = Xk.standardDeviation('column');
 
         // center and scale training set
         if (center) {
-          Xk.center("column");
-          Yk.center("column");
+          Xk.center('column');
+          Yk.center('column');
         }
 
         if (scale) {
-          Xk.scale("column");
-          Yk.scale("column");
+          Xk.scale('column');
+          Yk.scale('column');
         }
 
         if (nc === 0) {
@@ -124,8 +125,8 @@ export class OPLS {
         let plsCV = new NIPALS(oplsCV[fold].filteredX, { Y: Yk });
 
         // scaling the test dataset with respect to the train
-        testXk.center("column", { center: dataCenter });
-        testXk.scale("column", { scale: dataSD });
+        testXk.center('column', { center: dataCenter });
+        testXk.scale('column', { scale: dataSD });
 
         let Eh = testXk;
         // removing the orthogonal components from PLS
@@ -155,7 +156,7 @@ export class OPLS {
 
       // calculate Q2y for all the prediction (all folds)
       // ROC for DA is not implemented (check opls.R line 183) TODO
-      let tssy = tss(group.center("column").scale("column"));
+      let tssy = tss(group.center('column').scale('column'));
       let press = tss(group.clone().sub(yHatCV));
       let Q2y = 1 - press / tssy;
       Q2.push(Q2y); // ok
@@ -167,7 +168,7 @@ export class OPLS {
         modelNC = this._predictAll(
           modelNC.xRes,
           group,
-          (options = { scale: false, center: false })
+          (options = { scale: false, center: false }),
         );
       }
       // Deflated matrix for next compoment
@@ -184,14 +185,14 @@ export class OPLS {
 
     let m = this.model[nc - 1];
     let XOrth = m.XOrth;
-    let FeaturesCS = features.center("column").scale("column");
-    let labelsCS = group.center("column").scale("column");
+    let FeaturesCS = features.center('column').scale('column');
+    let labelsCS = group.center('column').scale('column');
     let Xres = FeaturesCS.clone().sub(XOrth);
     let plsCall = new NIPALS(Xres, { Y: labelsCS });
     let E = Xres.clone().sub(plsCall.t.clone().mmul(plsCall.p));
 
-    let R2x = this.model.map(x => x.R2x);
-    let R2y = this.model.map(x => x.R2y);
+    let R2x = this.model.map((x) => x.R2x);
+    let R2y = this.model.map((x) => x.R2y);
 
     this.output = {
       Q2y: Q2, // ok
@@ -209,7 +210,7 @@ export class OPLS {
       wOrth: m.wOrth,
       XOrth,
       Yres: m.plsC.yResidual,
-      E
+      E,
     };
   }
 
@@ -223,8 +224,8 @@ export class OPLS {
   }
 
   getScores() {
-    let scoresX = this.tCV.map(x => x.to1DArray());
-    let scoresY = this.tOrthCV.map(x => x.to1DArray());
+    let scoresX = this.tCV.map((x) => x.to1DArray());
+    let scoresY = this.tOrthCV.map((x) => x.to1DArray());
     return { scoresX, scoresY };
   }
 
@@ -234,10 +235,10 @@ export class OPLS {
    * @return {OPLS}
    */
   static load(model) {
-    if (typeof model.name !== "string") {
-      throw new TypeError("model must have a name property");
+    if (typeof model.name !== 'string') {
+      throw new TypeError('model must have a name property');
     }
-    if (model.name !== "OPLS") {
+    if (model.name !== 'OPLS') {
       throw new RangeError(`invalid model: ${model.name}`);
     }
     return new OPLS(true, [], model);
@@ -249,14 +250,14 @@ export class OPLS {
    */
   toJSON() {
     return {
-      name: "OPLS",
+      name: 'OPLS',
       center: this.center,
       scale: this.scale,
       means: this.means,
       stdevs: this.stdevs,
       model: this.model,
       tCV: this.tCV,
-      tOrthCV: this.tOrthCV
+      tOrthCV: this.tOrthCV,
     };
   }
 
@@ -278,15 +279,15 @@ export class OPLS {
 
     // scaling the test dataset with respect to the train
     if (this.center) {
-      features.center("column", { center: this.means });
+      features.center('column', { center: this.means });
       if (confusion) {
-        trueLabels.center("column", { center: this.means });
+        trueLabels.center('column', { center: this.means });
       }
     }
     if (this.scale) {
-      features.scale("column", { scale: this.stdevs });
+      features.scale('column', { scale: this.stdevs });
       if (confusion) {
-        trueLabels.scale("column", { center: this.means });
+        trueLabels.scale('column', { center: this.means });
       }
     }
 
@@ -312,7 +313,7 @@ export class OPLS {
     if (confusion) {
       confusionMatrix = ConfusionMatrix.fromLabels(
         trueLabels.to1DArray(),
-        yHat.to1DArray()
+        yHat.to1DArray(),
       );
     }
     return { tPred, tOrth, yHat, confusionMatrix };
@@ -326,13 +327,13 @@ export class OPLS {
     const { center = true, scale = true } = options;
 
     if (center) {
-      features.center("column");
-      labels.center("column");
+      features.center('column');
+      labels.center('column');
     }
 
     if (scale) {
-      features.scale("column");
-      labels.scale("column");
+      features.scale('column');
+      labels.scale('column');
       // reevaluate tssy and tssx after scaling
       this.tssy = tss(labels);
       this.tssx = tss(features);
@@ -362,7 +363,7 @@ export class OPLS {
       totalPred: yHat,
       XOrth: oplsC.scoresXOrtho.clone().mmul(oplsC.loadingsXOrtho),
       oplsC,
-      plsC
+      plsC,
     };
   }
 
@@ -385,7 +386,7 @@ export class OPLS {
       trainFeatures,
       testFeatures,
       trainLabels,
-      testLabels
+      testLabels,
     };
   }
 }

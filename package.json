@@ -40,6 +40,7 @@
   "homepage": "https://github.com/mljs/pls",
   "dependencies": {
     "ml": "^5.0.0",
+    "ml-array-mean": "^1.1.2",
     "ml-confusion-matrix": "^0.3.0",
     "ml-dataset-iris": "^1.1.1",
     "ml-matrix": "^6.4.1"
