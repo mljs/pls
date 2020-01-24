@@ -5,6 +5,17 @@ import ConfusionMatrix from 'ml-confusion-matrix';
 import { oplsNIPALS } from './oplsNIPALS.js';
 import { tss, getFolds } from './utils.js';
 
+/**
+ * Creates new OPLS (orthogonal partial latent structures) from features and labels.
+ * @param {Matrix} features - matrix containing data (X).
+ * @param {Array} labels - 1D Array containing metadata (Y).
+ * @param {Object} [options]
+ * @param {number} [options.nComp = 3] - number of latent structures computed.
+ * @param {boolean} [options.center = true] - should the data be centered (subtract the mean).
+ * @param {boolean} [options.scale = false] - should the data be scaled (divide by the standard deviation).
+ * @param {Array} [options.cvFolds = []] - allows to provide folds as 2D array for testing purpose
+ * */
+
 export class OPLS {
   constructor(features, labels, options = {}) {
     if (features === true) {
@@ -19,6 +30,8 @@ export class OPLS {
       return;
     }
 
+    // set default values
+    // cvFolds allows to define folds for testing purpose
     const {
       nComp = 3,
       center = true,
@@ -26,6 +39,12 @@ export class OPLS {
       cvFolds = [],
     } = options;
 
+    // check types of features and labels
+    // if (!(features instanceof Matrix)) {
+    //  throw new Error('features must be of class Matrix');
+    // }
+
+    // centering and scaling the features (all)
     this.center = center;
     if (this.center) {
       this.means = features.mean('column');
@@ -41,12 +60,10 @@ export class OPLS {
 
     if (typeof (labels[0]) === 'number') {
       console.warn('numeric labels: OPLS regression is used');
-      var group = Matrix
-        .from1DArray(labels.length, 1, labels);
-      // var group = labels;
-      console.log(group);
+      var group = Matrix.from1DArray(labels.length, 1, labels);
     } else if (typeof (labels[0]) === 'string') {
       console.warn('non-numeric labels: OPLS-DA is used');
+      group = labels;
     }
 
     // check and remove for features with sd = 0 TODO here
@@ -59,17 +76,20 @@ export class OPLS {
       folds = getFolds(labels, 5);
     }
 
-    let filteredXCV = [];
-    let modelNC = [];
     let Q2 = [];
-
-    let yHatNC = [];
-    let oplsNC = [];
+    this.model = [];
 
     this.tCV = [];
     this.tOrthCV = [];
-    this.model = [];
+    let filteredXCV = [];
+    let yHatNC = [];
+    let modelNC = [];
+    let oplsNC = [];
 
+    // this code could be made more efficient by reverting the order of the loops
+    // this is a legacy loop to be consistent with R code from MetaboMate package
+    // this allows for having statistic (R2) from CV to decide wether to continue
+    // with more latent structures
     for (var nc = 0; nc < nComp; nc++) {
       let yHatCV = new Matrix(group.rows, 1);
       let tPredCV = new Matrix(group.rows, 1);
@@ -243,11 +263,11 @@ export class OPLS {
 
   /**
    * Predict scores for new data
-   * @param {Array} features a double array with X matrix
+   * @param {Matrix} features - a matrix containing new data
    * @param {Object} [options]
-   * @param {Array} [options.trueLabel] an array with true values to compute confusion matrix
-   * @param {Number} [options.nc] the number of components to be used
-   * @return {Object} predictions
+   * @param {Array} [options.trueLabel] - an array with true values to compute confusion matrix
+   * @param {Number} [options.nc] - the number of components to be used
+   * @return {Object} - predictions
    */
   predict(features, options = {}) {
     var { trueLabels = [], nc = 1 } = options;
