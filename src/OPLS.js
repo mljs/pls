@@ -3,7 +3,7 @@ import ConfusionMatrix from 'ml-confusion-matrix';
 // import { getTrainTest } from 'ml-cross-validation';
 
 import { oplsNIPALS } from './oplsNIPALS.js';
-import { getFolds } from './utils.js';
+import { getFolds } from './getFolds.js';
 
 /**
  * Creates new OPLS (orthogonal partial latent structures) from features and labels.
@@ -296,14 +296,14 @@ export class OPLS {
       features.center('column');
       // features.clone().center('column', { center: this.means });
       // if (labels.rows > 0) {
-      //   labels.center('column', { center: this.means });
+      labels.center('column');
       // }
     }
     if (this.scale) {
       features.scale('column');
       // features.clone().scale('column', { scale: this.stdevs });
       // if (labels.rows > 0) {
-      //   labels.scale('column', { scale: this.stdevs });
+      labels.scale('column');
       // }
     }
 
@@ -327,6 +327,7 @@ export class OPLS {
     }
     console.log(yHat);
     console.log(labels);
+
     if (labels.rows > 0) {
       if (this.mode === 'regression') {
         let tssy = this._tss(labels);
@@ -397,7 +398,12 @@ export class OPLS {
       plsC,
     };
   }
-
+  /**
+   *
+   * @param {*} X - dataset matrix object
+   * @param {*} group - labels matrix object
+   * @param {*} index - train and test index (output from getFold())
+   */
   _getTrainTest(X, group, index) {
     let testFeatures = new Matrix(index.testIndex.length, X.columns);
     let testLabels = new Matrix(index.testIndex.length, 1);

@@ -422,24 +422,27 @@ describe('import / export model', () => {
   });
 });
 
-// describe('prediction', () => {
-//   let x = new Matrix(iris);
+describe('prediction', () => {
+  let x = new Matrix(iris);
 
-//   let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+  let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
 
-//   let options = { cvFolds, trainFraction: 0, nComp: 1 };
+  let options = { cvFolds, trainFraction: 0, nComp: 1 };
 
-//   let labels = summaryMetadata(getClasses()).classFactor;
+  let labels = summaryMetadata(getClasses()).classFactor;
 
-//   let model = new OPLS(x, labels, options);
+  let model = new OPLS(x, labels, options);
 
-//   let prediction = model.predict(x, { trueLabels: labels });
+  let prediction = model.predict(x, { trueLabels: labels });
 
-// it('test prediction', () => {
-//     expect(prediction.tPred.rows).toStrictEqual(150);
-//   });
+  it('test prediction', () => {
+    expect(prediction.tPred.rows).toStrictEqual(150);
+  });
 
-//   it('test prediction with confusion', () => {
-//     expect(model.predict(x, { trueLabels: labels }).Q2y).toStrictEqual(0);
-//   });
-// });
+  it('test prediction with confusion', () => {
+    expect(model.predict(x, { trueLabels: labels }).Q2y).toBeCloseTo(
+      0.92847,
+      4,
+    );
+  });
+});
