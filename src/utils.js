@@ -68,17 +68,17 @@ export function initializeMatrices(array, isMatrix) {
   return array;
 }
 
-/**
- * @private
- * Get total sum of square
- * @param {Array} x an array
- */
-export function tss(x) {
-  return x
-    .clone()
-    .mul(x.clone())
-    .sum();
-}
+// /**
+//  * @private
+//  * Get total sum of square
+//  * @param {Array} x an array
+//  */
+// export function tss(x) {
+//   return x
+//     .clone()
+//     .mul(x.clone())
+//     .sum();
+// }
 
 /**
  * @private

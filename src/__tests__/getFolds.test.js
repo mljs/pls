@@ -1,8 +1,7 @@
-import { getNumbers, getClasses } from 'ml-dataset-iris';
+import { getClasses } from 'ml-dataset-iris';
 
 import { getFolds } from '../getFolds';
 
-const iris = getNumbers();
 const metadata = getClasses();
 
 describe('utils', () => {

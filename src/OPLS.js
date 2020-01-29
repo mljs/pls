@@ -1,9 +1,12 @@
 import { Matrix, NIPALS } from 'ml-matrix';
 import ConfusionMatrix from 'ml-confusion-matrix';
+import { getFolds } from 'ml-cross-validation';
+
 // import { getTrainTest } from 'ml-cross-validation';
 
 import { oplsNIPALS } from './oplsNIPALS.js';
-import { getFolds } from './getFolds.js';
+// import { getFolds } from './getFolds.js';
+import { tss } from './tss.js';
 
 /**
  * Creates new OPLS (orthogonal partial latent structures) from features and labels.
@@ -25,8 +28,8 @@ export class OPLS {
       this.means = opls.means;
       this.stdevs = opls.stdevs;
       this.model = opls.model;
-      this.tCV = this.tCV;
-      this.tOrthCV = this.tOrthCV;
+      this.tCV = opls.tCV;
+      this.tOrthCV = opls.tOrthCV;
       this.mode = opls.mode;
       return;
     }
@@ -165,8 +168,8 @@ export class OPLS {
       // calculate Q2y for all the prediction (all folds)
       // ROC for DA is not implemented (check opls.R line 183) TODO
       if (this.mode === 'regression') {
-        let tssy = this._tss(group.center('column').scale('column'));
-        let press = this._tss(group.clone().sub(yHatk));
+        let tssy = tss(group.center('column').scale('column'));
+        let press = tss(group.clone().sub(yHatk));
         let Q2y = 1 - press / tssy;
         Q2.push(Q2y);
       } else if (this.mode === 'discriminant_analysis') {
@@ -325,13 +328,13 @@ export class OPLS {
       // this should be summed over ncomp (pls_prediction.R line 23)
       yHat = tPred.clone().mmul(this.model[idx].plsC.betas);
     }
-    console.log(yHat);
-    console.log(labels);
+    // console.log(yHat);
+    // console.log(labels);
 
     if (labels.rows > 0) {
       if (this.mode === 'regression') {
-        let tssy = this._tss(labels);
-        let press = this._tss(labels.clone().sub(yHat));
+        let tssy = tss(labels);
+        let press = tss(labels.clone().sub(yHat));
         let Q2y = 1 - press / tssy;
 
         return { tPred, tOrth, yHat, Q2y };
@@ -367,8 +370,8 @@ export class OPLS {
       // reevaluate tssy and tssx after scaling
       // must be global because re-used for next nc iteration
       // tssx is only evaluate the first time
-      this.tssy = this._tss(labels);
-      this.tssx = this._tss(features);
+      this.tssy = tss(labels);
+      this.tssx = tss(features);
     }
 
     let oplsC = oplsNIPALS(features, labels);
@@ -377,11 +380,11 @@ export class OPLS {
     let tPred = oplsC.filteredX.clone().mmul(plsC.w.transpose());
     let yHat = tPred.clone().mmul(plsC.betas);
 
-    let rss = this._tss(labels.clone().sub(yHat));
+    let rss = tss(labels.clone().sub(yHat));
     let R2y = 1 - rss / this.tssy;
 
     let xEx = plsC.t.clone().mmul(plsC.p.clone());
-    let rssx = this._tss(xEx);
+    let rssx = tss(xEx);
     let R2x = rssx / this.tssx;
 
     return {
@@ -425,18 +428,5 @@ export class OPLS {
       trainLabels,
       testLabels,
     };
-  }
-
-  /**
-   * @private
-   * Get total sum of square
-   * @param {Array} x an array
-   * @return {Number} - the sum of the squares
-   */
-  _tss(x) {
-    return x
-      .clone()
-      .mul(x.clone())
-      .sum();
   }
 }

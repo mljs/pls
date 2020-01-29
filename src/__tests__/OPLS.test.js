@@ -6,12 +6,14 @@ import {
   getCrossValidationSets,
 } from 'ml-dataset-iris';
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
-// import { METADATA } from 'dataset-metadata';
+import { sampleAClass } from 'ml-cross-validation';
 
 import { OPLS } from '../OPLS.js';
 import { oplsNIPALS } from '../oplsNIPALS.js';
-import { sampleAClass, summaryMetadata, tss } from '../utils.js';
+import { summaryMetadata } from '../summaryMetadata';
+import { tss } from '../tss.js';
 
+console.log(sampleAClass);
 expect.extend({ toBeDeepCloseTo });
 
 const iris = getNumbers();

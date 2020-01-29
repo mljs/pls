@@ -4,5 +4,10 @@ export default {
     format: 'cjs',
     file: 'lib/index.js',
   },
-  external: ['ml-matrix', 'ml-confusion-matrix', 'ml-array-mean'],
+  external: [
+    'ml-matrix',
+    'ml-confusion-matrix',
+    'ml-array-mean',
+    'ml-cross-validation',
+  ],
 };

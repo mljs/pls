@@ -42,6 +42,7 @@
     "ml": "^5.0.0",
     "ml-array-mean": "^1.1.2",
     "ml-confusion-matrix": "^0.4.0",
+    "ml-cross-validation": "^1.2.0",
     "ml-dataset-iris": "^1.1.1",
     "ml-matrix": "^6.4.1"
   },
