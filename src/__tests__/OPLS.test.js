@@ -451,4 +451,11 @@ describe('prediction', () => {
       5,
     );
   });
+
+  it('test prediction yHat vector', () => {
+    expect(prediction.yHat.to1DArray()).toBeDeepCloseTo(
+      model.getLogs().yHat.to1DArray(),
+      5,
+    );
+  });
 });
