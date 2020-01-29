@@ -13,7 +13,6 @@ import { oplsNIPALS } from '../oplsNIPALS.js';
 import { summaryMetadata } from '../summaryMetadata';
 import { tss } from '../tss.js';
 
-console.log(sampleAClass);
 expect.extend({ toBeDeepCloseTo });
 
 const iris = getNumbers();
@@ -434,17 +433,22 @@ describe('prediction', () => {
   let labels = summaryMetadata(getClasses()).classFactor;
 
   let model = new OPLS(x, labels, options);
-
+  // let exportedModel = JSON.stringify(model.toJSON());
   let prediction = model.predict(x, { trueLabels: labels });
-
-  it('test prediction', () => {
+  console.log(prediction);
+  console.log(model.getLogs().yHat);
+  it('test prediction length', () => {
     expect(prediction.tPred.rows).toStrictEqual(150);
   });
 
-  it('test prediction with confusion', () => {
-    expect(model.predict(x, { trueLabels: labels }).Q2y).toBeCloseTo(
-      0.92847,
-      4,
+  it('test prediction Q2y', () => {
+    expect(prediction.Q2y).toBeCloseTo(0.92847, 4);
+  });
+
+  it('test prediction yHat', () => {
+    expect(prediction.yHat.get(0, 0)).toBeCloseTo(
+      model.getLogs().yHat.get(0, 0),
+      5,
     );
   });
 });

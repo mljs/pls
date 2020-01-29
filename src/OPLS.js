@@ -26,10 +26,13 @@ export class OPLS {
       this.center = opls.center;
       this.scale = opls.scale;
       this.means = opls.means;
+      this.meansY = opls.meansY;
       this.stdevs = opls.stdevs;
+      this.stdevs = opls.stdevsY;
       this.model = opls.model;
       this.tCV = opls.tCV;
       this.tOrthCV = opls.tOrthCV;
+      this.yHatCV = opls.yHatCV;
       this.mode = opls.mode;
       return;
     }
@@ -59,6 +62,7 @@ export class OPLS {
     this.center = center;
     if (this.center) {
       this.means = features.mean('column');
+      this.meansY = group.mean('column');
       // console.log('training mean: ', this.means);
     } else {
       this.stdevs = null;
@@ -66,6 +70,7 @@ export class OPLS {
     this.scale = scale;
     if (this.scale) {
       this.stdevs = features.standardDeviation('column');
+      this.stdevsY = group.standardDeviation('column');
       // console.log('training sdevs: ', this.stdevs);
     } else {
       this.means = null;
@@ -86,7 +91,7 @@ export class OPLS {
 
     this.tCV = [];
     this.tOrthCV = [];
-    let yHatCV = [];
+    this.yHatCV = [];
     let oplsCV = [];
 
     let modelNC = [];
@@ -163,7 +168,7 @@ export class OPLS {
 
       this.tCV.push(tPredk);
       this.tOrthCV.push(tOrthk);
-      yHatCV.push(yHatk);
+      this.yHatCV.push(yHatk);
 
       // calculate Q2y for all the prediction (all folds)
       // ROC for DA is not implemented (check opls.R line 183) TODO
@@ -224,6 +229,7 @@ export class OPLS {
       pOrth: m.pOrth,
       wOrth: m.wOrth,
       XOrth,
+      yHat: m.totalPred,
       Yres: m.plsC.yResidual,
       E,
     };
@@ -273,6 +279,7 @@ export class OPLS {
       model: this.model,
       tCV: this.tCV,
       tOrthCV: this.tOrthCV,
+      yHatCV: this.yHatCV,
     };
   }
 
@@ -296,18 +303,16 @@ export class OPLS {
 
     // scaling the test dataset with respect to the train
     if (this.center) {
-      features.center('column');
-      // features.clone().center('column', { center: this.means });
-      // if (labels.rows > 0) {
-      labels.center('column');
-      // }
+      features.center('column', { center: this.means });
+      if (labels.rows > 0 && this.mode === 'regression') {
+        labels.center('column', { center: this.meansY });
+      }
     }
     if (this.scale) {
-      features.scale('column');
-      // features.clone().scale('column', { scale: this.stdevs });
-      // if (labels.rows > 0) {
-      labels.scale('column');
-      // }
+      features.scale('column', { scale: this.stdevs });
+      if (labels.rows > 0 && this.mode === 'regression') {
+        labels.scale('column', { scale: this.stdevsY });
+      }
     }
 
     let Eh = features.clone();
@@ -328,8 +333,6 @@ export class OPLS {
       // this should be summed over ncomp (pls_prediction.R line 23)
       yHat = tPred.clone().mmul(this.model[idx].plsC.betas);
     }
-    // console.log(yHat);
-    // console.log(labels);
 
     if (labels.rows > 0) {
       if (this.mode === 'regression') {
