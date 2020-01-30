@@ -43,7 +43,6 @@
     "ml-array-mean": "^1.1.2",
     "ml-confusion-matrix": "^0.4.0",
     "ml-cross-validation": "^1.2.0",
-    "ml-dataset-iris": "^1.1.1",
     "ml-matrix": "^6.4.1"
   },
   "devDependencies": {
@@ -61,6 +60,7 @@
     "prettier": "^1.19.1",
     "rollup": "^1.29.1",
     "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-node-resolve": "^5.2.0"
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "ml-dataset-iris": "^1.1.1"
   }
 }

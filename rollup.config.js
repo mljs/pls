@@ -5,6 +5,7 @@ export default {
     file: 'lib/index.js',
   },
   external: [
+    'ml',
     'ml-matrix',
     'ml-confusion-matrix',
     'ml-array-mean',

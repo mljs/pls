@@ -4281,36 +4281,6 @@
     }
 
     return array;
-  } // /**
-  function summaryMetadata(classVector) {
-    let nObs = classVector.length;
-    let type = typeof classVector[0];
-    let counts = {};
-
-    switch (type) {
-      case 'string':
-        counts = {};
-        classVector.forEach(x => counts[x] = (counts[x] || 0) + 1);
-        break;
-
-      case 'number':
-        classVector = classVector.map(x => x.toString());
-        counts = {};
-        classVector.forEach(x => counts[x] = (counts[x] || 0) + 1);
-        break;
-    }
-
-    let groupIDs = Object.keys(counts);
-    let nClass = groupIDs.length;
-    let classFactor = classVector.map(x => groupIDs.indexOf(x));
-    let classMatrix = Matrix.from1DArray(nObs, 1, classFactor);
-    return {
-      groupIDs,
-      nClass,
-      classVector,
-      classFactor,
-      classMatrix
-    };
   }
 
   /**
@@ -5340,10 +5310,13 @@
         this.center = opls.center;
         this.scale = opls.scale;
         this.means = opls.means;
+        this.meansY = opls.meansY;
         this.stdevs = opls.stdevs;
+        this.stdevs = opls.stdevsY;
         this.model = opls.model;
         this.tCV = opls.tCV;
         this.tOrthCV = opls.tOrthCV;
+        this.yHatCV = opls.yHatCV;
         this.mode = opls.mode;
         return;
       }
@@ -5379,7 +5352,8 @@
       this.center = center;
 
       if (this.center) {
-        this.means = features.mean('column'); // console.log('training mean: ', this.means);
+        this.means = features.mean('column');
+        this.meansY = group.mean('column'); // console.log('training mean: ', this.means);
       } else {
         this.stdevs = null;
       }
@@ -5387,7 +5361,8 @@
       this.scale = scale;
 
       if (this.scale) {
-        this.stdevs = features.standardDeviation('column'); // console.log('training sdevs: ', this.stdevs);
+        this.stdevs = features.standardDeviation('column');
+        this.stdevsY = group.standardDeviation('column'); // console.log('training sdevs: ', this.stdevs);
       } else {
         this.means = null;
       } // check and remove for features with sd = 0 TODO here
@@ -5406,6 +5381,7 @@
       this.model = [];
       this.tCV = [];
       this.tOrthCV = [];
+      this.yHatCV = [];
       let oplsCV = [];
       let modelNC = []; // this code could be made more efficient by reverting the order of the loops
       // this is a legacy loop to be consistent with R code from MetaboMate package
@@ -5488,6 +5464,7 @@
 
         this.tCV.push(tPredk);
         this.tOrthCV.push(tOrthk);
+        this.yHatCV.push(yHatk); // calculate Q2y for all the prediction (all folds)
         // ROC for DA is not implemented (check opls.R line 183) TODO
 
         if (this.mode === 'regression') {
@@ -5545,6 +5522,7 @@
         pOrth: m.pOrth,
         wOrth: m.wOrth,
         XOrth,
+        yHat: m.totalPred,
         Yres: m.plsC.yResidual,
         E
       };
@@ -5601,7 +5579,8 @@
         stdevs: this.stdevs,
         model: this.model,
         tCV: this.tCV,
-        tOrthCV: this.tOrthCV
+        tOrthCV: this.tOrthCV,
+        yHatCV: this.yHatCV
       };
     }
     /**
@@ -5630,17 +5609,27 @@
       let features = newData.clone(); // scaling the test dataset with respect to the train
 
       if (this.center) {
-        features.center('column'); // features.clone().center('column', { center: this.means });
-        // if (labels.rows > 0) {
+        features.center('column', {
+          center: this.means
+        });
 
-        labels.center('column'); // }
+        if (labels.rows > 0 && this.mode === 'regression') {
+          labels.center('column', {
+            center: this.meansY
+          });
+        }
       }
 
       if (this.scale) {
-        features.scale('column'); // features.clone().scale('column', { scale: this.stdevs });
-        // if (labels.rows > 0) {
+        features.scale('column', {
+          scale: this.stdevs
+        });
 
-        labels.scale('column'); // }
+        if (labels.rows > 0 && this.mode === 'regression') {
+          labels.scale('column', {
+            scale: this.stdevsY
+          });
+        }
       }
 
       let Eh = features.clone(); // removing the orthogonal components from PLS
@@ -5660,9 +5649,7 @@
         tPred = Eh.clone().mmul(this.model[idx].plsC.w.transpose()); // this should be summed over ncomp (pls_prediction.R line 23)
 
         yHat = tPred.clone().mmul(this.model[idx].plsC.betas);
-      } // console.log(yHat);
-      // console.log(labels);
-
+      }
 
       if (labels.rows > 0) {
         if (this.mode === 'regression') {
@@ -5774,6 +5761,43 @@
       };
     }
 
+  }
+
+  /**
+   *
+   * @param {*} classVector - an array with class information
+   * @return {Object} - an object with class information in different formats
+   */
+
+  function summaryMetadata(classVector) {
+    let nObs = classVector.length;
+    let type = typeof classVector[0];
+    let counts = {};
+
+    switch (type) {
+      case 'string':
+        counts = {};
+        classVector.forEach(x => counts[x] = (counts[x] || 0) + 1);
+        break;
+
+      case 'number':
+        classVector = classVector.map(x => x.toString());
+        counts = {};
+        classVector.forEach(x => counts[x] = (counts[x] || 0) + 1);
+        break;
+    }
+
+    let groupIDs = Object.keys(counts);
+    let nClass = groupIDs.length;
+    let classFactor = classVector.map(x => groupIDs.indexOf(x));
+    let classMatrix = Matrix.from1DArray(nObs, 1, classFactor);
+    return {
+      groupIDs,
+      nClass,
+      classVector,
+      classFactor,
+      classMatrix
+    };
   }
 
   exports.KOPLS = KOPLS;
