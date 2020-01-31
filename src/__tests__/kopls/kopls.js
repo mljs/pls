@@ -6,7 +6,7 @@ import { KOPLS } from '../../index';
 
 expect.extend({ toBeDeepCloseTo });
 
-describe.skip('K-OPLS', () => {
+describe('K-OPLS', () => {
   let Xtest = new Matrix(require('../../../data/Xtest.json'));
   let Xtrain = new Matrix(require('../../../data/Xtrain.json'));
   let Ytest = require('../../../data/Ytest.json');
@@ -29,14 +29,14 @@ describe.skip('K-OPLS', () => {
   it('K-OPLS test with main features', () => {
     let { prediction, predScoreMat, predYOrthVectors } = cls.predict(Xtest);
 
-    for (var i = 0; i < predScoreMat.length; ++i) {
-      for (var j = 0; j < predScoreMat[i].length; ++j) {
+    for (let i = 0; i < predScoreMat.length; ++i) {
+      for (let j = 0; j < predScoreMat[i].length; ++j) {
         expect(predScoreMat[i][j][0]).toBeCloseTo(Tp[i][j], 2);
       }
     }
 
-    for (i = 0; i < predYOrthVectors.length; ++i) {
-      for (j = 0; j < predYOrthVectors[i].length; ++j) {
+    for (let i = 0; i < predYOrthVectors.length; ++i) {
+      for (let j = 0; j < predYOrthVectors[i].length; ++j) {
         expect(predYOrthVectors[i][j][0]).toBeCloseTo(to[i][j], 2);
       }
     }
@@ -52,12 +52,12 @@ describe.skip('K-OPLS', () => {
   });
 
   it('Test with real dataset', () => {
-    let Xtest = new Matrix(require('../../../data/Xtest1.json'));
-    let Xtrain = new Matrix(require('../../../data/Xtrain1.json'));
-    let Ytest = require('../../../data/Ytest1.json');
-    let Ytrain = new Matrix(require('../../../data/Ytrain1.json'));
+    Xtest = new Matrix(require('../../../data/Xtest1.json'));
+    Xtrain = new Matrix(require('../../../data/Xtrain1.json'));
+    Ytest = require('../../../data/Ytest1.json');
+    Ytrain = new Matrix(require('../../../data/Ytrain1.json'));
 
-    let cls = new KOPLS({
+    cls = new KOPLS({
       orthogonalComponents: 10,
       predictiveComponents: 2,
       kernel: kernel,

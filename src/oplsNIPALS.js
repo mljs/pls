@@ -1,15 +1,6 @@
 import Matrix from 'ml-matrix';
 
-import { norm, pow2array } from './utils.js';
-
-let Utils = {};
-Utils.norm = function norm(X) {
-  return Math.sqrt(
-    X.clone()
-      .apply(pow2array)
-      .sum(),
-  );
-};
+import { norm } from './utils.js';
 
 /**
  * OPLS loop
@@ -113,7 +104,7 @@ export function oplsNIPALS(x, y, options = {}) {
       )
       .mmul(w.transpose()),
   );
-  wOrtho.div(Utils.norm(wOrtho));
+  wOrtho.div(norm(wOrtho));
 
   // orthogonal scores
   let tOrtho = X.mmul(wOrtho.transpose()).div(

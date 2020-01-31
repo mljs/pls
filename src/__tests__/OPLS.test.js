@@ -167,10 +167,10 @@ describe('OPLS nipals components', () => {
 
       let testCv = [];
       for (let j = 0; j < 150; j++) {
-        if (!cv.includes(j)) {
-          testCv.push(j);
-        }
+        testCv.push(j);
       }
+
+      testCv = testCv.filter((el, idx) => !cv.includes(idx));
 
       testCv.forEach((el, idx) => cvPreds.setRow(el, [Yhat.get(idx, 0)]));
       testCv.forEach((el, idx) => cvScoresO.setRow(el, [scores.get(idx, 0)]));
@@ -435,8 +435,8 @@ describe('prediction', () => {
   let model = new OPLS(x, labels, options);
   // let exportedModel = JSON.stringify(model.toJSON());
   let prediction = model.predict(x, { trueLabels: labels });
-  console.log(prediction);
-  console.log(model.getLogs().yHat);
+  // console.log(prediction);
+  // console.log(model.getLogs().yHat);
   it('test prediction length', () => {
     expect(prediction.tPred.rows).toStrictEqual(150);
   });

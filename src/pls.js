@@ -106,6 +106,10 @@ export class PLS {
     let B = Matrix.zeros(n, n);
     let W = P.clone();
     let k = 0;
+    let t;
+    let w;
+    let q;
+    let p;
 
     while (Utils.norm(trainingValues) > tolerance && k < n) {
       let transposeX = trainingSet.transpose();
@@ -116,14 +120,14 @@ export class PLS {
 
       let t1 = trainingSet.getColumnVector(tIndex);
       let u = trainingValues.getColumnVector(uIndex);
-      var t = Matrix.zeros(rx, 1);
+      t = Matrix.zeros(rx, 1);
 
       while (Utils.norm(t1.clone().sub(t)) > tolerance) {
-        var w = transposeX.mmul(u);
+        w = transposeX.mmul(u);
         w.div(Utils.norm(w));
         t = t1;
         t1 = trainingSet.mmul(w);
-        var q = transposeY.mmul(t1);
+        q = transposeY.mmul(t1);
         q.div(Utils.norm(q));
         u = trainingValues.mmul(q);
       }
@@ -134,7 +138,7 @@ export class PLS {
         .transpose()
         .mmul(t)
         .get(0, 0);
-      var p = num.div(den);
+      p = num.div(den);
       let pnorm = Utils.norm(p);
       p.div(pnorm);
       t.mul(pnorm);
@@ -172,9 +176,6 @@ export class PLS {
     W = W.subMatrix(0, W.rows - 1, 0, k);
     B = B.subMatrix(0, k, 0, k);
 
-    // TODO: review of R2Y
-    // this.R2Y = t.transpose().mmul(t).mul(q[k][0]*q[k][0]).divS(ssqYcal)[0][0];
-    //
     this.ssqYcal = sumOfSquaresY;
     this.E = trainingSet;
     this.F = trainingValues;

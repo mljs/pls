@@ -1,23 +1,23 @@
 import { PLS } from '../../index';
 
-describe.skip('PLS-DA algorithm', function() {
-  let training = [
-    [0.1, 0.02],
-    [0.25, 1.01],
-    [0.95, 0.01],
-    [1.01, 0.96],
-  ];
-  let predicted = [
-    [1, 0],
-    [1, 0],
-    [1, 0],
-    [0, 1],
-  ];
-
-  let pls = new PLS({ latentVectors: 2 });
-  pls.train(training, predicted);
-
+describe('PLS-DA algorithm', function() {
   it('test with a pseudo-AND operator', function() {
+    let training = [
+      [0.1, 0.02],
+      [0.25, 1.01],
+      [0.95, 0.01],
+      [1.01, 0.96],
+    ];
+    let predicted = [
+      [1, 0],
+      [1, 0],
+      [1, 0],
+      [0, 1],
+    ];
+
+    let pls = new PLS({ latentVectors: 2 });
+    pls.train(training, predicted);
+
     let result = pls.predict(training);
 
     expect(result.get(0, 0)).toBeGreaterThan(result.get(0, 1));
@@ -42,6 +42,22 @@ describe.skip('PLS-DA algorithm', function() {
   });
 
   it('Export and import', function() {
+    let training = [
+      [0.1, 0.02],
+      [0.25, 1.01],
+      [0.95, 0.01],
+      [1.01, 0.96],
+    ];
+    let predicted = [
+      [1, 0],
+      [1, 0],
+      [1, 0],
+      [0, 1],
+    ];
+
+    let pls = new PLS({ latentVectors: 2 });
+    pls.train(training, predicted);
+
     let model = JSON.parse(JSON.stringify(pls.toJSON()));
 
     let properties = [
@@ -99,14 +115,3 @@ describe.skip('PLS-DA algorithm', function() {
     expect(winePLS.getExplainedVariance()).toBeCloseTo(0.02, 1);
   });
 });
-
-/* describe('OPLS', function () {
-    var X0 = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
-    var X1 = [[-2.18, -2.18], [1.84, -0.16], [-0.48, 1.52], [0.83, 0.83]];
-    var y = [[2], [2], [0], [4]];
-
-    test('Main test', function () {
-        var opls = new OPLS(X1, y, 1);
-        expect(opls.R2X).toBeCloseTo(0.7402, 1);
-    });
-});*/
