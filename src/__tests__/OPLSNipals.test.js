@@ -2,7 +2,7 @@ import { Matrix } from 'ml-matrix';
 import { getNumbers, getClasses } from 'ml-dataset-iris';
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
 
-import { oplsNIPALS } from '../oplsNIPALS';
+import { OPLSNipals } from '../OPLSNipals';
 
 expect.extend({ toBeDeepCloseTo });
 
@@ -21,7 +21,7 @@ describe('opls-nipals', () => {
     x = x.center('column').scale('column');
     y = y.center('column').scale('column');
 
-    let model = oplsNIPALS(x, y);
+    let model = OPLSNipals(x, y);
 
     expect(model.scoresXOrtho.to1DArray()).toHaveLength(150);
   });
@@ -33,7 +33,7 @@ describe('opls-nipals', () => {
     x = x.center('column').scale('column');
     y = y.center('column').scale('column');
 
-    let model = oplsNIPALS(x, y);
+    let model = OPLSNipals(x, y);
 
     expect(model.scoresXOrtho.to1DArray()).toHaveLength(8);
 

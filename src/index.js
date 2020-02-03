@@ -1,5 +1,5 @@
-export { PLS } from './pls';
-export { KOPLS } from './kopls';
+export { PLS } from './PLS';
+export { KOPLS } from './KOPLS';
 export { OPLS } from './OPLS';
-export { oplsNIPALS } from './oplsNIPALS';
+export { OPLSNipals } from './OPLSNipals';
 export { summaryMetadata } from './summaryMetadata';

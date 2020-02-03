@@ -1,6 +1,6 @@
 import Matrix from 'ml-matrix';
 
-import * as Utils from './utils';
+import * as Utils from './util/utils';
 
 /**
  * @class PLS

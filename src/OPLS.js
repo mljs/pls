@@ -2,9 +2,9 @@ import { Matrix, NIPALS } from 'ml-matrix';
 import ConfusionMatrix from 'ml-confusion-matrix';
 import { getFolds } from 'ml-cross-validation';
 
-import { oplsNIPALS } from './oplsNIPALS.js';
+import { OPLSNipals } from './OPLSNipals.js';
 // import { getFolds } from './getFolds.js';
-import { tss } from './tss.js';
+import { tss } from './util/tss.js';
 
 /**
  * Creates new OPLS (orthogonal partial latent structures) from features and labels.
@@ -129,9 +129,9 @@ export class OPLS {
 
         // perform opls
         if (nc === 0) {
-          oplsk[f] = oplsNIPALS(Xk, Yk);
+          oplsk[f] = OPLSNipals(Xk, Yk);
         } else {
-          oplsk[f] = oplsNIPALS(oplsCV[nc - 1][f].filteredX, Yk);
+          oplsk[f] = OPLSNipals(oplsCV[nc - 1][f].filteredX, Yk);
         }
         // store model for next component
         oplsCV[nc] = oplsk;
@@ -375,7 +375,7 @@ export class OPLS {
       this.tssx = tss(features);
     }
 
-    let oplsC = oplsNIPALS(features, labels);
+    let oplsC = OPLSNipals(features, labels);
     let plsC = new NIPALS(oplsC.filteredX, { Y: labels });
 
     let tPred = oplsC.filteredX.clone().mmul(plsC.w.transpose());

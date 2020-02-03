@@ -1,6 +1,6 @@
 import Matrix from 'ml-matrix';
 
-import { tss } from '../tss.js';
+import { tss } from '../../util/tss.js';
 
 describe('tss', () => {
   let x = Matrix.from1DArray(1, 2, [1, 2]);

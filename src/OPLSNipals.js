@@ -1,6 +1,6 @@
 import Matrix from 'ml-matrix';
 
-import { norm } from './utils.js';
+import { norm } from './util/utils.js';
 
 /**
  * OPLS loop
@@ -16,7 +16,7 @@ import { norm } from './utils.js';
     scoresXpred: t,
     loadingsY:)
  */
-export function oplsNIPALS(x, y, options = {}) {
+export function OPLSNipals(x, y, options = {}) {
   const { numberOSC = 100 } = options;
 
   let X = Matrix.checkMatrix(x.clone());

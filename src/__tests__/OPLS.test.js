@@ -9,9 +9,9 @@ import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
 import { sampleAClass } from 'ml-cross-validation';
 
 import { OPLS } from '../OPLS.js';
-import { oplsNIPALS } from '../oplsNIPALS.js';
+import { OPLSNipals } from '../OPLSNipals.js';
 import { summaryMetadata } from '../summaryMetadata';
-import { tss } from '../tss.js';
+import { tss } from '../util/tss.js';
 
 expect.extend({ toBeDeepCloseTo });
 
@@ -54,7 +54,7 @@ describe('OPLS nipals components', () => {
     expect(y.get(126, 0)).toBeCloseTo(1.2593538, 6); // ok
     expect(x.get(0, 0)).toBeCloseTo(-0.86171924, 6); // ok
 
-    let opls = oplsNIPALS(x, y);
+    let opls = OPLSNipals(x, y);
 
     expect(opls.filteredX.get(0, 0)).toBeCloseTo(-1.055718013, 8); // ok
     expect(opls.filteredX.get(3, 3)).toBeCloseTo(-1.316108827, 8);
@@ -146,7 +146,7 @@ describe('OPLS nipals components', () => {
       y = summaryMetadata(y).classMatrix;
       y = y.center('column').scale('column');
 
-      let opls = oplsNIPALS(x, y);
+      let opls = OPLSNipals(x, y);
 
       let xResidual = opls.filteredX;
       let plsComp = new NIPALS(xResidual, { Y: y });
@@ -238,7 +238,7 @@ describe('OPLS utility functions', () => {
     let x = new Matrix(iris);
     x = x.center('column').scale('column');
 
-    let res = oplsNIPALS(x, y);
+    let res = OPLSNipals(x, y);
     let xRes = res.filteredX;
     expect(xRes.get(0, 0)).toBeCloseTo(-0.99598366, 6);
     expect(res.scoresXOrtho.get(0, 0)).toBeCloseTo(0.074537852, 6);

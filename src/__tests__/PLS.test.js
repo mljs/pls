@@ -1,4 +1,4 @@
-import { PLS } from '../../index';
+import { PLS } from '../PLS.js';
 
 describe('PLS-DA algorithm', function() {
   it('test with a pseudo-AND operator', function() {

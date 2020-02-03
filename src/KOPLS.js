@@ -1,6 +1,6 @@
 import { Matrix, SingularValueDecomposition, inverse } from 'ml-matrix';
 
-import { initializeMatrices } from './utils';
+import { initializeMatrices } from './util/utils';
 
 /**
  * @class KOPLS

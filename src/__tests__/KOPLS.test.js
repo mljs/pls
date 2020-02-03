@@ -2,17 +2,17 @@ import Matrix from 'ml-matrix';
 import Kernel from 'ml-kernel';
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
 
-import { KOPLS } from '../../index';
+import { KOPLS } from '../KOPLS.js';
 
 expect.extend({ toBeDeepCloseTo });
 
 describe('K-OPLS', () => {
-  let Xtest = new Matrix(require('../../../data/Xtest.json'));
-  let Xtrain = new Matrix(require('../../../data/Xtrain.json'));
-  let Ytest = require('../../../data/Ytest.json');
-  let Ytrain = new Matrix(require('../../../data/Ytrain.json'));
-  let Tp = new Matrix(require('../../../data/tp.json'));
-  let to = new Matrix(require('../../../data/to.json'));
+  let Xtest = new Matrix(require('../../data/Xtest.json'));
+  let Xtrain = new Matrix(require('../../data/Xtrain.json'));
+  let Ytest = require('../../data/Ytest.json');
+  let Ytrain = new Matrix(require('../../data/Ytrain.json'));
+  let Tp = new Matrix(require('../../data/tp.json'));
+  let to = new Matrix(require('../../data/to.json'));
 
   let kernel = new Kernel('gaussian', {
     sigma: 25,
@@ -52,10 +52,10 @@ describe('K-OPLS', () => {
   });
 
   it('Test with real dataset', () => {
-    Xtest = new Matrix(require('../../../data/Xtest1.json'));
-    Xtrain = new Matrix(require('../../../data/Xtrain1.json'));
-    Ytest = require('../../../data/Ytest1.json');
-    Ytrain = new Matrix(require('../../../data/Ytrain1.json'));
+    Xtest = new Matrix(require('../../data/Xtest1.json'));
+    Xtrain = new Matrix(require('../../data/Xtrain1.json'));
+    Ytest = require('../../data/Ytest1.json');
+    Ytrain = new Matrix(require('../../data/Ytrain1.json'));
 
     cls = new KOPLS({
       orthogonalComponents: 10,
