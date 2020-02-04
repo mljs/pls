@@ -1,5 +1,6 @@
 import ConfusionMatrix from 'ml-confusion-matrix';
 import { Matrix, NIPALS } from 'ml-matrix';
+import { METADATA } from 'ml-dataset-metadata';
 import {
   getNumbers,
   getClasses,
@@ -10,7 +11,6 @@ import { sampleAClass } from 'ml-cross-validation';
 
 import { OPLS } from '../OPLS.js';
 import { OPLSNipals } from '../OPLSNipals.js';
-import { summaryMetadata } from '../summaryMetadata';
 import { tss } from '../util/tss.js';
 
 expect.extend({ toBeDeepCloseTo });
@@ -19,6 +19,7 @@ const iris = getNumbers();
 const metadata = getClasses();
 const folds = getCrossValidationSets(7, { idx: 0, by: 'folds' });
 
+const newM = new METADATA([metadata], { headers: ['iris'] });
 describe('centering and scaling X and Y', () => {
   let x = new Matrix(iris);
   it('test that iris X scaling is similar to scaling in R', () => {
@@ -26,7 +27,8 @@ describe('centering and scaling X and Y', () => {
     expect(x.get(0, 0)).toBeCloseTo(-0.8976739, 6); // ok
   });
   it('test that iris Y scaling is similar to scaling in R', () => {
-    let y = summaryMetadata(metadata).classMatrix;
+    // let y = summaryMetadata(metadata).classMatrix;
+    let y = newM.get('iris', { format: 'matrix' }).values;
     y = y.center('column').scale('column');
     expect(y.get(0, 0)).toBeCloseTo(-1.220656, 6); // ok
   });
@@ -44,7 +46,8 @@ describe('OPLS nipals components', () => {
     x.center('column').scale('column');
 
     let y = metadata.filter((el, idx) => folds[0].includes(idx));
-    y = summaryMetadata(y).classMatrix;
+    let M = new METADATA([y], { headers: ['iris'] });
+    y = M.get('iris', { format: 'matrix' }).values;
     y = y.center('column').scale('column');
 
     expect(folds[0].reduce((a, c) => a + c)).toStrictEqual(9343); // ok
@@ -143,7 +146,8 @@ describe('OPLS nipals components', () => {
       x.center('column').scale('column');
 
       let y = metadata.filter((el, idx) => cv.includes(idx));
-      y = summaryMetadata(y).classMatrix;
+      let M = new METADATA([y], { headers: ['iris'] });
+      y = M.get('iris', { format: 'matrix' }).values;
       y = y.center('column').scale('column');
 
       let opls = OPLSNipals(x, y);
@@ -177,7 +181,7 @@ describe('OPLS nipals components', () => {
       testCv.forEach((el, idx) => cvScoresP.setRow(el, [tPred.get(idx, 0)]));
     }
 
-    let y = summaryMetadata(metadata).classMatrix;
+    let y = newM.get('iris', { format: 'matrix' }).values;
     y.center('column').scale('column');
     let tssy = tss(y);
     let press = tss(y.clone().sub(cvPreds));
@@ -198,7 +202,7 @@ describe('OPLS nipals components', () => {
 
     let oplsOptions = { cvFolds, trainFraction: 0, nComp: 1 };
 
-    let labels = summaryMetadata(metadata).classFactor;
+    let labels = newM.get('iris', { format: 'factor' }).values;
 
     let opls = new OPLS(x, labels, oplsOptions);
 
@@ -221,18 +225,18 @@ describe('OPLS nipals components', () => {
 
 describe('OPLS utility functions', () => {
   it('test tss', () => {
-    let y = summaryMetadata(metadata).classMatrix;
+    let y = newM.get('iris', { format: 'matrix' }).values;
     y = y.center('column').scale('column');
 
     let x = new Matrix(iris);
     x = x.center('column').scale('column');
-    expect(x.get(0, 0)).toBeCloseTo(-0.8976739, 6); // ok
-    expect(y.get(0, 0)).toBeCloseTo(-1.220656, 6); // ok
-    expect(tss(x)).toBeCloseTo(596, 6); // ok
-    expect(tss(y)).toStrictEqual(149); // ok
+    expect(x.get(0, 0)).toBeCloseTo(-0.8976739, 6);
+    expect(y.get(0, 0)).toBeCloseTo(-1.220656, 6);
+    expect(tss(x)).toBeCloseTo(596, 6);
+    expect(tss(y)).toStrictEqual(149);
   });
   it('test total prediction', () => {
-    let y = summaryMetadata(metadata).classMatrix;
+    let y = newM.get('iris', { format: 'matrix' }).values;
     y = y.center('column').scale('column');
 
     let x = new Matrix(iris);
@@ -303,7 +307,8 @@ describe('OPLS utility functions', () => {
 
     let trainTestLabels = require('../../data/trainTestLabels.json');
     let options = { trainTestLabels, nComp: 3 };
-    let labels = summaryMetadata(metadata).classFactor;
+    let M = new METADATA([metadata], { headers: ['iris'] });
+    let labels = M.get('iris', { format: 'factor' }).values;
     let model = new OPLS(x, labels, options);
     expect(model.model).toHaveLength(3);
   });
@@ -320,7 +325,7 @@ describe('OPLS', () => {
 
     let options = { cvFolds, trainFraction: 0, nComp: 1 };
 
-    let labels = summaryMetadata(metadata).classFactor;
+    let labels = newM.get('iris', { format: 'factor' }).values;
     let model = new OPLS(x, labels, options);
 
     expect(model.model).toHaveLength(1);
@@ -350,10 +355,9 @@ describe('OPLS', () => {
 
     let options = { cvFolds, trainFraction: 0, nComp: 2 };
 
-    let labels = summaryMetadata(getClasses()).classFactor;
+    let labels = newM.get('iris', { format: 'factor' }).values;
     let model = new OPLS(x, labels, options);
-    // onsole.log(model.model.map((x) => x.pslC.yResidual));
-    // expect(model.summary()).toHaveLength(2);
+
     expect(model.tCV[0].get(0, 0)).toBeCloseTo(-2.48581401, 6);
     expect(model.tOrthCV[0].get(0, 0)).toBeCloseTo(0.078273936, 6);
     expect(model.tOrthCV[1].get(0, 0)).toBeCloseTo(-0.439656132, 6);
@@ -410,7 +414,7 @@ describe('import / export model', () => {
 
   let options = { cvFolds, trainFraction: 0, nComp: 2 };
 
-  let labels = summaryMetadata(getClasses()).classFactor;
+  let labels = newM.get('iris', { format: 'factor' }).values;
   let model = new OPLS(x, labels, options);
   let exportedModel = JSON.stringify(model.toJSON());
 
@@ -430,7 +434,7 @@ describe('prediction', () => {
 
   let options = { cvFolds, trainFraction: 0, nComp: 1 };
 
-  let labels = summaryMetadata(getClasses()).classFactor;
+  let labels = newM.get('iris', { format: 'factor' }).values;
 
   let model = new OPLS(x, labels, options);
   // let exportedModel = JSON.stringify(model.toJSON());
