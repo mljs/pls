@@ -1,7 +1,7 @@
 import { PLS } from '../PLS.js';
 
-describe('PLS-DA algorithm', function() {
-  it('test with a pseudo-AND operator', function() {
+describe('PLS-DA algorithm', () => {
+  it('test with a pseudo-AND operator', () => {
     let training = [
       [0.1, 0.02],
       [0.25, 1.01],
@@ -41,7 +41,7 @@ describe('PLS-DA algorithm', function() {
     expect(result.get(1, 0)).toStrictEqual(predicted[1][0]);
   });
 
-  it('Export and import', function() {
+  it('Export and import', () => {
     let training = [
       [0.1, 0.02],
       [0.25, 1.01],
@@ -89,7 +89,7 @@ describe('PLS-DA algorithm', function() {
    * https://www.utdallas.edu/~herve/Abdi-PLS-pretty.pdf
    *
    * */
-  it('Wine test with getExplainedVariance', function() {
+  it('Wine test with getExplainedVariance', () => {
     let dataset = [
       [7, 7, 13, 7],
       [4, 3, 14, 7],
