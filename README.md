@@ -1,7 +1,7 @@
 # Partial Least Squares (PLS) and Kernel-based Orthogonal Projections to Latent Structures (K-OPLS)
 
 [![NPM version][npm-image]][npm-url]
-[![build status][travis-image]][travis-url]
+[![build status][ci-image]][ci-url]
 [![npm download][download-image]][download-url]
 
 PLS regression algorithm based on the Yi Cao implementation:
@@ -23,11 +23,21 @@ K-OPLS regression algorithm based on [this paper](http://onlinelibrary.wiley.com
 ```js
 import PLS from 'ml-pls';
 
-var X = [[0.1, 0.02], [0.25, 1.01], [0.95, 0.01], [1.01, 0.96]];
-var Y = [[1, 0], [1, 0], [1, 0], [0, 1]];
+var X = [
+  [0.1, 0.02],
+  [0.25, 1.01],
+  [0.95, 0.01],
+  [1.01, 0.96],
+];
+var Y = [
+  [1, 0],
+  [1, 0],
+  [1, 0],
+  [0, 1],
+];
 var options = {
   latentVectors: 10,
-  tolerance: 1e-4
+  tolerance: 1e-4,
 };
 
 var pls = new PLS(options);
@@ -43,20 +53,20 @@ import Kernel from 'ml-kernel';
 import KOPLS from 'ml-pls';
 
 var kernel = new Kernel('gaussian', {
-  sigma: 25
+  sigma: 25,
 });
 
 var cls = new KOPLS({
   orthogonalComponents: 10,
   predictiveComponents: 1,
-  kernel: kernel
+  kernel: kernel,
 });
 
 cls.train(Xtrain, Ytrain);
 var {
   prediction, // prediction
   predScoreMat, // Score matrix over prediction
-  predYOrthVectors // Y-Orthogonal vectors over prediction
+  predYOrthVectors, // Y-Orthogonal vectors over prediction
 } = cls.predict(Xtest);
 ```
 
@@ -68,7 +78,7 @@ var {
 
 [npm-image]: https://img.shields.io/npm/v/ml-pls.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/ml-pls
-[travis-image]: https://img.shields.io/travis/mljs/pls/master.svg?style=flat-square
-[travis-url]: https://travis-ci.org/mljs/pls
+[ci-image]: https://github.com/mljs/pls/workflows/Node.js%20CI/badge.svg?branch=master
+[ci-url]: https://github.com/mljs/pls/actions?query=workflow%3A%22Node.js+CI%22
 [download-image]: https://img.shields.io/npm/dm/ml-pls.svg?style=flat-square
 [download-url]: https://npmjs.org/package/ml-pls
