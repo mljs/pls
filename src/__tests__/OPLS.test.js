@@ -18,8 +18,8 @@ expect.extend({ toBeDeepCloseTo });
 const iris = getNumbers();
 const metadata = getClasses();
 const folds = getCrossValidationSets(7, { idx: 0, by: 'folds' });
-
 const newM = new METADATA([metadata], { headers: ['iris'] });
+
 describe('centering and scaling X and Y', () => {
   let x = new Matrix(iris);
   it('test that iris X scaling is similar to scaling in R', () => {
@@ -45,9 +45,14 @@ describe('OPLS nipals components', () => {
     let sd = x.standardDeviation('column');
     x.center('column').scale('column');
 
-    let y = metadata.filter((el, idx) => folds[0].includes(idx));
-    let M = new METADATA([y], { headers: ['iris'] });
-    y = M.get('iris', { format: 'matrix' }).values;
+    let toExclude = getCrossValidationSets(7, { idx: 0, by: 'trainTest' })[0]
+      .testIndex;
+
+    let met = getClasses();
+    let y = new METADATA([met], { headers: ['iris'] });
+    y.remove(toExclude, 'row');
+    y = y.get('iris', { format: 'matrix' }).values;
+
     y = y.center('column').scale('column');
 
     expect(folds[0].reduce((a, c) => a + c)).toStrictEqual(9343); // ok
@@ -200,7 +205,7 @@ describe('OPLS nipals components', () => {
 
     let x = new Matrix(iris);
 
-    let oplsOptions = { cvFolds, trainFraction: 0, nComp: 1 };
+    let oplsOptions = { cvFolds, nComp: 1 };
 
     let labels = newM.get('iris', { format: 'factor' }).values;
 
@@ -323,7 +328,7 @@ describe('OPLS', () => {
 
     let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
 
-    let options = { cvFolds, trainFraction: 0, nComp: 1 };
+    let options = { cvFolds, nComp: 1 };
 
     let labels = newM.get('iris', { format: 'factor' }).values;
     let model = new OPLS(x, labels, options);
@@ -353,7 +358,7 @@ describe('OPLS', () => {
 
     let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
 
-    let options = { cvFolds, trainFraction: 0, nComp: 2 };
+    let options = { cvFolds, nComp: 2 };
 
     let labels = newM.get('iris', { format: 'factor' }).values;
     let model = new OPLS(x, labels, options);
@@ -412,7 +417,7 @@ describe('import / export model', () => {
 
   let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
 
-  let options = { cvFolds, trainFraction: 0, nComp: 2 };
+  let options = { cvFolds, nComp: 2 };
 
   let labels = newM.get('iris', { format: 'factor' }).values;
   let model = new OPLS(x, labels, options);
@@ -432,7 +437,7 @@ describe('prediction', () => {
 
   let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
 
-  let options = { cvFolds, trainFraction: 0, nComp: 1 };
+  let options = { cvFolds, nComp: 1 };
 
   let labels = newM.get('iris', { format: 'factor' }).values;
 
