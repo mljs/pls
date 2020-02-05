@@ -1,3 +1,22 @@
+# [3.0.0](https://github.com/mljs/pls/compare/v2.0.0...v3.0.0) (2020-02-05)
+
+
+### chore
+
+* replace travis with GitHub actions ([475f9db](https://github.com/mljs/pls/commit/475f9db441a4a60671c441d32e30b93082f4ed9a))
+
+
+### Features
+
+* add OPLS and OPLSNipals ([084d49f](https://github.com/mljs/pls/commit/084d49fd822d249c3d2775992cb99c9399cd9685))
+
+
+### BREAKING CHANGES
+
+* Node.js 8 is no longer supported
+
+
+
 # [2.0.0](https://github.com/mljs/pls/compare/v1.0.0...v2.0.0) (2019-06-29)
 
 
