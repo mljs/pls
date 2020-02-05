@@ -1,4 +1,4 @@
-# Partial Least Squares (PLS) and Kernel-based Orthogonal Projections to Latent Structures (K-OPLS)
+# Partial Least Squares (PLS), Kernel-based Orthogonal Projections to Latent Structures (K-OPLS) and NIPALS based OPLS
 
 [![NPM version][npm-image]][npm-url]
 [![build status][ci-image]][ci-url]
@@ -12,13 +12,15 @@ K-OPLS regression algorithm based on [this paper](http://onlinelibrary.wiley.com
 
 [K-OPLS Matlab code](http://kopls.sourceforge.net/download.shtml)
 
+OPLS implementation based on the R package [Metabomate](https://github.com/kimsche/MetaboMate) using NIPALS factorization loop.
+
 ## installation
 
 `$ npm i ml-pls`
 
 ## Usage
 
-### [PLS](./src/pls.js)
+### [PLS](./src/PLS.js)
 
 ```js
 import PLS from 'ml-pls';
@@ -44,7 +46,7 @@ var pls = new PLS(options);
 pls.train(X, Y);
 ```
 
-### [K-OPLS](./src/kopls.js)
+### [K-OPLS](./src/KOPLS.js)
 
 ```js
 // assuming that you created Xtrain, Xtest, Ytrain, Ytest
@@ -69,6 +71,76 @@ var {
   predYOrthVectors, // Y-Orthogonal vectors over prediction
 } = cls.predict(Xtest);
 ```
+
+### [OPLS](./src/OPLS.js)
+
+```js
+// get the famous iris dataset
+import {
+  getNumbers,
+  getClasses,
+  getCrossValidationSets,
+} from 'ml-dataset-iris'; 
+
+// get dataset-metadata
+import { METADATA } from 'ml-dataset-metadata';
+
+// get frozen folds for testing purposes
+let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+
+let x = new Matrix(iris);
+
+let oplsOptions = { cvFolds, nComp: 1 };
+
+// get labels as factor (for regression)
+let labels = new METADATA([metadata], { headers: ['iris'] });
+let y = labels.get('iris', { format: 'factor' }).values;
+
+// get model
+let model = new OPLS(x, y, oplsOptions);
+```
+The OPLS class is intended for exploratory modeling, that is not for the creation of predictors. Therefore there is a built-in k-fold cross-validation loop and Q2y is an average over the folds. 
+
+```js 
+console.log(model.model[0].Q2y);
+``` 
+should give 0.9209227614652857
+
+If for some reason a predictor is necessary the following code may serve as an example
+
+```js
+let testIndex = getCrossValidationSets(7, { idx: 0, by: 'trainTest' })[0]
+  .testIndex;
+let trainIndex = getCrossValidationSets(7, { idx: 0, by: 'trainTest' })[0]
+  .trainIndex;
+
+// get data
+let data = getNumbers();
+// set test and training set
+let testX = data.filter((el, idx) => testIndex.includes(idx));
+let trainingX = data.filter((el, idx) => trainIndex.includes(idx));
+
+// convert to matrix
+trainingX = new Matrix(trainingX);
+testX = new Matrix(testX);
+
+// get metadata
+let labels = getClasses();
+let testLabels = labels.filter((el, idx) => testIndex.includes(idx));
+let trainingLabels = labels.filter((el, idx) => trainIndex.includes(idx));
+let trainingY = new METADATA([trainingLabels], { headers: ['iris'] });
+let testY = new METADATA([testLabels], { headers: ['iris'] }).get('iris', {
+  format: 'factor',
+}).values;
+
+let model = new OPLS(
+  trainingX,
+  trainingY.get('iris', { format: 'factor' }).values,
+);
+let prediction = model.predict(testX, { trueLabels: testY });
+console.log(model.model[0].Q2y);
+```
+
 
 ## [API Documentation](http://mljs.github.io/pls/)
 
