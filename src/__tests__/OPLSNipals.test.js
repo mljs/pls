@@ -1,6 +1,6 @@
-import { Matrix } from 'ml-matrix';
-import { getNumbers, getClasses } from 'ml-dataset-iris';
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
+import { getNumbers, getClasses } from 'ml-dataset-iris';
+import { Matrix } from 'ml-matrix';
 
 import { OPLSNipals } from '../OPLSNipals';
 

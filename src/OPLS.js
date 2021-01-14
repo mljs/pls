@@ -1,6 +1,6 @@
-import { Matrix, NIPALS } from 'ml-matrix';
 import ConfusionMatrix from 'ml-confusion-matrix';
 import { getFolds } from 'ml-cross-validation';
+import { Matrix, NIPALS } from 'ml-matrix';
 
 import { OPLSNipals } from './OPLSNipals.js';
 import { tss } from './util/tss.js';

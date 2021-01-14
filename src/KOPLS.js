@@ -73,10 +73,7 @@ export class KOPLS {
     kernelX[0][0] = temp;
 
     let result = new SingularValueDecomposition(
-      trainingValues
-        .transpose()
-        .mmul(kernelX[0][0])
-        .mmul(trainingValues),
+      trainingValues.transpose().mmul(kernelX[0][0]).mmul(trainingValues),
       {
         computeLeftSingularVectors: true,
         computeRightSingularVectors: false,
@@ -109,7 +106,7 @@ export class KOPLS {
 
     let SigmaPow = Matrix.pow(Sigma, -0.5);
     // to avoid errors, check infinity
-    SigmaPow.apply(function(i, j) {
+    SigmaPow.apply(function (i, j) {
       if (this.get(i, j) === Infinity) {
         this.set(i, j, 0);
       }

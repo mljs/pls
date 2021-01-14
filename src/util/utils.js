@@ -7,11 +7,7 @@ import Matrix from 'ml-matrix';
  * @return {number} Norm of the vector
  */
 export function norm(X) {
-  return Math.sqrt(
-    X.clone()
-      .apply(pow2array)
-      .sum(),
-  );
+  return Math.sqrt(X.clone().apply(pow2array).sum());
 }
 
 /**

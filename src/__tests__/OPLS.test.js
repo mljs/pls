@@ -1,13 +1,13 @@
+import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
 import ConfusionMatrix from 'ml-confusion-matrix';
-import { Matrix, NIPALS } from 'ml-matrix';
-import { METADATA } from 'ml-dataset-metadata';
+import { sampleAClass } from 'ml-cross-validation';
 import {
   getNumbers,
   getClasses,
   getCrossValidationSets,
 } from 'ml-dataset-iris';
-import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
-import { sampleAClass } from 'ml-cross-validation';
+import { METADATA } from 'ml-dataset-metadata';
+import { Matrix, NIPALS } from 'ml-matrix';
 
 import { OPLS } from '../OPLS.js';
 import { OPLSNipals } from '../OPLSNipals.js';
@@ -266,10 +266,7 @@ describe('OPLS utility functions', () => {
     let tssy = tss(y);
     expect(tssy).toBeCloseTo(149, 6); // ok
     let rss = y.clone().sub(Yhat);
-    rss = rss
-      .clone()
-      .mul(rss)
-      .sum();
+    rss = rss.clone().mul(rss).sum();
     expect(rss).toBeCloseTo(10.65667, 5);
     let R2y = 1 - rss / tssy;
     expect(R2y).toBeCloseTo(0.9284787, 6);

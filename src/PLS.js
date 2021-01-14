@@ -88,14 +88,8 @@ export class PLS {
     let ry = trainingValues.rows;
     let cy = trainingValues.columns;
 
-    let ssqXcal = trainingSet
-      .clone()
-      .mul(trainingSet)
-      .sum(); // for the r²
-    let sumOfSquaresY = trainingValues
-      .clone()
-      .mul(trainingValues)
-      .sum();
+    let ssqXcal = trainingSet.clone().mul(trainingSet).sum(); // for the r²
+    let sumOfSquaresY = trainingValues.clone().mul(trainingValues).sum();
 
     let tolerance = this.tolerance;
     let n = this.latentVectors;
@@ -134,10 +128,7 @@ export class PLS {
 
       t = t1;
       let num = transposeX.mmul(t);
-      let den = t
-        .transpose()
-        .mmul(t)
-        .get(0, 0);
+      let den = t.transpose().mmul(t).get(0, 0);
       p = num.div(den);
       let pnorm = Utils.norm(p);
       p.div(pnorm);
@@ -145,18 +136,10 @@ export class PLS {
       w.mul(pnorm);
 
       num = u.transpose().mmul(t);
-      den = t
-        .transpose()
-        .mmul(t)
-        .get(0, 0);
+      den = t.transpose().mmul(t).get(0, 0);
       let b = num.div(den).get(0, 0);
       trainingSet.sub(t.mmul(p.transpose()));
-      trainingValues.sub(
-        t
-          .clone()
-          .mul(b)
-          .mmul(q.transpose()),
-      );
+      trainingValues.sub(t.clone().mul(b).mmul(q.transpose()));
 
       T.setColumn(k, t);
       P.setColumn(k, p);

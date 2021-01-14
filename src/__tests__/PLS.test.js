@@ -26,7 +26,7 @@ describe('PLS-DA algorithm', () => {
     expect(result.get(3, 0)).toBeLessThan(result.get(3, 1));
   });
 
-  it('Random points test', function() {
+  it('Random points test', function () {
     let training = [
       [0.323, 34, 56, 23],
       [2.23, 43, 32, 83],
