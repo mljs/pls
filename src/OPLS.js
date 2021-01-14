@@ -34,7 +34,7 @@ export class OPLS {
       return;
     }
 
-    let features = data.clone();
+    let features = new Matrix(data);
     // set default values
     // cvFolds allows to define folds for testing purpose
     const { nComp = 3, center = true, scale = true, cvFolds = [] } = options;
@@ -51,10 +51,6 @@ export class OPLS {
       throw new Error('discriminant analysis is not yet supported');
     }
 
-    // check types of features and labels
-    if (features.constructor.name !== 'Matrix') {
-      throw new TypeError('features must be of class Matrix');
-    }
     // getting center and scale the features (all)
     this.center = center;
     if (this.center) {
@@ -294,7 +290,7 @@ export class OPLS {
       labels = trueLabels.clone();
     }
 
-    let features = newData.clone();
+    let features = new Matrix(newData);
 
     // scaling the test dataset with respect to the train
     if (this.center) {
