@@ -41,16 +41,12 @@ describe('opls-nipals', () => {
     expect(model.scoresXpred.getRow(149)).toBeDeepCloseTo([8.539939678663997]);
 
     expect(model.loadingsXpred.getRow(0)).toBeDeepCloseTo([
-      0.7533846125482135,
-      0.37991165000540095,
-      0.5175455876998517,
+      0.7533846125482135, 0.37991165000540095, 0.5175455876998517,
       0.1697637836019074,
     ]);
 
     expect(model.weightsXPred.getColumn(0)).toBeDeepCloseTo([
-      0.7191635887943787,
-      0.3280487739174021,
-      0.5781304613979087,
+      0.7191635887943787, 0.3280487739174021, 0.5781304613979087,
       0.20236823883090044,
     ]);
 
@@ -60,16 +56,12 @@ describe('opls-nipals', () => {
     expect(model.scoresXOrtho.getRow(149)).toBeDeepCloseTo([-0.1097900904882]);
 
     expect(model.loadingsXOrtho.getRow(0)).toBeDeepCloseTo([
-      1.893676431872939,
-      1.2763813703908802,
-      0.5781825736661366,
+      1.893676431872939, 1.2763813703908802, 0.5781825736661366,
       0.10014507134716187,
     ]);
 
     expect(model.weightsXOrtho.getRow(0)).toBeDeepCloseTo([
-      0.36913469592136616,
-      0.5594334971409369,
-      -0.6535157770509538,
+      0.36913469592136616, 0.5594334971409369, -0.6535157770509538,
       -0.35169712493733896,
     ]);
 
@@ -83,16 +75,12 @@ describe('opls-nipals', () => {
     y.setColumn(1, numericValues);
     let model = OPLSNipals(x, y);
     expect(model.loadingsXpred.getRow(0)).toBeDeepCloseTo([
-      -39.87921132989588,
-      -18.15477710189015,
-      -32.14670745016701,
+      -39.87921132989588, -18.15477710189015, -32.14670745016701,
       -11.264000394844325,
     ]);
 
     expect(model.weightsXPred.getColumn(0)).toBeDeepCloseTo([
-      0.7191635887943787,
-      0.3280487739174021,
-      0.5781304613979087,
+      0.7191635887943787, 0.3280487739174021, 0.5781304613979087,
       0.20236823883090044,
     ]);
 
@@ -102,16 +90,12 @@ describe('opls-nipals', () => {
     expect(model.scoresXpred.getRow(149)).toBeDeepCloseTo([8.539939678663997]);
 
     expect(model.loadingsXOrtho.getRow(0)).toBeDeepCloseTo([
-      -0.7534815884584046,
-      -0.37993723094817833,
-      -0.5176646384052347,
+      -0.7534815884584046, -0.37993723094817833, -0.5176646384052347,
       -0.16980932815451685,
     ]);
 
     expect(model.weightsXOrtho.getRow(0)).toBeDeepCloseTo([
-      -0.7185459890650463,
-      -0.32711384788980913,
-      -0.579221276691814,
+      -0.7185459890650463, -0.32711384788980913, -0.579221276691814,
       -0.20295542551201248,
     ]);
 
@@ -121,8 +105,7 @@ describe('opls-nipals', () => {
     expect(model.scoresXOrtho.getRow(149)).toBeDeepCloseTo([-8.54011115620307]);
 
     expect(model.loadingsY.getRow(0)).toBeDeepCloseTo([
-      0.14558532608468372,
-      0.14558532608468372,
+      0.14558532608468372, 0.14558532608468372,
     ]);
   });
 
