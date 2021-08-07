@@ -10,6 +10,15 @@ expect.extend({ toBeDeepCloseTo });
 const iris = getNumbers();
 const metadata = getClasses();
 const newM = new METADATA([metadata], { headers: ['iris'] });
+
+/* # R code
+library(MetaboMate)
+data(iris)
+X=as.matrix(iris[,1:4])
+labels=cbind(as.character(iris[,5]))
+model=opls(X, labels)
+*/
+
 /*
 model@summary
        R2X  R2Y   Q2

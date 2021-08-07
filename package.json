@@ -9,15 +9,14 @@
     "src"
   ],
   "scripts": {
-    "prepublishOnly": "rollup -c",
     "eslint": "eslint src",
     "eslint-fix": "npm run eslint -- --fix",
-    "prepack": "npm run compile",
+    "prepack": "rollup -c",
     "prettier": "prettier --check src",
     "prettier-write": "prettier --write src",
     "test": "npm run test-coverage && npm run eslint && npm run prettier",
-    "test-only": "jest",
     "test-coverage": "jest --coverage",
+    "test-only": "jest",
     "bench": "node ./benchmark/transpose.js"
   },
   "repository": {
