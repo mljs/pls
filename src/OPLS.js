@@ -1,6 +1,7 @@
 import ConfusionMatrix from 'ml-confusion-matrix';
 import { getFolds } from 'ml-cross-validation';
 import { Matrix, NIPALS } from 'ml-matrix';
+import { getRocCurve, getAuc } from 'ml-roc-multiclass';
 
 import { OPLSNipals } from './OPLSNipals.js';
 import { tss } from './util/tss.js';
@@ -14,6 +15,7 @@ import { tss } from './util/tss.js';
  * @param {boolean} [options.center = true] - should the data be centered (subtract the mean).
  * @param {boolean} [options.scale = false] - should the data be scaled (divide by the standard deviation).
  * @param {Array} [options.cvFolds = []] - allows to provide folds as 2D array for testing purpose.
+ * @param {number} [options.nbFolds] - allows to provide folds as 2D array for testing purpose.
  * */
 
 export class OPLS {
@@ -37,7 +39,7 @@ export class OPLS {
     let features = new Matrix(data);
     // set default values
     // cvFolds allows to define folds for testing purpose
-    const { nComp = 3, center = true, scale = true, cvFolds = [] } = options;
+    const { center = true, scale = true, cvFolds = [], nbFolds = 7 } = options;
 
     let group;
     if (typeof labels[0] === 'number') {
@@ -47,8 +49,9 @@ export class OPLS {
     } else if (typeof labels[0] === 'string') {
       // non-numeric labels: OPLS-DA is used
       this.mode = 'discriminantAnalysis';
-      group = labels;
-      throw new Error('discriminant analysis is not yet supported');
+      const dummyY = Matrix.checkMatrix(createDummyY(labels)).transpose();
+      group = Matrix.checkMatrix(dummyY);
+      // group = labels;
     }
 
     // getting center and scale the features (all)
@@ -74,10 +77,10 @@ export class OPLS {
     if (cvFolds.length > 0) {
       folds = cvFolds;
     } else {
-      folds = getFolds(labels, 5);
+      folds = getFolds(labels, nbFolds);
     }
-
     let Q2 = [];
+    let aucResult = [];
     this.model = [];
 
     this.tCV = [];
@@ -91,16 +94,17 @@ export class OPLS {
     // this is a legacy loop to be consistent with R code from MetaboMate package
     // this allows for having statistic (R2) from CV to decide wether to continue
     // with more latent structures
-    let nc;
-    for (nc = 0; nc < nComp; nc++) {
+    let overfitted = false;
+    let nc = 0;
+    let value;
+
+    do {
       let yHatk = new Matrix(group.rows, 1);
       let tPredk = new Matrix(group.rows, 1);
       let tOrthk = new Matrix(group.rows, 1);
-      let oplsk = [];
-
-      let f = 0;
-      for (let fold of folds) {
-        let trainTest = this._getTrainTest(features, group, fold);
+      oplsCV[nc] = [];
+      for (let f = 0; f < folds.length; f++) {
+        let trainTest = this._getTrainTest(features, group, folds[f]);
         let testXk = trainTest.testFeatures;
         let Xk = trainTest.trainFeatures;
         let Yk = trainTest.trainLabels;
@@ -121,15 +125,16 @@ export class OPLS {
         }
 
         // perform opls
+        let oplsk;
         if (nc === 0) {
-          oplsk[f] = OPLSNipals(Xk, Yk);
+          oplsk = OPLSNipals(Xk, Yk);
         } else {
-          oplsk[f] = OPLSNipals(oplsCV[nc - 1][f].filteredX, Yk);
+          oplsk = OPLSNipals(oplsCV[nc - 1][f].filteredX, Yk);
         }
-        // store model for next component
-        oplsCV[nc] = oplsk;
 
-        let plsCV = new NIPALS(oplsk[f].filteredX, { Y: Yk });
+        // store model for next component
+        oplsCV[nc][f] = oplsk;
+        let plsCV = new NIPALS(oplsk.filteredX, { Y: Yk });
 
         // scaling the test dataset with respect to the train
         testXk.center('column', { center: dataCenter });
@@ -146,15 +151,17 @@ export class OPLS {
         // prediction
         let tPred = Eh.mmul(plsCV.w.transpose());
         // this should be summed over ncomp (pls_prediction.R line 23)
-        let yHat = tPred.mmul(plsCV.betas); // ok
-
-        // adding all prediction from all folds
-        for (let i = 0; i < fold.testIndex.length; i++) {
-          yHatk.setRow(fold.testIndex[i], [yHat.get(i, 0)]);
-          tPredk.setRow(fold.testIndex[i], [tPred.get(i, 0)]);
-          tOrthk.setRow(fold.testIndex[i], [scores.get(i, 0)]);
+        let yHatComponents = tPred.mmul(plsCV.betas).mmul(plsCV.q.transpose()); // ok
+        let yHat = new Matrix(yHatComponents.rows, 1);
+        for (let i = 0; i < yHatComponents.rows; i++) {
+          yHat.setRow(i, [yHatComponents.getRowVector(i).sum()]);
         }
-        f++;
+        // adding all prediction from all folds
+        for (let i = 0; i < folds[f].testIndex.length; i++) {
+          yHatk.setRow(folds[f].testIndex[i], [yHat.get(i, 0)]);
+          tPredk.setRow(folds[f].testIndex[i], [tPred.get(i, 0)]);
+          tOrthk.setRow(folds[f].testIndex[i], [scores.get(i, 0)]);
+        }
       } // end of loop over folds
 
       this.tCV.push(tPredk);
@@ -163,41 +170,64 @@ export class OPLS {
 
       // calculate Q2y for all the prediction (all folds)
       // ROC for DA is not implemented (check opls.R line 183) TODO
+      let tssy = tss(group.center('column').scale('column'));
+      let press = 0;
+      for (let i = 0; i < group.columns; i++) {
+        press += tss(group.getColumnVector(i).sub(yHatk));
+      }
+      let Q2y = 1 - press / group.columns / tssy;
+      Q2.push(Q2y);
       if (this.mode === 'regression') {
-        let tssy = tss(group.center('column').scale('column'));
-        let press = tss(group.clone().sub(yHatk));
-        let Q2y = 1 - press / tssy;
-        Q2.push(Q2y);
+        value = Q2y;
       } else if (this.mode === 'discriminantAnalysis') {
-        throw new Error('discriminant analysis is not yet supported');
+        const rocCurve = getRocCurve(labels, yHatk.to1DArray());
+        const areaUnderCurve = getAuc(rocCurve);
+        aucResult.push(areaUnderCurve);
+        value = areaUnderCurve;
       }
 
       // calculate the R2y for the complete data
       if (nc === 0) {
         modelNC = this._predictAll(features, group);
       } else {
-        modelNC = this._predictAll(
-          modelNC.xRes,
-          group,
-          (options = { scale: false, center: false }),
-        );
+        modelNC = this._predictAll(modelNC.xRes, group, {
+          scale: false,
+          center: false,
+        });
       }
 
       // adding the predictive statistics from CV
+      let listOfValues;
       modelNC.Q2y = Q2;
-      // store the model for each component
-      this.model.push(modelNC);
-      // console.warn(`OPLS iteration over # of Components: ${nc + 1}`);
-    } // end of loop over nc
+      if (this.mode === 'regression') {
+        listOfValues = Q2;
+      } else {
+        listOfValues = aucResult;
+        modelNC.auc = aucResult;
+      }
+      modelNC.value = value;
 
+      if (nc > 0) {
+        overfitted = listOfValues[nc - 1] >= value ? true : false;
+      }
+      this.model.push(modelNC);
+      // store the model for each component
+      nc++;
+      // console.warn(`OPLS iteration over # of Components: ${nc + 1}`);
+    } while (!overfitted); // end of loop over nc
     // store scores from CV
     let tCV = this.tCV;
     let tOrthCV = this.tOrthCV;
-
+    let yHatCV = this.yHatCV;
     let m = this.model[nc - 1];
     let XOrth = m.XOrth;
     let FeaturesCS = features.center('column').scale('column');
-    let labelsCS = group.center('column').scale('column');
+    let labelsCS;
+    if (this.mode === 'regression') {
+      labelsCS = group.center('column').scale('column');
+    } else {
+      labelsCS = group;
+    }
     let Xres = FeaturesCS.clone().sub(XOrth);
     let plsCall = new NIPALS(Xres, { Y: labelsCS });
     let E = Xres.clone().sub(plsCall.t.mmul(plsCall.p));
@@ -207,6 +237,7 @@ export class OPLS {
 
     this.output = {
       Q2y: Q2,
+      auc: aucResult,
       R2x,
       R2y,
       tPred: m.plsC.t,
@@ -216,6 +247,8 @@ export class OPLS {
       Qpc: m.plsC.q,
       tCV,
       tOrthCV,
+      yHatCV,
+      oplsCV,
       tOrth: m.tOrth,
       pOrth: m.pOrth,
       wOrth: m.wOrth,
@@ -283,7 +316,7 @@ export class OPLS {
    * @return {Object} - predictions
    */
   predict(newData, options = {}) {
-    let { trueLabels = [], nc = 1 } = options;
+    let { trueLabels = [] } = options;
     let labels = [];
     if (trueLabels.length > 0) {
       trueLabels = Matrix.from1DArray(trueLabels.length, 1, trueLabels);
@@ -306,6 +339,13 @@ export class OPLS {
       }
     }
 
+    let nc;
+    if (this.mode === 'regression') {
+      nc = this.model[0].Q2y.length;
+    } else {
+      nc = this.model[0].auc.length;
+    }
+
     let Eh = features.clone();
     // removing the orthogonal components from PLS
     let tOrth;
@@ -313,7 +353,6 @@ export class OPLS {
     let pOrth;
     let yHat;
     let tPred;
-
     for (let idx = 0; idx < nc; idx++) {
       wOrth = this.model[idx].wOrth.transpose();
       pOrth = this.model[idx].pOrth;
@@ -372,11 +411,16 @@ export class OPLS {
     let plsC = new NIPALS(oplsC.filteredX, { Y: labels });
 
     let tPred = oplsC.filteredX.mmul(plsC.w.transpose());
-    let yHat = tPred.mmul(plsC.betas);
-
-    let rss = tss(labels.clone().sub(yHat));
-    let R2y = 1 - rss / this.tssy;
-
+    let yHatComponents = tPred.mmul(plsC.betas).mmul(plsC.q.transpose()); // ok
+    let yHat = new Matrix(yHatComponents.rows, 1);
+    for (let i = 0; i < yHatComponents.rows; i++) {
+      yHat.setRow(i, [yHatComponents.getRowVector(i).sum()]);
+    }
+    let rss = 0;
+    for (let i = 0; i < labels.columns; i++) {
+      rss += tss(labels.getColumnVector(i).sub(yHat));
+    }
+    let R2y = 1 - rss / labels.columns / this.tssy;
     let xEx = plsC.t.mmul(plsC.p);
     let rssx = tss(xEx);
     let R2x = rssx / this.tssx;
@@ -403,18 +447,20 @@ export class OPLS {
    */
   _getTrainTest(X, group, index) {
     let testFeatures = new Matrix(index.testIndex.length, X.columns);
-    let testLabels = new Matrix(index.testIndex.length, 1);
+    let testLabels = new Matrix(index.testIndex.length, group.columns);
     index.testIndex.forEach((el, idx) => {
       testFeatures.setRow(idx, X.getRow(el));
       testLabels.setRow(idx, group.getRow(el));
     });
 
     let trainFeatures = new Matrix(index.trainIndex.length, X.columns);
-    let trainLabels = new Matrix(index.trainIndex.length, 1);
+    let trainLabels = new Matrix(index.trainIndex.length, group.columns);
     index.trainIndex.forEach((el, idx) => {
       trainFeatures.setRow(idx, X.getRow(el));
       trainLabels.setRow(idx, group.getRow(el));
     });
+
+    // console.log({ testFeatures, testLabels, trainFeatures, trainLabels });
 
     return {
       trainFeatures,
@@ -423,4 +469,18 @@ export class OPLS {
       testLabels,
     };
   }
+}
+
+function createDummyY(array) {
+  const features = [...new Set(array)];
+  const result = [];
+  for (let i = 0; i < features.length; i++) {
+    const feature = [];
+    for (let j = 0; j < array.length; j++) {
+      const point = features[i] === array[j] ? 1 : -1;
+      feature.push(point);
+    }
+    result.push(feature);
+  }
+  return result;
 }
