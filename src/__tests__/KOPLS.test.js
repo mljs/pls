@@ -1,6 +1,6 @@
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
 import Kernel from 'ml-kernel';
-import Matrix from 'ml-matrix';
+import { Matrix } from 'ml-matrix';
 
 import { KOPLS } from '../KOPLS';
 
