@@ -22,12 +22,13 @@ const newM = new METADATA([metadata], { headers: ['iris'] });
 
 describe('centering and scaling X and Y', () => {
   let x = new Matrix(iris);
+
   it('test that iris X scaling is similar to scaling in R', () => {
     x = x.center('column').scale('column');
     expect(x.get(0, 0)).toBeCloseTo(-0.8976739, 6); // ok
   });
+
   it('test that iris Y scaling is similar to scaling in R', () => {
-    // let y = summaryMetadata(metadata).classMatrix;
     let y = newM.get('iris', { format: 'matrix' }).values;
     y = y.center('column').scale('column');
     expect(y.get(0, 0)).toBeCloseTo(-1.220656, 6); // ok
@@ -39,30 +40,24 @@ describe('OPLS nipals components', () => {
     let rawData = iris;
     let testRawData = rawData.filter((el, idx) => !folds[0].includes(idx));
     rawData = rawData.filter((el, idx) => folds[0].includes(idx));
-
-    let x = new Matrix(rawData);
-    let center = x.mean('column');
-    let sd = x.standardDeviation('column');
+    const x = new Matrix(rawData);
+    const center = x.mean('column');
+    const sd = x.standardDeviation('column');
     x.center('column').scale('column');
-
-    let toExclude = getCrossValidationSets(7, { idx: 0, by: 'trainTest' })[0]
+    const toExclude = getCrossValidationSets(7, { idx: 0, by: 'trainTest' })[0]
       .testIndex;
-
-    let met = getClasses();
+    const met = getClasses();
     let y = new METADATA([met], { headers: ['iris'] });
     y.remove(toExclude, 'row');
     y = y.get('iris', { format: 'matrix' }).values;
-
     y = y.center('column').scale('column');
+    const opls = OPLSNipals(x, y);
 
     expect(folds[0].reduce((a, c) => a + c)).toStrictEqual(9343); // ok
-
     expect(y.rows).toStrictEqual(127); // ok
     expect(y.get(0, 0)).toBeCloseTo(-1.22030407, 6); // ok
     expect(y.get(126, 0)).toBeCloseTo(1.2593538, 6); // ok
     expect(x.get(0, 0)).toBeCloseTo(-0.86171924, 6); // ok
-
-    let opls = OPLSNipals(x, y);
 
     expect(opls.filteredX.get(0, 0)).toBeCloseTo(-1.055718013, 8); // ok
     expect(opls.filteredX.get(3, 3)).toBeCloseTo(-1.316108827, 8);
@@ -86,8 +81,8 @@ describe('OPLS nipals components', () => {
     expect(opls.scoresXOrtho.get(0, 0)).toBeCloseTo(0.144701329, 8);
     expect(opls.loadingsXOrtho.get(0, 0)).toBeCloseTo(1.340684);
 
-    let xResidual = opls.filteredX;
-    let plsComp = new NIPALS(xResidual, { Y: y });
+    const xResidual = opls.filteredX;
+    const plsComp = new NIPALS(xResidual, { Y: y });
 
     expect(plsComp.xResidual.get(0, 0)).toBeCloseTo(0.0746564622, 2);
     expect(plsComp.xResidual.get(3, 3)).toBeCloseTo(0.1006373429, 2);
@@ -109,7 +104,7 @@ describe('OPLS nipals components', () => {
 
     // scaling of the test dataset with respect to the train
     testRawData = testRawData.map((d) => d.slice(0, 4));
-    let testx = new Matrix(23, 4);
+    const testx = new Matrix(23, 4);
     testRawData.forEach((el, i) => testx.setRow(i, testRawData[i]));
     testx.center('column', { center: center });
     testx.scale('column', { scale: sd });
@@ -119,7 +114,7 @@ describe('OPLS nipals components', () => {
 
     let Eh = testx;
     // removing the orthogonal components from PLS
-    let scores = Eh.mmul(opls.weightsXOrtho.transpose());
+    const scores = Eh.mmul(opls.weightsXOrtho.transpose());
     Eh = Eh.clone().sub(scores.mmul(opls.loadingsXOrtho));
 
     expect(scores.get(0, 0)).toBeCloseTo(0.009042318, 6);
@@ -127,68 +122,66 @@ describe('OPLS nipals components', () => {
     expect(Eh.get(0, 0)).toBeCloseTo(-1.11357563, 6);
     expect(Eh.get(22, 1)).toBeCloseTo(-1.22642102, 6);
 
-    let tPred = Eh.mmul(plsComp.w.transpose());
+    const tPred = Eh.mmul(plsComp.w.transpose());
     expect(tPred.get(0, 0)).toBeCloseTo(-2.0983292, 6);
     expect(tPred.get(7, 0)).toBeCloseTo(-2.4324436, 6);
-    let Yhat = tPred.mmul(plsComp.betas);
-    expect(Yhat.get(0, 0)).toBeCloseTo(-1.21268611, 6);
-    expect(Yhat.get(7, 0)).toBeCloseTo(-1.40578061, 6);
+
+    const yHat = tPred.mmul(plsComp.betas);
+    expect(yHat.get(0, 0)).toBeCloseTo(-1.21268611, 6);
+    expect(yHat.get(7, 0)).toBeCloseTo(-1.40578061, 6);
   });
 
-  it('test first opls loop nComp = 1 with all folds', () => {
-    let cvPreds = new Matrix(150, 1);
-    let cvScoresO = new Matrix(150, 1);
-    let cvScoresP = new Matrix(150, 1);
+  it('test first opls nipals loop nComp = 1 with all folds', () => {
+    const cvPreds = new Matrix(150, 1);
+    const cvScoresO = new Matrix(150, 1);
+    const cvScoresP = new Matrix(150, 1);
 
-    for (let cv of folds) {
+    for (let fold of folds) {
       let rawData = iris;
-      let testRawData = rawData.filter((el, idx) => !cv.includes(idx));
-      rawData = rawData.filter((el, idx) => cv.includes(idx));
-      let x = new Matrix(rawData);
-      let center = x.mean('column');
-      let sd = x.standardDeviation('column');
+      let testRawData = rawData.filter((el, idx) => !fold.includes(idx));
+      rawData = rawData.filter((el, idx) => fold.includes(idx));
+      const x = new Matrix(rawData);
+      const center = x.mean('column');
+      const sd = x.standardDeviation('column');
       x.center('column').scale('column');
 
-      let y = metadata.filter((el, idx) => cv.includes(idx));
-      let M = new METADATA([y], { headers: ['iris'] });
+      let y = metadata.filter((el, idx) => fold.includes(idx));
+      const M = new METADATA([y], { headers: ['iris'] });
       y = M.get('iris', { format: 'matrix' }).values;
       y = y.center('column').scale('column');
 
-      let opls = OPLSNipals(x, y);
-
-      let xResidual = opls.filteredX;
-      let plsComp = new NIPALS(xResidual, { Y: y });
+      const opls = OPLSNipals(x, y);
+      const xResidual = opls.filteredX;
+      const plsComp = new NIPALS(xResidual, { Y: y });
 
       testRawData = testRawData.map((d) => d.slice(0, 4));
-      let testx = new Matrix(testRawData.length, 4);
+      const testx = new Matrix(testRawData.length, 4);
       testRawData.forEach((el, i) => testx.setRow(i, testRawData[i]));
       testx.center('column', { center: center });
       testx.scale('column', { scale: sd });
 
-      let Eh = testx;
+      const Eh = testx;
       // removing the orthogonal components from PLS
-      let scores = Eh.mmul(opls.weightsXOrtho.transpose());
+      const scores = Eh.mmul(opls.weightsXOrtho.transpose());
       Eh.sub(scores.mmul(opls.loadingsXOrtho));
 
-      let tPred = Eh.mmul(plsComp.w.transpose());
-      let Yhat = tPred.mmul(plsComp.betas);
-
+      const tPred = Eh.mmul(plsComp.w.transpose());
+      const yHat = tPred.mmul(plsComp.betas);
       let testCv = [];
       for (let j = 0; j < 150; j++) {
         testCv.push(j);
       }
 
-      testCv = testCv.filter((el, idx) => !cv.includes(idx));
-
-      testCv.forEach((el, idx) => cvPreds.setRow(el, [Yhat.get(idx, 0)]));
+      testCv = testCv.filter((el, idx) => !fold.includes(idx));
+      testCv.forEach((el, idx) => cvPreds.setRow(el, [yHat.get(idx, 0)]));
       testCv.forEach((el, idx) => cvScoresO.setRow(el, [scores.get(idx, 0)]));
       testCv.forEach((el, idx) => cvScoresP.setRow(el, [tPred.get(idx, 0)]));
     }
 
-    let y = newM.get('iris', { format: 'matrix' }).values;
+    const y = newM.get('iris', { format: 'matrix' }).values;
     y.center('column').scale('column');
-    let tssy = tss(y);
-    let press = tss(y.clone().sub(cvPreds));
+    const tssy = tss(y);
+    const press = tss(y.clone().sub(cvPreds));
 
     expect(cvPreds.get(0, 0)).toBeCloseTo(-1.42935863, 6);
     expect(cvPreds.get(3, 0)).toBeCloseTo(-1.16151882, 6);
@@ -197,33 +190,6 @@ describe('OPLS nipals components', () => {
     expect(press).toBeCloseTo(11.78251, 5);
     expect(tssy).toBeCloseTo(149, 10);
     expect(1 - press / tssy).toBeCloseTo(0.9209228, 6);
-  });
-
-  it('test first OPLS loop nComp = 1 with all folds', () => {
-    let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
-
-    let x = new Matrix(iris);
-
-    let oplsOptions = { cvFolds, nComp: 1 };
-
-    let labels = newM.get('iris', { format: 'factor' }).values;
-
-    let opls = new OPLS(x, labels, oplsOptions);
-
-    expect(opls.model[0].Q2y[0]).toBeCloseTo(0.9209228, 6);
-    expect(opls.model[0].R2y).toBeCloseTo(0.9284787, 6);
-    expect(opls.model[0].tPred.get(0, 0)).toBeCloseTo(-2.32295367, 6);
-    expect(opls.model[0].tOrth.get(0, 0)).toBeCloseTo(0.074537852, 6);
-    expect(opls.model[0].tOrth.get(149, 0)).toBeCloseTo(-0.486465664, 6);
-    expect(opls.model[0].pOrth.get(0, 0)).toBeCloseTo(1.318924, 6);
-    expect(opls.model[0].wOrth.get(0, 0)).toBeCloseTo(0.7888785, 6);
-    expect(opls.model[0].XOrth.get(0, 0)).toBeCloseTo(0.09830979, 6);
-    expect(opls.model[0].totalPred.get(0, 0)).toBeCloseTo(-1.33501112, 6);
-    expect(opls.model[0].oplsC.filteredX.get(0, 0)).toBeCloseTo(-0.99598366, 6);
-    expect(opls.model[0].oplsC.scoresXOrtho.get(0, 0)).toBeCloseTo(
-      0.074537852,
-      6,
-    );
   });
 });
 
@@ -239,6 +205,7 @@ describe('OPLS utility functions', () => {
     expect(tss(x)).toBeCloseTo(596, 6);
     expect(tss(y)).toStrictEqual(149);
   });
+
   it('test total prediction', () => {
     let y = newM.get('iris', { format: 'matrix' }).values;
     y = y.center('column').scale('column');
@@ -246,47 +213,53 @@ describe('OPLS utility functions', () => {
     let x = new Matrix(iris);
     x = x.center('column').scale('column');
 
-    let res = OPLSNipals(x, y);
-    let xRes = res.filteredX;
+    const res = OPLSNipals(x, y);
+    const xRes = res.filteredX;
     expect(xRes.get(0, 0)).toBeCloseTo(-0.99598366, 6);
     expect(res.scoresXOrtho.get(0, 0)).toBeCloseTo(0.074537852, 6);
 
-    let plsComp = new NIPALS(xRes, { Y: y });
+    const plsComp = new NIPALS(xRes, { Y: y });
+
     expect(plsComp.t.get(0, 0)).toBeCloseTo(-2.32295367, 6);
     expect(plsComp.xResidual.get(0, 1)).toBeCloseTo(0.340980373, 3);
     expect(plsComp.yResidual.get(0, 0)).toBeCloseTo(0.1143555571, 6);
     expect(plsComp.p.get(0, 1)).toBeCloseTo(-0.2864595, 3);
     expect(plsComp.w.get(0, 0)).toBeCloseTo(0.484385, 6);
 
-    let tPred = xRes.mmul(plsComp.w.transpose());
-    expect(tPred.get(0, 0)).toBeCloseTo(-2.32295367, 6);
-    let Yhat = tPred.mmul(plsComp.betas);
-    expect(Yhat.get(0, 0)).toBeCloseTo(-1.33501112, 6);
+    const tPred = xRes.mmul(plsComp.w.transpose());
+    const yHat = tPred.mmul(plsComp.betas);
 
-    let tssy = tss(y);
-    expect(tssy).toBeCloseTo(149, 6); // ok
-    let rss = y.clone().sub(Yhat);
+    expect(tPred.get(0, 0)).toBeCloseTo(-2.32295367, 6);
+    expect(yHat.get(0, 0)).toBeCloseTo(-1.33501112, 6);
+
+    const tssy = tss(y);
+    let rss = y.clone().sub(yHat);
     rss = rss.clone().mul(rss).sum();
+    const R2y = 1 - rss / tssy;
+
+    expect(tssy).toBeCloseTo(149, 6); // ok
     expect(rss).toBeCloseTo(10.65667, 5);
-    let R2y = 1 - rss / tssy;
     expect(R2y).toBeCloseTo(0.9284787, 6);
 
-    let xEx = plsComp.t.mmul(plsComp.p);
-    let rssx = tss(xEx);
+    const xEx = plsComp.t.mmul(plsComp.p);
+    const rssx = tss(xEx);
+    const tssx = tss(x);
+    const R2x = rssx / tssx;
+
     expect(rssx).toBeCloseTo(419.0932, 0);
-    let tssx = tss(x);
     expect(tssx).toBeCloseTo(596, 6); // ok
-    let R2x = rssx / tssx;
     expect(R2x).toBeCloseTo(0.7031765, 2);
   });
+
   it('test OPLS sampleAClass', () => {
-    let c = sampleAClass(metadata, 0.1).trainIndex;
-    let d = [];
+    const c = sampleAClass(metadata, 0.1).trainIndex;
+    const d = [];
     c.forEach((el) => d.push(metadata[el]));
     let counts = {};
     d.forEach((x) => {
       counts[x] = (counts[x] || 0) + 1;
     });
+
     expect(sampleAClass(metadata, 0.1).trainIndex).toHaveLength(15);
     expect(sampleAClass(metadata, 0.1).testIndex).toHaveLength(135);
     expect(sampleAClass(metadata, 0.1).mask).toHaveLength(150);
@@ -294,40 +267,35 @@ describe('OPLS utility functions', () => {
       JSON.stringify({ setosa: 5, versicolor: 5, virginica: 5 }),
     );
   });
-  it('test OPLS sampleAClass 2', () => {
-    let c = sampleAClass(metadata, 0.1).mask;
 
-    let train = metadata.filter((f, idx) => c[idx]);
-    let test = metadata.filter((f, idx) => !c[idx]);
+  it('test OPLS sampleAClass 2', () => {
+    const c = sampleAClass(metadata, 0.1).mask;
+    const train = metadata.filter((f, idx) => c[idx]);
+    const test = metadata.filter((f, idx) => !c[idx]);
+
     expect(train).toHaveLength(15);
     expect(test).toHaveLength(135);
     expect(sampleAClass(metadata, 0.1).mask).toHaveLength(150);
   });
-  it('test OPLS dataArray', () => {
-    let x = new Matrix(iris);
 
-    let trainTestLabels = require('../../data/trainTestLabels.json');
-    let options = { trainTestLabels, nComp: 3 };
-    let M = new METADATA([metadata], { headers: ['iris'] });
-    let labels = M.get('iris', { format: 'factor' }).values;
-    let model = new OPLS(x, labels, options);
+  it('test OPLS dataArray', () => {
+    const x = new Matrix(iris);
+    const trainTestLabels = require('../../data/trainTestLabels.json');
+    const M = new METADATA([metadata], { headers: ['iris'] });
+    const labels = M.get('iris', { format: 'factor' }).values;
+    const model = new OPLS(x, labels, { trainTestLabels });
+
     expect(model.model).toHaveLength(3);
   });
 });
 
 describe('OPLS', () => {
-  it('test nComp = 2', () => {
-    let x = new Matrix(iris);
+  it('test OPLS with 7 folds', () => {
+    const x = new Matrix(iris);
+    const cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+    const labels = newM.get('iris', { format: 'factor' }).values;
+    const model = new OPLS(x, labels, { cvFolds });
 
-    // let trainTestLabels = require('../../data/trainTestLabels.json');
-    // let options = { trainTestLabels, nComp: 1, folds };
-
-    let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
-
-    let options = { cvFolds, nComp: 2 };
-
-    let labels = newM.get('iris', { format: 'factor' }).values;
-    let model = new OPLS(x, labels, options);
     expect(model.tCV[0].get(0, 0)).toBeCloseTo(-2.48581401, 6);
     expect(model.tOrthCV[0].get(0, 0)).toBeCloseTo(0.078273936, 6);
     expect(model.tOrthCV[1].get(0, 0)).toBeCloseTo(-0.439656132, 6);
@@ -342,6 +310,7 @@ describe('OPLS', () => {
     expect(model.model[0].tPred.get(0, 0)).toBeCloseTo(-2.32295367, 6);
     expect(model.model[0].tOrth.get(0, 0)).toBeCloseTo(0.074537852, 6);
     expect(model.model[1].tOrth.get(0, 0)).toBeCloseTo(-0.416881408, 6);
+    expect(model.model[0].tOrth.get(149, 0)).toBeCloseTo(-0.486465664, 6);
     expect(model.model[0].pOrth.get(0, 0)).toBeCloseTo(1.318924, 6);
     expect(model.model[1].pOrth.get(0, 0)).toBeCloseTo(-0.2600433, 6);
     expect(model.model[0].wOrth.get(0, 0)).toBeCloseTo(0.7888785, 6);
@@ -361,34 +330,39 @@ describe('OPLS', () => {
       6,
     );
     expect(model.model[1].plsC.yResidual.get(0, 0)).toBeCloseTo(0.09827427, 6);
-
     expect(model.model[0].plsC.xResidual.get(0, 0)).toBeCloseTo(0.113718555, 3);
     expect(model.model[1].plsC.xResidual.get(0, 0)).toBeCloseTo(0.006007284, 3);
+    expect(model.model[0].XOrth.get(0, 0)).toBeCloseTo(0.09830979, 6);
+    expect(model.model[0].totalPred.get(0, 0)).toBeCloseTo(-1.33501112, 6);
+    expect(model.model[0].oplsC.filteredX.get(0, 0)).toBeCloseTo(
+      -0.99598366,
+      6,
+    );
+    expect(model.model[0].oplsC.scoresXOrtho.get(0, 0)).toBeCloseTo(
+      0.074537852,
+      6,
+    );
   });
 });
 
 describe('confusion matrix', () => {
   const trueLabels = [1];
   const predictedLabels = [1];
+  const CM2 = ConfusionMatrix.fromLabels(trueLabels, predictedLabels);
 
-  let CM2 = ConfusionMatrix.fromLabels(trueLabels, predictedLabels);
   it('test confusion matrix works even with length 1', () => {
     expect(CM2.getAccuracy()).toStrictEqual(1);
   });
 });
 
 describe('import / export model', () => {
-  let x = new Matrix(iris);
+  const x = new Matrix(iris);
+  const cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+  const labels = newM.get('iris', { format: 'factor' }).values;
+  const model = new OPLS(x, labels, { cvFolds });
+  const exportedModel = JSON.stringify(model.toJSON());
+  const newModel = OPLS.load(JSON.parse(exportedModel));
 
-  let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
-
-  let options = { cvFolds, nComp: 2 };
-
-  let labels = newM.get('iris', { format: 'factor' }).values;
-  let model = new OPLS(x, labels, options);
-  let exportedModel = JSON.stringify(model.toJSON());
-
-  let newModel = OPLS.load(JSON.parse(exportedModel));
   it('test export', () => {
     expect(JSON.parse(exportedModel).name).toStrictEqual('OPLS');
   });
@@ -398,19 +372,12 @@ describe('import / export model', () => {
 });
 
 describe('prediction', () => {
-  let x = new Matrix(iris);
+  const x = new Matrix(iris);
+  const cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+  const labels = newM.get('iris', { format: 'factor' }).values;
+  const model = new OPLS(x, labels, { cvFolds });
+  const prediction = model.predict(x, { trueLabels: labels });
 
-  let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
-
-  let options = { cvFolds, nComp: 1 };
-
-  let labels = newM.get('iris', { format: 'factor' }).values;
-
-  let model = new OPLS(x, labels, options);
-  // let exportedModel = JSON.stringify(model.toJSON());
-  let prediction = model.predict(x, { trueLabels: labels });
-  // console.log(prediction);
-  // console.log(model.getLogs().yHat);
   it('test prediction length', () => {
     expect(prediction.tPred.rows).toStrictEqual(150);
   });

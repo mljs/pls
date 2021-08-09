@@ -11,7 +11,6 @@ import { tss } from './util/tss.js';
  * @param {Matrix} data - matrix containing data (X).
  * @param {Array} labels - 1D Array containing metadata (Y).
  * @param {Object} [options]
- * @param {number} [options.nComp = 3] - number of latent structures computed.
  * @param {boolean} [options.center = true] - should the data be centered (subtract the mean).
  * @param {boolean} [options.scale = false] - should the data be scaled (divide by the standard deviation).
  * @param {Array} [options.cvFolds = []] - allows to provide folds as 2D array for testing purpose.
@@ -150,7 +149,6 @@ export class OPLS {
 
         // prediction
         const tPred = Eh.mmul(plsCV.w.transpose());
-        // this should be summed over ncomp (pls_prediction.R line 23)
         const yHatComponents = tPred
           .mmul(plsCV.betas)
           .mmul(plsCV.q.transpose()); // ok
@@ -362,7 +360,6 @@ export class OPLS {
       Eh.sub(tOrth.mmul(pOrth));
       // prediction
       tPred = Eh.mmul(this.model[idx].plsC.w.transpose());
-      // this should be summed over ncomp (pls_prediction.R line 23)
       yHat = tPred.mmul(this.model[idx].plsC.betas);
     }
 
@@ -461,8 +458,6 @@ export class OPLS {
       trainLabels.setRow(idx, group.getRow(el));
     });
 
-    // console.log({ testFeatures, testLabels, trainFeatures, trainLabels });
-
     return {
       trainFeatures,
       testFeatures,
@@ -475,13 +470,22 @@ export class OPLS {
 function createDummyY(array) {
   const features = [...new Set(array)];
   const result = [];
-  for (let i = 0; i < features.length; i++) {
-    const feature = [];
-    for (let j = 0; j < array.length; j++) {
-      const point = features[i] === array[j] ? 1 : -1;
-      feature.push(point);
+  if (features.length > 2) {
+    for (let i = 0; i < features.length; i++) {
+      const feature = [];
+      for (let j = 0; j < array.length; j++) {
+        const point = features[i] === array[j] ? 1 : -1;
+        feature.push(point);
+      }
+      result.push(feature);
     }
-    result.push(feature);
+    return result;
+  } else {
+    const result = [];
+    for (let j = 0; j < array.length; j++) {
+      const point = features[0] === array[j] ? 2 : 1;
+      result.push(point);
+    }
+    return [result];
   }
-  return result;
 }

@@ -11,7 +11,7 @@ const iris = getNumbers();
 const metadata = getClasses();
 const newM = new METADATA([metadata], { headers: ['iris'] });
 
-/* # R code
+/* # R-code:
 library(MetaboMate)
 data(iris)
 X=as.matrix(iris[,1:4])
@@ -25,7 +25,7 @@ model@summary
 PC_o 1 0.7 0.93 0.93
 */
 
-test('Statistic values with OPLS-R', () => {
+test('Statistic values with OPLS-R working on iris dataset', () => {
   const x = new Matrix(iris);
   const y = newM.get('iris', { format: 'factor' }).values;
   const opls = new OPLS(x, y, { cvFolds: kFoldStratified });
@@ -40,7 +40,7 @@ model@summary
        R2X  R2Y   Q2 AUROC
 PC_o 1 0.72 0.67 0.67  0.57
 */
-test('Statistic values with OPLS-DA', () => {
+test('Statistic values with OPLS-DA working on iris dataset', () => {
   const x = new Matrix(iris);
   const opls = new OPLS(x, metadata, { cvFolds: kFoldStratified });
   expect(opls.output.Q2y[0]).toBeCloseTo(0.6666553, 6);
