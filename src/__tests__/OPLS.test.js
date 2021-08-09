@@ -285,7 +285,7 @@ describe('OPLS utility functions', () => {
     const labels = M.get('iris', { format: 'factor' }).values;
     const model = new OPLS(x, labels, { cvFolds: trainTestLabels });
 
-    expect(model.model).toHaveLength(3);
+    expect(model.model).toHaveLength(2);
   });
 });
 

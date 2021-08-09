@@ -13,8 +13,8 @@ import { tss } from './util/tss.js';
  * @param {Object} [options]
  * @param {boolean} [options.center = true] - should the data be centered (subtract the mean).
  * @param {boolean} [options.scale = false] - should the data be scaled (divide by the standard deviation).
- * @param {Array} [options.cvFolds = []] - allows to provide folds as 2D array for testing purpose.
- * @param {number} [options.nbFolds] - allows to provide folds as 2D array for testing purpose.
+ * @param {Array} [options.cvFolds = []] - Allows to provide folds as array of objects with the arrays trainIndex and testIndex as properties.
+ * @param {number} [options.nbFolds] - Allows to generate the defined number of folds with the training and test set choosen randomly from the data set.
  * */
 
 export class OPLS {
@@ -48,9 +48,7 @@ export class OPLS {
     } else if (typeof labels[0] === 'string') {
       // non-numeric labels: OPLS-DA is used
       this.mode = 'discriminantAnalysis';
-      const dummyY = Matrix.checkMatrix(createDummyY(labels)).transpose();
-      group = Matrix.checkMatrix(dummyY);
-      // group = labels;
+      group = Matrix.checkMatrix(createDummyY(labels)).transpose();
     }
 
     // getting center and scale the features (all)
