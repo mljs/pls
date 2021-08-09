@@ -283,7 +283,7 @@ describe('OPLS utility functions', () => {
     const trainTestLabels = require('../../data/trainTestLabels.json');
     const M = new METADATA([metadata], { headers: ['iris'] });
     const labels = M.get('iris', { format: 'factor' }).values;
-    const model = new OPLS(x, labels, { trainTestLabels });
+    const model = new OPLS(x, labels, { cvFolds: trainTestLabels });
 
     expect(model.model).toHaveLength(3);
   });
