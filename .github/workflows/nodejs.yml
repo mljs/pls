@@ -2,38 +2,42 @@ name: Node.js CI
 
 on:
   push:
-    branches: master
+    branches:
+      - master
   pull_request:
+
+env:
+  NODE_VERSION: 16.x
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: Use Node.js 12
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
         with:
-          node-version: 12
-      - name: npm install and test
-        run: |
-          npm install
-          npm run eslint
-        env:
-          CI: true
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dependencies
+        run: npm install
+      - name: Run ESLint
+        run: npm run eslint
+      - name: Run Prettier
+        run: npm run prettier 
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [10.x, 12.x, 13.x]
+        node-version: [14.x, 16.x]
+      fail-fast: false
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - name: npm install and test
-        run: |
-          npm install
-          npm run test-coverage
-        env:
-          CI: true
+      - name: Install dependencies
+        run: npm install
+      - name: Run tests
+        run: npm run test-coverage
+      - name: Send coverage report to Codecov
+        uses: codecov/codecov-action@v2
