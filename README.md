@@ -25,24 +25,24 @@ OPLS implementation based on the R package [Metabomate](https://github.com/kimsc
 ```js
 import PLS from 'ml-pls';
 
-var X = [
+const X = [
   [0.1, 0.02],
   [0.25, 1.01],
   [0.95, 0.01],
   [1.01, 0.96],
 ];
-var Y = [
+const Y = [
   [1, 0],
   [1, 0],
   [1, 0],
   [0, 1],
 ];
-var options = {
+const options = {
   latentVectors: 10,
   tolerance: 1e-4,
 };
 
-var pls = new PLS(options);
+const pls = new PLS(options);
 pls.train(X, Y);
 ```
 
@@ -54,18 +54,18 @@ pls.train(X, Y);
 import Kernel from 'ml-kernel';
 import KOPLS from 'ml-pls';
 
-var kernel = new Kernel('gaussian', {
+const kernel = new Kernel('gaussian', {
   sigma: 25,
 });
 
-var cls = new KOPLS({
+const cls = new KOPLS({
   orthogonalComponents: 10,
   predictiveComponents: 1,
   kernel: kernel,
 });
 
 cls.train(Xtrain, Ytrain);
-var {
+const {
   prediction, // prediction
   predScoreMat, // Score matrix over prediction
   predYOrthVectors, // Y-Orthogonal vectors over prediction
@@ -80,7 +80,7 @@ import {
   getNumbers,
   getClasses,
   getCrossValidationSets,
-} from 'ml-dataset-iris'; 
+} from 'ml-dataset-iris';
 
 // get dataset-metadata
 import { METADATA } from 'ml-dataset-metadata';
@@ -90,7 +90,7 @@ let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
 
 let x = new Matrix(iris);
 
-let oplsOptions = { cvFolds, nComp: 1 };
+let oplsOptions = { cvFolds };
 
 // get labels as factor (for regression)
 let labels = new METADATA([metadata], { headers: ['iris'] });
@@ -99,11 +99,13 @@ let y = labels.get('iris', { format: 'factor' }).values;
 // get model
 let model = new OPLS(x, y, oplsOptions);
 ```
-The OPLS class is intended for exploratory modeling, that is not for the creation of predictors. Therefore there is a built-in k-fold cross-validation loop and Q2y is an average over the folds. 
 
-```js 
+The OPLS class is intended for exploratory modeling, that is not for the creation of predictors. Therefore there is a built-in k-fold cross-validation loop and Q2y is an average over the folds.
+
+```js
 console.log(model.model[0].Q2y);
-``` 
+```
+
 should give 0.9209227614652857
 
 If for some reason a predictor is necessary the following code may serve as an example
@@ -140,7 +142,6 @@ let model = new OPLS(
 let prediction = model.predict(testX, { trueLabels: testY });
 console.log(model.model[0].Q2y);
 ```
-
 
 ## [API Documentation](http://mljs.github.io/pls/)
 
