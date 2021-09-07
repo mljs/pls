@@ -232,7 +232,7 @@
     </h3>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/OPLS.js#L19-L426'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/OPLS.js#L20-L466'>
       <span>src/OPLS.js</span>
       </a>
     
@@ -241,7 +241,7 @@
 
   <p>Creates new OPLS (orthogonal partial latent structures) from features and labels.</p>
 
-    <div class='pre p1 fill-light mt0'>new OPLS(data: Matrix, labels: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>, options: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</div>
+    <div class='pre p1 fill-light mt0'>new OPLS(data: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>, labels: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>, options: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -258,7 +258,7 @@
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>data</span> <code class='quiet'>(Matrix)</code>
+            <span class='code bold'>data</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>)</code>
 	    matrix containing data (X).
 
           </div>
@@ -276,7 +276,7 @@
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>options</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?
+            <span class='code bold'>options</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>
             = <code>{}</code>)</code>
 	    
           </div>
@@ -295,17 +295,6 @@
             <tbody class='mt1'>
               
                 <tr>
-  <td class='break-word'><span class='code bold'>options.nComp</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>
-  
-    (default <code>3</code>)
-  </td>
-  <td class='break-word'><span>number of latent structures computed.
-</span></td>
-</tr>
-
-
-              
-                <tr>
   <td class='break-word'><span class='code bold'>options.center</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></code>
   
     (default <code>true</code>)
@@ -319,7 +308,7 @@
                 <tr>
   <td class='break-word'><span class='code bold'>options.scale</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></code>
   
-    (default <code>false</code>)
+    (default <code>true</code>)
   </td>
   <td class='break-word'><span>should the data be scaled (divide by the standard deviation).
 </span></td>
@@ -332,7 +321,18 @@
   
     (default <code>[]</code>)
   </td>
-  <td class='break-word'><span>allows to provide folds as 2D array for testing purpose.
+  <td class='break-word'><span>Allows to provide folds as array of objects with the arrays trainIndex and testIndex as properties.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>options.nbFolds</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></code>
+  
+    (default <code>7</code>)
+  </td>
+  <td class='break-word'><span>Allows to generate the defined number of folds with the training and test set choosen randomly from the data set.
 </span></td>
 </tr>
 
@@ -374,7 +374,7 @@
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/OPLS.js#L249-L257'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/OPLS.js#L280-L288'>
       <span>src/OPLS.js</span>
       </a>
     
@@ -460,7 +460,7 @@
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/OPLS.js#L404-L425'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/OPLS.js#L444-L465'>
       <span>src/OPLS.js</span>
       </a>
     
@@ -549,7 +549,7 @@
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/OPLS.js#L234-L236'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/OPLS.js#L265-L267'>
       <span>src/OPLS.js</span>
       </a>
     
@@ -616,7 +616,7 @@ Mainly for debug and testing</p>
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/OPLS.js#L285-L347'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/OPLS.js#L316-L382'>
       <span>src/OPLS.js</span>
       </a>
     
@@ -747,7 +747,7 @@ Mainly for debug and testing</p>
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/OPLS.js#L263-L275'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/OPLS.js#L294-L306'>
       <span>src/OPLS.js</span>
       </a>
     
@@ -821,7 +821,7 @@ Mainly for debug and testing</p>
     </h3>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/PLS.js#L8-L232'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/PLS.js#L8-L232'>
       <span>src/PLS.js</span>
       </a>
     
@@ -870,7 +870,7 @@ Mainly for debug and testing</p>
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/PLS.js#L226-L231'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/PLS.js#L226-L231'>
       <span>src/PLS.js</span>
       </a>
     
@@ -957,7 +957,7 @@ Mainly for debug and testing</p>
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/PLS.js#L199-L201'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/PLS.js#L199-L201'>
       <span>src/PLS.js</span>
       </a>
     
@@ -1022,7 +1022,7 @@ Mainly for debug and testing</p>
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/PLS.js#L185-L193'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/PLS.js#L185-L193'>
       <span>src/PLS.js</span>
       </a>
     
@@ -1102,7 +1102,7 @@ Mainly for debug and testing</p>
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/PLS.js#L207-L219'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/PLS.js#L207-L219'>
       <span>src/PLS.js</span>
       </a>
     
@@ -1168,7 +1168,7 @@ Mainly for debug and testing</p>
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/PLS.js#L50-L178'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/PLS.js#L50-L178'>
       <span>src/PLS.js</span>
       </a>
     
@@ -1262,7 +1262,7 @@ W - Weight matrix of X</p>
     </h3>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/KOPLS.js#L8-L294'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/KOPLS.js#L8-L297'>
       <span>src/KOPLS.js</span>
       </a>
     
@@ -1311,7 +1311,7 @@ W - Weight matrix of X</p>
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/KOPLS.js#L282-L293'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/KOPLS.js#L285-L296'>
       <span>src/KOPLS.js</span>
       </a>
     
@@ -1408,7 +1408,7 @@ W - Weight matrix of X</p>
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/KOPLS.js#L194-L251'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/KOPLS.js#L197-L254'>
       <span>src/KOPLS.js</span>
       </a>
     
@@ -1487,7 +1487,7 @@ W - Weight matrix of X</p>
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/KOPLS.js#L257-L274'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/KOPLS.js#L260-L277'>
       <span>src/KOPLS.js</span>
       </a>
     
@@ -1553,7 +1553,7 @@ W - Weight matrix of X</p>
   <div class='clearfix'>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/KOPLS.js#L58-L187'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/KOPLS.js#L58-L190'>
       <span>src/KOPLS.js</span>
       </a>
     
@@ -1640,7 +1640,7 @@ W - Weight matrix of X</p>
     </h3>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/OPLSNipals.js#L19-L86'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/OPLSNipals.js#L19-L114'>
       <span>src/OPLSNipals.js</span>
       </a>
     
@@ -1649,7 +1649,7 @@ W - Weight matrix of X</p>
 
   <p>OPLS loop</p>
 
-    <div class='pre p1 fill-light mt0'>new OPLSNipals(x: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>, y: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>, options: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>): <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></div>
+    <div class='pre p1 fill-light mt0'>new OPLSNipals(X: any, Y: any, options: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, x: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>, y: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>): <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></div>
   
   
 
@@ -1666,6 +1666,32 @@ W - Weight matrix of X</p>
       
         <div class='space-bottom0'>
           <div>
+            <span class='code bold'>X</span> <code class='quiet'>(any)</code>
+	    
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>Y</span> <code class='quiet'>(any)</code>
+	    
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>options</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>
+            = <code>{}</code>)</code>
+	    an object with options
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
             <span class='code bold'>x</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>)</code>
 	    a matrix with features
 
@@ -1677,16 +1703,6 @@ W - Weight matrix of X</p>
           <div>
             <span class='code bold'>y</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>)</code>
 	    an array of labels (dependent variable)
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>options</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>
-            = <code>{}</code>)</code>
-	    an object with options
 
           </div>
           
@@ -1742,7 +1758,7 @@ loadingsY:)
     </h3>
     
     
-      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/022346e107e089b2149702770b937faf57ec8223/src/util/tss.js#L8-L10'>
+      <a class='fr fill-darken0 round round pad1x quiet h5' href='https://github.com/mljs/pls/blob/7d94e09b336b535ad0b7e465b29c7935c1bc2f45/src/util/tss.js#L8-L10'>
       <span>src/util/tss.js</span>
       </a>
     
