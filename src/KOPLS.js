@@ -106,11 +106,14 @@ export class KOPLS {
 
     let SigmaPow = Matrix.pow(Sigma, -0.5);
     // to avoid errors, check infinity
-    SigmaPow.apply(function (i, j) {
+
+    function removeInfinity(i, j) {
       if (this.get(i, j) === Infinity) {
         this.set(i, j, 0);
       }
-    });
+    }
+
+    SigmaPow.apply(removeInfinity);
 
     for (let i = 0; i < this.orthogonalComp; ++i) {
       predScoreMat[i] = kernelX[0][i]
