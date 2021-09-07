@@ -8,13 +8,13 @@ import { tss } from './util/tss.js';
 
 /**
  * Creates new OPLS (orthogonal partial latent structures) from features and labels.
- * @param {Matrix} data - matrix containing data (X).
+ * @param {Array} data - matrix containing data (X).
  * @param {Array} labels - 1D Array containing metadata (Y).
- * @param {Object} [options]
+ * @param {Object} [options={}]
  * @param {boolean} [options.center = true] - should the data be centered (subtract the mean).
- * @param {boolean} [options.scale = false] - should the data be scaled (divide by the standard deviation).
+ * @param {boolean} [options.scale = true] - should the data be scaled (divide by the standard deviation).
  * @param {Array} [options.cvFolds = []] - Allows to provide folds as array of objects with the arrays trainIndex and testIndex as properties.
- * @param {number} [options.nbFolds] - Allows to generate the defined number of folds with the training and test set choosen randomly from the data set.
+ * @param {number} [options.nbFolds = 7] - Allows to generate the defined number of folds with the training and test set choosen randomly from the data set.
  * */
 
 export class OPLS {

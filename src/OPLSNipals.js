@@ -16,16 +16,16 @@ import { norm } from './util/utils.js';
     scoresXpred: t,
     loadingsY:)
  */
-export function OPLSNipals(x, y, options = {}) {
-  const { numberOSC = 100 } = options;
+export function OPLSNipals(X, Y, options = {}) {
+  const { numberOSC = 100, limit = 10e-10 } = options;
 
-  let X = Matrix.checkMatrix(x);
-  let Y = Matrix.checkMatrix(y);
+  X = Matrix.checkMatrix(X);
+  Y = Matrix.checkMatrix(Y);
   let tW = [];
-  if (y.columns > 1) {
+  if (Y.columns > 1) {
     const wh = getWh(X, Y);
-    const ssWh = Math.pow(wh.norm(), 2);
-    let ssT = Math.pow(wh.norm(), 2);
+    const ssWh = wh.norm() ** 2;
+    let ssT = ssWh;
     let pcaW;
     let count = 0;
     do {
@@ -37,15 +37,15 @@ export function OPLSNipals(x, y, options = {}) {
         pcaW = new NIPALS(data);
         tW.push(pcaW.t);
       }
-      ssT = Math.pow(pcaW.t.norm(), 2);
+      ssT = wh.norm() ** 2;
       count++;
-    } while (ssT / ssWh > 10e-10);
+    } while (ssT / ssWh > limit);
   }
 
   let u = Y.getColumnVector(0);
   let diff = 1;
   let t, c, w, uNew;
-  for (let i = 0; i < numberOSC && diff > 10e-10; i++) {
+  for (let i = 0; i < numberOSC && diff > limit; i++) {
     w = u.transpose().mmul(X).div(u.transpose().mmul(u).get(0, 0));
     w = w.transpose().div(norm(w));
 
@@ -67,7 +67,7 @@ export function OPLSNipals(x, y, options = {}) {
   // calc loadings
   let wOrtho;
   let p = t.transpose().mmul(X).div(t.transpose().mmul(t).get(0, 0));
-  if (y.columns > 1) {
+  if (Y.columns > 1) {
     for (let i = 0; i < tW.length; i++) {
       let tw = tW[i].transpose();
       p = p.sub(
