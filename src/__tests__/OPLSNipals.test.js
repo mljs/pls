@@ -3,7 +3,7 @@ import { getNumbers, getClasses } from 'ml-dataset-iris';
 import { METADATA } from 'ml-dataset-metadata';
 import { Matrix } from 'ml-matrix';
 
-import { OPLSNipals } from '../OPLSNipals';
+import { oplsNipals } from '../oplsNipals';
 
 expect.extend({ toBeDeepCloseTo });
 
@@ -25,7 +25,7 @@ describe('opls-nipals', () => {
     x = x.center('column').scale('column');
     y = y.center('column').scale('column');
 
-    let model = OPLSNipals(x, y);
+    let model = oplsNipals(x, y);
 
     expect(model.scoresXOrtho.to1DArray()).toHaveLength(150);
   });
@@ -33,7 +33,7 @@ describe('opls-nipals', () => {
   it('test opls-nipals with iris', () => {
     let x = new Matrix(iris);
     let y = numericValues.clone();
-    let model = OPLSNipals(x, y);
+    let model = oplsNipals(x, y);
 
     expect(model.scoresXpred.getRow(0)).toBeDeepCloseTo([5.66576130528549]);
     expect(model.scoresXpred.getRow(1)).toBeDeepCloseTo([5.357904200567914]);
@@ -73,7 +73,7 @@ describe('opls-nipals', () => {
     let y = new Matrix(numericValues.rows, 2);
     y.setColumn(0, numericValues);
     y.setColumn(1, numericValues);
-    let model = OPLSNipals(x, y);
+    let model = oplsNipals(x, y);
     expect(model.loadingsXpred.getRow(0)).toBeDeepCloseTo([
       -39.87921132989588, -18.15477710189015, -32.14670745016701,
       -11.264000394844325,
@@ -117,7 +117,7 @@ describe('opls-nipals', () => {
     x = x.center('column').scale('column');
     y = y.center('column').scale('column');
 
-    let model = OPLSNipals(x, y);
+    let model = oplsNipals(x, y);
 
     expect(model.scoresXOrtho.to1DArray()).toHaveLength(8);
 

@@ -10,7 +10,7 @@ import { METADATA } from 'ml-dataset-metadata';
 import { Matrix, NIPALS } from 'ml-matrix';
 
 import { OPLS } from '../OPLS.js';
-import { OPLSNipals } from '../OPLSNipals.js';
+import { oplsNipals } from '../oplsNipals.js';
 import { tss } from '../util/tss.js';
 
 expect.extend({ toBeDeepCloseTo });
@@ -51,7 +51,7 @@ describe('OPLS nipals components', () => {
     y.remove(toExclude, 'row');
     y = y.get('iris', { format: 'matrix' }).values;
     y = y.center('column').scale('column');
-    const opls = OPLSNipals(x, y);
+    const opls = oplsNipals(x, y);
 
     expect(folds[0].reduce((a, c) => a + c)).toStrictEqual(9343); // ok
     expect(y.rows).toStrictEqual(127); // ok
@@ -150,7 +150,7 @@ describe('OPLS nipals components', () => {
       y = M.get('iris', { format: 'matrix' }).values;
       y = y.center('column').scale('column');
 
-      const opls = OPLSNipals(x, y);
+      const opls = oplsNipals(x, y);
       const xResidual = opls.filteredX;
       const plsComp = new NIPALS(xResidual, { Y: y });
 
@@ -213,7 +213,7 @@ describe('OPLS utility functions', () => {
     let x = new Matrix(iris);
     x = x.center('column').scale('column');
 
-    const res = OPLSNipals(x, y);
+    const res = oplsNipals(x, y);
     const xRes = res.filteredX;
     expect(xRes.get(0, 0)).toBeCloseTo(-0.99598366, 6);
     expect(res.scoresXOrtho.get(0, 0)).toBeCloseTo(0.074537852, 6);

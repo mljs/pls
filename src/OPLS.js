@@ -3,7 +3,7 @@ import { getFolds } from 'ml-cross-validation';
 import { Matrix, NIPALS } from 'ml-matrix';
 import { getRocCurve, getAuc } from 'ml-roc-multiclass';
 
-import { OPLSNipals } from './OPLSNipals.js';
+import { oplsNipals } from './oplsNipals.js';
 import { tss } from './util/tss.js';
 
 /**
@@ -124,9 +124,9 @@ export class OPLS {
         // perform opls
         let oplsk;
         if (nc === 0) {
-          oplsk = OPLSNipals(Xk, Yk);
+          oplsk = oplsNipals(Xk, Yk);
         } else {
-          oplsk = OPLSNipals(oplsCV[nc - 1][f].filteredX, Yk);
+          oplsk = oplsNipals(oplsCV[nc - 1][f].filteredX, Yk);
         }
 
         // store model for next component
@@ -403,7 +403,7 @@ export class OPLS {
       this.tssx = tss(features);
     }
 
-    const oplsC = OPLSNipals(features, labels);
+    const oplsC = oplsNipals(features, labels);
     const plsC = new NIPALS(oplsC.filteredX, { Y: labels });
 
     const tPred = oplsC.filteredX.mmul(plsC.w.transpose());
