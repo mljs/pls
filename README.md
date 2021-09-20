@@ -46,58 +46,22 @@ const pls = new PLS(options);
 pls.train(X, Y);
 ```
 
-### [K-OPLS](./src/KOPLS.js)
+### [OPLS-R](./src/OPLS.js)
 
 ```js
-// assuming that you created Xtrain, Xtest, Ytrain, Ytest
-
-import Kernel from 'ml-kernel';
-import KOPLS from 'ml-pls';
-
-const kernel = new Kernel('gaussian', {
-  sigma: 25,
-});
-
-const cls = new KOPLS({
-  orthogonalComponents: 10,
-  predictiveComponents: 1,
-  kernel: kernel,
-});
-
-cls.train(Xtrain, Ytrain);
-const {
-  prediction, // prediction
-  predScoreMat, // Score matrix over prediction
-  predYOrthVectors, // Y-Orthogonal vectors over prediction
-} = cls.predict(Xtest);
-```
-
-### [OPLS](./src/OPLS.js)
-
-```js
-// get the famous iris dataset
 import {
   getNumbers,
-  getClasses,
+  getClassesAsNumber,
   getCrossValidationSets,
 } from 'ml-dataset-iris';
+import { OPLS } from 'ml-pls';
 
-// get dataset-metadata
-import { METADATA } from 'ml-dataset-metadata';
+const cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+const data = getNumbers();
+const irisLabels = getClassesAsNumber();
 
-// get frozen folds for testing purposes
-let cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
-
-let x = new Matrix(iris);
-
-let oplsOptions = { cvFolds };
-
-// get labels as factor (for regression)
-let labels = new METADATA([metadata], { headers: ['iris'] });
-let y = labels.get('iris', { format: 'factor' }).values;
-
-// get model
-let model = new OPLS(x, y, oplsOptions);
+const model = new OPLS(data, irisLabels, { cvFolds });
+console.log(model.mode); // 'regression'
 ```
 
 The OPLS class is intended for exploratory modeling, that is not for the creation of predictors. Therefore there is a built-in k-fold cross-validation loop and Q2y is an average over the folds.
@@ -105,42 +69,102 @@ The OPLS class is intended for exploratory modeling, that is not for the creatio
 ```js
 console.log(model.model[0].Q2y);
 ```
-
 should give 0.9209227614652857
+
+### [OPLS-DA](./src/OPLS.js)
+
+```js
+import {
+  getNumbers,
+  getClasses,
+  getCrossValidationSets,
+} from 'ml-dataset-iris';
+import { OPLS } from 'ml-pls';
+
+const cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+const data = getNumbers();
+const irisLabels = getClasses();
+
+const model = new OPLS(data, irisLabels, { cvFolds });
+console.log(model.mode); // 'discriminantAnalysis'
+console.log(model.model[0].auc); // 0.5366666666666665,
+```
 
 If for some reason a predictor is necessary the following code may serve as an example
 
+### [Prediction](./src/OPLS.js)
+
 ```js
-let testIndex = getCrossValidationSets(7, { idx: 0, by: 'trainTest' })[0]
-  .testIndex;
-let trainIndex = getCrossValidationSets(7, { idx: 0, by: 'trainTest' })[0]
-  .trainIndex;
+import {
+  getNumbers,
+  getClassesAsNumber,
+  getCrossValidationSets,
+} from 'ml-dataset-iris';
+import { OPLS } from 'ml-pls';
 
-// get data
-let data = getNumbers();
-// set test and training set
-let testX = data.filter((el, idx) => testIndex.includes(idx));
-let trainingX = data.filter((el, idx) => trainIndex.includes(idx));
+// get frozen folds for testing purposes
+const { testIndex, trainIndex } = getCrossValidationSets(7, {
+  idx: 0,
+  by: 'trainTest',
+})[0];
 
-// convert to matrix
-trainingX = new Matrix(trainingX);
-testX = new Matrix(testX);
+// Getting the data of selected fold
+const irisNumbers = getNumbers();
+const testData = irisNumbers.filter((el, idx) => testIndex.includes(idx));
+const trainingData = irisNumbers.filter((el, idx) => trainIndex.includes(idx));
 
-// get metadata
-let labels = getClasses();
-let testLabels = labels.filter((el, idx) => testIndex.includes(idx));
-let trainingLabels = labels.filter((el, idx) => trainIndex.includes(idx));
-let trainingY = new METADATA([trainingLabels], { headers: ['iris'] });
-let testY = new METADATA([testLabels], { headers: ['iris'] }).get('iris', {
-  format: 'factor',
-}).values;
+// Getting the labels of selected fold
+const irisLabels = getClassesAsNumber();
+const testLabels = irisLabels.filter((el, idx) => testIndex.includes(idx));
+const trainingLabels = irisLabels.filter((el, idx) => trainIndex.includes(idx));
 
-let model = new OPLS(
-  trainingX,
-  trainingY.get('iris', { format: 'factor' }).values,
-);
-let prediction = model.predict(testX, { trueLabels: testY });
-console.log(model.model[0].Q2y);
+const model = new OPLS(trainingData, trainingLabels);
+console.log(model.mode); // 'discriminantAnalysis'
+const prediction = model.predict(testData, { trueLabels: testLabels });
+// Get the predicted Q2 value
+console.log(prediction.Q2y); // 0.9247698398971457
+```
+
+### [K-OPLS](./src/KOPLS.js)
+
+```js
+import Kernel from 'ml-kernel';
+import { KOPLS } from 'ml-pls';
+
+const kernel = new Kernel('gaussian', {
+  sigma: 25,
+});
+
+const X = [
+  [0.1, 0.02],
+  [0.25, 1.01],
+  [0.95, 0.01],
+  [1.01, 0.96],
+];
+const Y = [
+  [1, 0],
+  [1, 0],
+  [1, 0],
+  [0, 1],
+];
+
+const cls = new KOPLS({
+  orthogonalComponents: 10,
+  predictiveComponents: 1,
+  kernel: kernel,
+});
+
+cls.train(X, Y);
+
+const {
+  prediction, // prediction
+  predScoreMat, // Score matrix over prediction
+  predYOrthVectors, // Y-Orthogonal vectors over prediction
+} = cls.predict(X);
+
+console.log(prediction);
+console.log(predScoreMat);
+console.log(predYOrthVectors);
 ```
 
 ## [API Documentation](http://mljs.github.io/pls/)

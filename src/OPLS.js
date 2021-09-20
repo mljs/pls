@@ -314,11 +314,10 @@ export class OPLS {
    * @return {Object} - predictions
    */
   predict(newData, options = {}) {
-    let { trueLabels = [] } = options;
+    const { trueLabels = [] } = options;
     let labels;
     if (trueLabels.length > 0) {
-      trueLabels = Matrix.from1DArray(trueLabels.length, 1, trueLabels);
-      labels = trueLabels.clone();
+      labels = Matrix.from1DArray(trueLabels.length, 1, trueLabels);
     }
 
     const features = new Matrix(newData);
@@ -370,11 +369,13 @@ export class OPLS {
         return { tPred, tOrth, yHat, Q2y };
       } else if (this.mode === 'discriminantAnalysis') {
         const confusionMatrix = ConfusionMatrix.fromLabels(
-          trueLabels.to1DArray(),
+          trueLabels,
           yHat.to1DArray(),
         );
 
-        return { tPred, tOrth, yHat, confusionMatrix };
+        const rocCurve = getRocCurve(trueLabels, yHat.to1DArray());
+        const auc = getAuc(rocCurve);
+        return { tPred, tOrth, yHat, confusionMatrix, auc };
       }
     } else {
       return { tPred, tOrth, yHat };
