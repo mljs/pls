@@ -47,6 +47,13 @@
 
 
 <a name="0.2.1"></a>
+## [4.1.0](https://www.github.com/mljs/pls/compare/v4.0.0...v4.1.0) (2021-09-20)
+
+
+### Features
+
+* add lactame deploy ([77c3486](https://www.github.com/mljs/pls/commit/77c3486098cc4a2ec9eeb591995ed5bfaa7bdb6b))
+
 ## [4.0.0](https://www.github.com/mljs/pls/compare/v3.0.0...v4.0.0) (2021-09-20)
 
 
