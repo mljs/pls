@@ -47,6 +47,23 @@
 
 
 <a name="0.2.1"></a>
+## [4.0.0](https://www.github.com/mljs/pls/compare/v3.0.0...v4.0.0) (2021-09-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* Rename OPLSNipals to oplsNipals
+
+### Features
+
+* add discriminant analysis + test case ([#19](https://www.github.com/mljs/pls/issues/19)) ([386c255](https://www.github.com/mljs/pls/commit/386c255163eed1876d3c7a070338f3b8e0edb138))
+* Rename OPLSNipals to oplsNipals ([43861f1](https://www.github.com/mljs/pls/commit/43861f1869f4478dc632641d0a9bbc11d893b00d))
+
+
+### Bug Fixes
+
+* allow OPLS to accept an array of array ([ddb0afb](https://www.github.com/mljs/pls/commit/ddb0afb2bbe5156f0624128e777e3222ee1c67c3))
+
 ## [0.2.1](https://github.com/mljs/pls/compare/v0.2.0...v0.2.1) (2017-07-25)
 
 
@@ -109,6 +126,3 @@
 
 * **pls:** clone matrices. ([bf93c1a](https://github.com/mljs/pls/commit/bf93c1a))
 * **pls:** explained variance on training. ([7efb292](https://github.com/mljs/pls/commit/7efb292))
-
-
-
