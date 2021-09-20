@@ -9,6 +9,8 @@
     "src"
   ],
   "scripts": {
+    "bench": "node ./benchmark/transpose.js",
+    "build": "cheminfo-build --entry src/index.js --root PLS",
     "eslint": "eslint src",
     "eslint-fix": "npm run eslint -- --fix",
     "prepack": "rollup -c",
@@ -16,8 +18,7 @@
     "prettier-write": "prettier --write src",
     "test": "npm run test-coverage && npm run eslint && npm run prettier",
     "test-coverage": "jest --coverage",
-    "test-only": "jest",
-    "bench": "node ./benchmark/transpose.js"
+    "test-only": "jest"
   },
   "repository": {
     "type": "git",
@@ -52,6 +53,7 @@
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.15.4",
     "benchmark": "^2.1.4",
+    "cheminfo-build": "^1.1.11",
     "eslint": "^7.32.0",
     "eslint-config-cheminfo": "^5.5.0",
     "eslint-plugin-import": "^2.24.2",
