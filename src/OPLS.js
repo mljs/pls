@@ -320,23 +320,25 @@ export class OPLS {
       scale = this.scale,
     } = options;
 
-    const labels =
-      trueLabels.length > 0
-        ? Matrix.from1DArray(trueLabels.length, 1, trueLabels)
-        : undefined;
+    let labels;
+    if (typeof trueLabels[0] === 'number') {
+      labels = Matrix.from1DArray(trueLabels.length, 1, trueLabels);
+    } else if (typeof trueLabels[0] === 'string') {
+      labels = Matrix.checkMatrix(createDummyY(trueLabels)).transpose();
+    }
 
     const features = new Matrix(data);
 
     // scaling the test dataset with respect to the train
     if (center) {
       features.center('column', { center: this.means });
-      if (labels && labels.rows > 0 && this.mode === 'regression') {
+      if (labels && labels.rows > 0) {
         labels.center('column', { center: this.meansY });
       }
     }
     if (scale) {
       features.scale('column', { scale: this.stdevs });
-      if (labels && labels.rows > 0 && this.mode === 'regression') {
+      if (labels && labels.rows > 0) {
         labels.scale('column', { scale: this.stdevsY });
       }
     }
@@ -354,13 +356,14 @@ export class OPLS {
     let yHat;
     let tPred;
     for (let idx = 0; idx < nc; idx++) {
-      wOrth = this.model[idx].wOrth.transpose();
-      pOrth = this.model[idx].pOrth;
+      const model = this.model[idx];
+      wOrth = model.wOrth.transpose();
+      pOrth = model.pOrth;
       tOrth = Eh.mmul(wOrth);
       Eh.sub(tOrth.mmul(pOrth));
       // prediction
-      tPred = Eh.mmul(this.model[idx].plsC.w.transpose());
-      yHat = tPred.mmul(this.model[idx].plsC.betas);
+      tPred = Eh.mmul(model.plsC.w.transpose());
+      yHat = tPred.mmul(model.plsC.betas).mmul(model.plsC.q);
     }
 
     if (labels && labels.rows > 0) {

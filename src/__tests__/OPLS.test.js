@@ -401,6 +401,35 @@ describe('prediction', () => {
   });
 });
 
+describe('prediction with metadata', () => {
+  const x = new Matrix(iris);
+  const cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+  const model = new OPLS(x, metadata, { cvFolds });
+  const prediction = model.predict(x, { trueLabels: metadata });
+
+  it('test prediction length', () => {
+    expect(prediction.tPred.rows).toBe(150);
+  });
+
+  it('test prediction auc', () => {
+    expect(prediction.auc).toBeCloseTo(0.55826, 4);
+  });
+
+  it('test prediction tPred vector', () => {
+    expect(prediction.tPred.to1DArray()).toBeDeepCloseTo(
+      model.getLogs().tPred.to1DArray(),
+      5,
+    );
+  });
+
+  it('test prediction tOrth vector', () => {
+    expect(prediction.tOrth.to1DArray()).toBeDeepCloseTo(
+      model.getLogs().tOrth.to1DArray(),
+      5,
+    );
+  });
+});
+
 describe('prediction without labels', () => {
   const x = new Matrix(iris);
   const cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
