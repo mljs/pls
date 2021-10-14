@@ -53,8 +53,8 @@ describe('OPLS nipals components', () => {
     y = y.center('column').scale('column');
     const opls = oplsNipals(x, y);
 
-    expect(folds[0].reduce((a, c) => a + c)).toStrictEqual(9343); // ok
-    expect(y.rows).toStrictEqual(127); // ok
+    expect(folds[0].reduce((a, c) => a + c)).toBe(9343); // ok
+    expect(y.rows).toBe(127); // ok
     expect(y.get(0, 0)).toBeCloseTo(-1.22030407, 6); // ok
     expect(y.get(126, 0)).toBeCloseTo(1.2593538, 6); // ok
     expect(x.get(0, 0)).toBeCloseTo(-0.86171924, 6); // ok
@@ -203,7 +203,7 @@ describe('OPLS utility functions', () => {
     expect(x.get(0, 0)).toBeCloseTo(-0.8976739, 6);
     expect(y.get(0, 0)).toBeCloseTo(-1.220656, 6);
     expect(tss(x)).toBeCloseTo(596, 6);
-    expect(tss(y)).toStrictEqual(149);
+    expect(tss(y)).toBe(149);
   });
 
   it('test total prediction', () => {
@@ -351,7 +351,7 @@ describe('confusion matrix', () => {
   const CM2 = ConfusionMatrix.fromLabels(trueLabels, predictedLabels);
 
   it('test confusion matrix works even with length 1', () => {
-    expect(CM2.getAccuracy()).toStrictEqual(1);
+    expect(CM2.getAccuracy()).toBe(1);
   });
 });
 
@@ -364,10 +364,10 @@ describe('import / export model', () => {
   const newModel = OPLS.load(JSON.parse(exportedModel));
 
   it('test export', () => {
-    expect(JSON.parse(exportedModel).name).toStrictEqual('OPLS');
+    expect(JSON.parse(exportedModel).name).toBe('OPLS');
   });
   it('test import', () => {
-    expect(Object.keys(newModel)[0]).toStrictEqual('center');
+    expect(Object.keys(newModel)[0]).toBe('center');
   });
 });
 
@@ -379,11 +379,37 @@ describe('prediction', () => {
   const prediction = model.predict(x, { trueLabels: labels });
 
   it('test prediction length', () => {
-    expect(prediction.tPred.rows).toStrictEqual(150);
+    expect(prediction.tPred.rows).toBe(150);
   });
 
   it('test prediction Q2y', () => {
     expect(prediction.Q2y).toBeCloseTo(0.93039, 4);
+  });
+
+  it('test prediction yHat', () => {
+    expect(prediction.yHat.get(0, 0)).toBeCloseTo(
+      model.getLogs().yHat.get(0, 0),
+      5,
+    );
+  });
+
+  it('test prediction yHat vector', () => {
+    expect(prediction.yHat.to1DArray()).toBeDeepCloseTo(
+      model.getLogs().yHat.to1DArray(),
+      5,
+    );
+  });
+});
+
+describe('prediction without labels', () => {
+  const x = new Matrix(iris);
+  const cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+  const labels = newM.get('iris', { format: 'factor' }).values;
+  const model = new OPLS(x, labels, { cvFolds });
+  const prediction = model.predict(x);
+
+  it('test prediction length', () => {
+    expect(prediction.tPred.rows).toBe(150);
   });
 
   it('test prediction yHat', () => {

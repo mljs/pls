@@ -313,35 +313,38 @@ export class OPLS {
    * @param {Number} [options.nc] - the number of components to be used
    * @return {Object} - predictions
    */
-  predict(newData, options = {}) {
-    const { trueLabels = [] } = options;
-    let labels;
-    if (trueLabels.length > 0) {
-      labels = Matrix.from1DArray(trueLabels.length, 1, trueLabels);
-    }
+  predict(data, options = {}) {
+    const {
+      trueLabels = [],
+      center = this.center,
+      scale = this.scale,
+    } = options;
 
-    const features = new Matrix(newData);
+    const labels =
+      trueLabels.length > 0
+        ? Matrix.from1DArray(trueLabels.length, 1, trueLabels)
+        : undefined;
+
+    const features = new Matrix(data);
 
     // scaling the test dataset with respect to the train
-    if (this.center) {
+    if (center) {
       features.center('column', { center: this.means });
-      if (labels.rows > 0 && this.mode === 'regression') {
+      if (labels && labels.rows > 0 && this.mode === 'regression') {
         labels.center('column', { center: this.meansY });
       }
     }
-    if (this.scale) {
+    if (scale) {
       features.scale('column', { scale: this.stdevs });
-      if (labels.rows > 0 && this.mode === 'regression') {
+      if (labels && labels.rows > 0 && this.mode === 'regression') {
         labels.scale('column', { scale: this.stdevsY });
       }
     }
 
-    let nc;
-    if (this.mode === 'regression') {
-      nc = this.model[0].Q2y.length;
-    } else {
-      nc = this.model[0].auc.length;
-    }
+    const nc =
+      this.mode === 'regression'
+        ? this.model[0].Q2y.length
+        : this.model[0].auc.length;
 
     const Eh = features.clone();
     // removing the orthogonal components from PLS
@@ -360,7 +363,7 @@ export class OPLS {
       yHat = tPred.mmul(this.model[idx].plsC.betas);
     }
 
-    if (labels.rows > 0) {
+    if (labels && labels.rows > 0) {
       if (this.mode === 'regression') {
         const tssy = tss(labels);
         const press = tss(labels.clone().sub(yHat));
