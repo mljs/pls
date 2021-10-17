@@ -332,13 +332,13 @@ export class OPLS {
     // scaling the test dataset with respect to the train
     if (center) {
       features.center('column', { center: this.means });
-      if (labels && labels.rows > 0) {
+      if (labels?.rows > 0) {
         labels.center('column', { center: this.meansY });
       }
     }
     if (scale) {
       features.scale('column', { scale: this.stdevs });
-      if (labels && labels.rows > 0) {
+      if (labels?.rows > 0) {
         labels.scale('column', { scale: this.stdevsY });
       }
     }
@@ -366,7 +366,7 @@ export class OPLS {
       yHat = tPred.mmul(model.plsC.betas).mmul(model.plsC.q);
     }
 
-    if (labels && labels.rows > 0) {
+    if (labels?.rows > 0) {
       if (this.mode === 'regression') {
         const tssy = tss(labels);
         const press = tss(labels.clone().sub(yHat));
