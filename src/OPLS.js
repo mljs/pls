@@ -70,16 +70,10 @@ export class OPLS {
     // check and remove for features with sd = 0 TODO here
     // check opls.R line 70
 
-    let folds;
-    if (cvFolds.length > 0) {
-      folds = cvFolds;
-    } else {
-      folds = getFolds(labels, nbFolds);
-    }
+    const folds = cvFolds.length > 0 ? cvFolds : getFolds(labels, nbFolds);
     const Q2 = [];
     const aucResult = [];
     this.model = [];
-
     this.tCV = [];
     this.tOrthCV = [];
     this.yHatCV = [];
@@ -254,6 +248,7 @@ export class OPLS {
       yHat: m.totalPred,
       Yres: m.plsC.yResidual,
       E,
+      folds,
     };
   }
 
@@ -308,12 +303,12 @@ export class OPLS {
   /**
    * Predict scores for new data
    * @param {Matrix} features - a matrix containing new data
-   * @param {Object} [options]
+   * @param {Object} [options={}]
    * @param {Array} [options.trueLabel] - an array with true values to compute confusion matrix
    * @param {Number} [options.nc] - the number of components to be used
    * @return {Object} - predictions
    */
-  predict(data, options = {}) {
+  predict(features, options = {}) {
     const {
       trueLabels = [],
       center = this.center,
@@ -327,7 +322,7 @@ export class OPLS {
       labels = Matrix.checkMatrix(createDummyY(trueLabels)).transpose();
     }
 
-    const features = new Matrix(data);
+    features = new Matrix(features);
 
     // scaling the test dataset with respect to the train
     if (center) {
