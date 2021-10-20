@@ -47,6 +47,13 @@
 
 
 <a name="0.2.1"></a>
+### [4.1.1](https://www.github.com/mljs/pls/compare/v4.1.0...v4.1.1) (2021-10-20)
+
+
+### Bug Fixes
+
+* bug in OPLS predict method + testcase ([#25](https://www.github.com/mljs/pls/issues/25)) ([226d4c4](https://www.github.com/mljs/pls/commit/226d4c4dfe7542432e243d74dbeb3c2cd407089a))
+
 ## [4.1.0](https://www.github.com/mljs/pls/compare/v4.0.0...v4.1.0) (2021-09-20)
 
 
