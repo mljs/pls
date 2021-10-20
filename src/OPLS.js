@@ -70,16 +70,10 @@ export class OPLS {
     // check and remove for features with sd = 0 TODO here
     // check opls.R line 70
 
-    let folds;
-    if (cvFolds.length > 0) {
-      folds = cvFolds;
-    } else {
-      folds = getFolds(labels, nbFolds);
-    }
+    const folds = cvFolds.length > 0 ? cvFolds : getFolds(labels, nbFolds);
     const Q2 = [];
     const aucResult = [];
     this.model = [];
-
     this.tCV = [];
     this.tOrthCV = [];
     this.yHatCV = [];
@@ -254,6 +248,7 @@ export class OPLS {
       yHat: m.totalPred,
       Yres: m.plsC.yResidual,
       E,
+      folds,
     };
   }
 
@@ -308,40 +303,45 @@ export class OPLS {
   /**
    * Predict scores for new data
    * @param {Matrix} features - a matrix containing new data
-   * @param {Object} [options]
+   * @param {Object} [options={}]
    * @param {Array} [options.trueLabel] - an array with true values to compute confusion matrix
    * @param {Number} [options.nc] - the number of components to be used
    * @return {Object} - predictions
    */
-  predict(newData, options = {}) {
-    const { trueLabels = [] } = options;
+  predict(features, options = {}) {
+    const {
+      trueLabels = [],
+      center = this.center,
+      scale = this.scale,
+    } = options;
+
     let labels;
-    if (trueLabels.length > 0) {
+    if (typeof trueLabels[0] === 'number') {
       labels = Matrix.from1DArray(trueLabels.length, 1, trueLabels);
+    } else if (typeof trueLabels[0] === 'string') {
+      labels = Matrix.checkMatrix(createDummyY(trueLabels)).transpose();
     }
 
-    const features = new Matrix(newData);
+    features = new Matrix(features);
 
     // scaling the test dataset with respect to the train
-    if (this.center) {
+    if (center) {
       features.center('column', { center: this.means });
-      if (labels.rows > 0 && this.mode === 'regression') {
+      if (labels?.rows > 0) {
         labels.center('column', { center: this.meansY });
       }
     }
-    if (this.scale) {
+    if (scale) {
       features.scale('column', { scale: this.stdevs });
-      if (labels.rows > 0 && this.mode === 'regression') {
+      if (labels?.rows > 0) {
         labels.scale('column', { scale: this.stdevsY });
       }
     }
 
-    let nc;
-    if (this.mode === 'regression') {
-      nc = this.model[0].Q2y.length;
-    } else {
-      nc = this.model[0].auc.length;
-    }
+    const nc =
+      this.mode === 'regression'
+        ? this.model[0].Q2y.length
+        : this.model[0].auc.length;
 
     const Eh = features.clone();
     // removing the orthogonal components from PLS
@@ -351,16 +351,17 @@ export class OPLS {
     let yHat;
     let tPred;
     for (let idx = 0; idx < nc; idx++) {
-      wOrth = this.model[idx].wOrth.transpose();
-      pOrth = this.model[idx].pOrth;
+      const model = this.model[idx];
+      wOrth = model.wOrth.transpose();
+      pOrth = model.pOrth;
       tOrth = Eh.mmul(wOrth);
       Eh.sub(tOrth.mmul(pOrth));
       // prediction
-      tPred = Eh.mmul(this.model[idx].plsC.w.transpose());
-      yHat = tPred.mmul(this.model[idx].plsC.betas);
+      tPred = Eh.mmul(model.plsC.w.transpose());
+      yHat = tPred.mmul(model.plsC.betas).mmul(model.plsC.q);
     }
 
-    if (labels.rows > 0) {
+    if (labels?.rows > 0) {
       if (this.mode === 'regression') {
         const tssy = tss(labels);
         const press = tss(labels.clone().sub(yHat));
