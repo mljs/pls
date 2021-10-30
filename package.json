@@ -2,23 +2,30 @@
   "name": "ml-pls",
   "version": "4.1.1",
   "description": "Partial least squares library",
-  "main": "lib/index.js",
-  "module": "src/index.js",
+  "main": "./lib/index.js",
+  "module": "./lib-esm/index.js",
+  "types": "./lib/index.d.ts",
   "files": [
     "lib",
-    "src"
+    "src",
+    "lib-esm"
   ],
   "scripts": {
     "bench": "node ./benchmark/transpose.js",
     "build": "cheminfo-build --entry src/index.js --root PLS",
+    "check-types": "tsc --noEmit",
+    "clean": "rimraf lib lib-esm",
     "eslint": "eslint src",
     "eslint-fix": "npm run eslint -- --fix",
-    "prepack": "rollup -c",
+    "prepack": "npm run tsc",
     "prettier": "prettier --check src",
     "prettier-write": "prettier --write src",
-    "test": "npm run test-coverage && npm run eslint && npm run prettier",
+    "test": "npm run test-coverage && npm run eslint && npm run prettier && npm run check-types",
     "test-coverage": "jest --coverage",
-    "test-only": "jest"
+    "test-only": "jest",
+    "tsc": "npm run clean && npm run tsc-cjs && npm run tsc-esm",
+    "tsc-cjs": "tsc --project tsconfig.cjs.json",
+    "tsc-esm": "tsc --project tsconfig.esm.json"
   },
   "repository": {
     "type": "git",
@@ -51,11 +58,11 @@
     "ml-roc-multiclass": "^0.2.0"
   },
   "devDependencies": {
-    "@babel/plugin-transform-modules-commonjs": "^7.15.4",
+    "@types/jest": "^27.0.2",
     "benchmark": "^2.1.4",
     "cheminfo-build": "^1.1.11",
     "eslint": "^8.1.0",
-    "eslint-config-cheminfo": "^7.1.2",
+    "eslint-config-cheminfo-typescript": "^10.1.1",
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-jest": "^25.2.2",
     "eslint-plugin-prettier": "^4.0.0",
@@ -66,6 +73,8 @@
     "ml-kernel": "^3.0.0",
     "papaparse": "^5.3.1",
     "prettier": "^2.4.1",
-    "rollup": "^2.58.3"
+    "rimraf": "^3.0.2",
+    "ts-jest": "^27.0.7",
+    "typescript": "^4.4.4"
   }
 }
