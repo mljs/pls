@@ -31,6 +31,8 @@ build/Release
 node_modules
 
 .idea
-lib/
+lib
+
+lib-esm
 
 inspector.js
