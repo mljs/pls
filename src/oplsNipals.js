@@ -1,7 +1,5 @@
 import { Matrix, NIPALS } from 'ml-matrix';
 
-import { norm } from './util/utils.js';
-
 /**
  * OPLS loop
  * @param {Array|Matrix} data matrix with features
@@ -17,8 +15,7 @@ import { norm } from './util/utils.js';
     loadingsY:)
  */
 export function oplsNipals(data, labels, options = {}) {
-  const { numberOSC = 100, limit = 10e-10 } = options;
-
+  const { numberOSC = 1000, limit = 1e-10 } = options;
   data = Matrix.checkMatrix(data);
   labels = Matrix.checkMatrix(labels);
   let tW = [];
@@ -30,14 +27,14 @@ export function oplsNipals(data, labels, options = {}) {
     let count = 0;
     do {
       if (count === 0) {
-        pcaW = new NIPALS(wh);
+        pcaW = new NIPALS(wh.clone());
         tW.push(pcaW.t);
       } else {
-        let data = pcaW.xResidual;
+        const data = pcaW.xResidual;
         pcaW = new NIPALS(data);
         tW.push(pcaW.t);
       }
-      ssT = wh.norm() ** 2;
+      ssT = pcaW.t.norm() ** 2;
       count++;
     } while (ssT / ssWh > limit);
   }
@@ -47,8 +44,7 @@ export function oplsNipals(data, labels, options = {}) {
   let t, c, w, uNew;
   for (let i = 0; i < numberOSC && diff > limit; i++) {
     w = u.transpose().mmul(data).div(u.transpose().mmul(u).get(0, 0));
-    w = w.transpose().div(norm(w));
-
+    w = w.transpose().div(w.norm());
     t = data.mmul(w).div(w.transpose().mmul(w).get(0, 0)); // t_h paso 3
 
     // calc loading
@@ -56,23 +52,19 @@ export function oplsNipals(data, labels, options = {}) {
 
     // calc new u and compare with one in previus iteration (stop criterion)
     uNew = labels.mmul(c.transpose());
-    uNew = uNew.div(c.transpose().mmul(c).get(0, 0));
-
+    uNew = uNew.div(c.norm() ** 2);
     if (i > 0) {
       diff = uNew.clone().sub(u).pow(2).sum() / uNew.clone().pow(2).sum();
     }
     u = uNew.clone();
   }
-
   // calc loadings
   let wOrtho;
   let p = t.transpose().mmul(data).div(t.transpose().mmul(t).get(0, 0));
   if (labels.columns > 1) {
-    for (let i = 0; i < tW.length; i++) {
+    for (let i = 0; i < tW.length - 1; i++) {
       let tw = tW[i].transpose();
-      p = p.sub(
-        tw.mmul(p.transpose()).mmul(tw), // .div(tw.mmul(tw.transpose()).get(0, 0))
-      );
+      p = p.sub(tw.mmul(p.transpose()).div(tw.mmul(tw.transpose())).mmul(tw));
     }
     wOrtho = p.clone();
   } else {
@@ -86,9 +78,7 @@ export function oplsNipals(data, labels, options = {}) {
           .mmul(w.transpose()),
       );
   }
-
-  wOrtho.div(norm(wOrtho));
-
+  wOrtho.div(wOrtho.norm());
   let tOrtho = data
     .mmul(wOrtho.transpose())
     .div(wOrtho.mmul(wOrtho.transpose()).get(0, 0));

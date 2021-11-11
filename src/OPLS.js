@@ -99,7 +99,6 @@ export class OPLS {
         const testXk = trainTest.testFeatures;
         const Xk = trainTest.trainFeatures;
         const Yk = trainTest.trainLabels;
-
         // determine center and scale of training set
         const dataCenter = Xk.mean('column');
         const dataSD = Xk.standardDeviation('column');
@@ -114,7 +113,6 @@ export class OPLS {
           Xk.scale('column');
           Yk.scale('column');
         }
-
         // perform opls
         let oplsk;
         if (nc === 0) {
@@ -138,7 +136,6 @@ export class OPLS {
           scores = Eh.mmul(oplsCV[idx][f].weightsXOrtho.transpose()); // ok
           Eh.sub(scores.mmul(oplsCV[idx][f].loadingsXOrtho));
         }
-
         // prediction
         const tPred = Eh.mmul(plsCV.w.transpose());
         const yHatComponents = tPred
@@ -155,7 +152,6 @@ export class OPLS {
           tOrthk.setRow(folds[f].testIndex[i], [scores.get(i, 0)]);
         }
       } // end of loop over folds
-
       this.tCV.push(tPredk);
       this.tOrthCV.push(tOrthk);
       this.yHatCV.push(yHatk);
@@ -200,7 +196,7 @@ export class OPLS {
       modelNC.value = value;
 
       if (nc > 0) {
-        overfitted = listOfValues[nc - 1] >= value ? true : false;
+        overfitted = value - listOfValues[nc - 1] < 0.05 ? true : false;
       }
       this.model.push(modelNC);
       // store the model for each component
@@ -212,38 +208,47 @@ export class OPLS {
     const tOrthCV = this.tOrthCV;
     const yHatCV = this.yHatCV;
     const m = this.model[nc - 1];
-    const XOrth = m.XOrth;
+    const XOrth = new Matrix(features.rows, features.columns);
+    const tOrth = new Matrix(features.rows, nc - 1);
+    const pOrth = new Matrix(nc - 1, features.columns);
+    const wOrth = new Matrix(nc - 1, features.columns);
+    for (let i = 0; i < this.model.length - 1; i++) {
+      XOrth.add(this.model[i].XOrth);
+      tOrth.setSubMatrix(this.model[i].tOrth, 0, i);
+      pOrth.setSubMatrix(this.model[i].pOrth, i, 0);
+      wOrth.setSubMatrix(this.model[i].wOrth, i, 0);
+    }
+
     const FeaturesCS = features.center('column').scale('column');
     let labelsCS;
     if (this.mode === 'regression') {
-      labelsCS = group.center('column').scale('column');
+      labelsCS = group.clone().center('column').scale('column');
     } else {
       labelsCS = group;
     }
+
     const Xres = FeaturesCS.clone().sub(XOrth);
     const plsCall = new NIPALS(Xres, { Y: labelsCS });
     const E = Xres.clone().sub(plsCall.t.mmul(plsCall.p));
-
     const R2x = this.model.map((x) => x.R2x);
     const R2y = this.model.map((x) => x.R2y);
-
     this.output = {
       Q2y: Q2,
       auc: aucResult,
       R2x,
       R2y,
-      tPred: m.plsC.t,
-      pPred: m.plsC.p,
-      wPred: m.plsC.w,
-      betasPred: m.plsC.betas,
-      Qpc: m.plsC.q,
+      tPred: plsCall.t,
+      pPred: plsCall.p,
+      wPred: plsCall.w,
+      betasPred: plsCall.betas,
+      Qpc: plsCall.q,
       tCV,
       tOrthCV,
       yHatCV,
       oplsCV,
-      tOrth: m.tOrth,
-      pOrth: m.pOrth,
-      wOrth: m.wOrth,
+      tOrth: tOrth,
+      pOrth: pOrth,
+      wOrth: wOrth,
       XOrth,
       yHat: m.totalPred,
       Yres: m.plsC.yResidual,
@@ -341,7 +346,7 @@ export class OPLS {
     const nc =
       this.mode === 'regression'
         ? this.model[0].Q2y.length
-        : this.model[0].auc.length;
+        : this.model[0].auc.length - 1;
 
     const Eh = features.clone();
     // removing the orthogonal components from PLS
@@ -383,20 +388,23 @@ export class OPLS {
     }
   }
 
-  _predictAll(features, labels, options = {}) {
+  _predictAll(data, categories, options = {}) {
     // cannot use the global this.center here
     // since it is used in the NC loop and
     // centering and scaling should only be
     // performed once
     const { center = true, scale = true } = options;
+    const features = data.clone();
+    const labels = categories.clone();
 
     if (center) {
-      features.center('column');
+      const means = features.mean('column');
+      features.center('column', { center: means });
       labels.center('column');
     }
-
     if (scale) {
-      features.scale('column');
+      const stdevs = features.standardDeviation('column');
+      features.scale('column', { scale: stdevs });
       labels.scale('column');
       // reevaluate tssy and tssx after scaling
       // must be global because re-used for next nc iteration
@@ -404,11 +412,9 @@ export class OPLS {
       this.tssy = tss(labels);
       this.tssx = tss(features);
     }
-
     const oplsC = oplsNipals(features, labels);
     const plsC = new NIPALS(oplsC.filteredX, { Y: labels });
-
-    const tPred = oplsC.filteredX.mmul(plsC.w.transpose());
+    const tPred = plsC.t.clone();
     const yHatComponents = tPred.mmul(plsC.betas).mmul(plsC.q.transpose()); // ok
     const yHat = new Matrix(yHatComponents.rows, 1);
     for (let i = 0; i < yHatComponents.rows; i++) {
