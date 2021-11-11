@@ -383,7 +383,7 @@ describe('prediction', () => {
   });
 
   it('test prediction Q2y', () => {
-    expect(prediction.Q2y).toBeCloseTo(0.93039, 4);
+    expect(prediction.Q2y).toBeCloseTo(0.93016, 4);
   });
 
   it('test prediction yHat', () => {
@@ -412,20 +412,20 @@ describe('prediction with metadata', () => {
   });
 
   it('test prediction auc', () => {
-    expect(prediction.auc).toBeCloseTo(0.55826, 4);
+    expect(prediction.auc).toBeCloseTo(0.9989, 4);
   });
 
   it('test prediction tPred vector', () => {
     expect(prediction.tPred.to1DArray()).toBeDeepCloseTo(
       model.getLogs().tPred.to1DArray(),
-      5,
+      8,
     );
   });
 
   it('test prediction tOrth vector', () => {
     expect(prediction.tOrth.to1DArray()).toBeDeepCloseTo(
       model.getLogs().tOrth.to1DArray(),
-      5,
+      8,
     );
   });
 });
