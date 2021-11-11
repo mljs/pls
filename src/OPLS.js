@@ -254,7 +254,7 @@ export class OPLS {
       yHat: m.totalPred,
       Yres: m.plsC.yResidual,
       E,
-      folds
+      folds,
     };
   }
 
