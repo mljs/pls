@@ -1,7 +1,7 @@
 import ConfusionMatrix from 'ml-confusion-matrix';
 import { getFolds } from 'ml-cross-validation';
 import { Matrix, NIPALS } from 'ml-matrix';
-import { getRocCurve, getAuc } from 'ml-roc-multiclass';
+import { getRocCurve, getAuc, getBinaryClassifiers } from 'ml-roc-multiclass';
 
 import { oplsNipals } from './oplsNipals.js';
 import { tss } from './util/tss.js';
@@ -232,6 +232,7 @@ export class OPLS {
     const E = Xres.clone().sub(plsCall.t.mmul(plsCall.p));
     const R2x = this.model.map((x) => x.R2x);
     const R2y = this.model.map((x) => x.R2y);
+    this.getBinaryClassifiers = getBinaryClassifiers;
     this.output = {
       Q2y: Q2,
       auc: aucResult,
@@ -253,7 +254,7 @@ export class OPLS {
       yHat: m.totalPred,
       Yres: m.plsC.yResidual,
       E,
-      folds,
+      folds
     };
   }
 
