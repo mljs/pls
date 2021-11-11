@@ -1,6 +1,6 @@
 {
   "name": "ml-pls",
-  "version": "4.1.1",
+  "version": "4.1.2",
   "description": "Partial least squares library",
   "main": "./lib/index.js",
   "module": "./lib-esm/index.js",

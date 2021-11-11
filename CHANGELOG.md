@@ -47,6 +47,13 @@
 
 
 <a name="0.2.1"></a>
+### [4.1.2](https://www.github.com/mljs/pls/compare/v4.1.1...v4.1.2) (2021-11-11)
+
+
+### Bug Fixes
+
+* bugs in oplsNipals and OPLS + testcases ([17b82cd](https://www.github.com/mljs/pls/commit/17b82cd5bf7dc8c5b4e9b6e3fc01b171853b84bd))
+
 ### [4.1.1](https://www.github.com/mljs/pls/compare/v4.1.0...v4.1.1) (2021-10-20)
 
 
