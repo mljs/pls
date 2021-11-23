@@ -386,13 +386,6 @@ describe('prediction', () => {
     expect(prediction.Q2y).toBeCloseTo(0.93016, 4);
   });
 
-  it('test prediction yHat', () => {
-    expect(prediction.yHat.get(0, 0)).toBeCloseTo(
-      model.getLogs().yHat.get(0, 0),
-      5,
-    );
-  });
-
   it('test prediction yHat vector', () => {
     expect(prediction.yHat.to1DArray()).toBeDeepCloseTo(
       model.getLogs().yHat.to1DArray(),
@@ -412,7 +405,33 @@ describe('prediction with metadata', () => {
   });
 
   it('test prediction auc', () => {
-    expect(prediction.auc).toBeCloseTo(0.9989, 4);
+    expect(prediction.auc).toBeCloseTo(0.9985, 4);
+  });
+
+  it('test prediction tPred result', () => {
+    //             [,1]
+    // [1,]  2.36197253
+    // [2,]  2.03663185
+    // [3,]  2.18730941
+    // [4,]  2.04038657
+    // [5,]  2.41783405
+    expect(prediction.tPred.to1DArray().slice(0, 5)).toBeDeepCloseTo(
+      [2.36197253, 2.03663185, 2.18730941, 2.04038657, 2.41783405],
+      8,
+    );
+  });
+
+  it('test prediction tOrth result', () => {
+    //             [,1]
+    // [1,] -0.120705304
+    // [2,]  0.001762035
+    // [3,]  0.221496966
+    // [4,]  0.323480471
+    // [5,] -0.006342759
+    expect(prediction.tOrth.to1DArray().slice(0, 5)).toBeDeepCloseTo(
+      [-0.120705304, 0.001762035, 0.221496966, 0.323480471, -0.006342759],
+      8,
+    );
   });
 
   it('test prediction tPred vector', () => {
@@ -425,6 +444,13 @@ describe('prediction with metadata', () => {
   it('test prediction tOrth vector', () => {
     expect(prediction.tOrth.to1DArray()).toBeDeepCloseTo(
       model.getLogs().tOrth.to1DArray(),
+      8,
+    );
+  });
+
+  it('test prediction yHat vector', () => {
+    expect(prediction.yHat.to1DArray()).toBeDeepCloseTo(
+      model.getLogs().yHat.to1DArray(),
       8,
     );
   });

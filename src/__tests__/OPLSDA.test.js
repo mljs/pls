@@ -1,4 +1,5 @@
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
+import ConfusionMatrix from 'ml-confusion-matrix';
 import { getNumbers, getClasses } from 'ml-dataset-iris';
 import { Matrix } from 'ml-matrix';
 
@@ -113,7 +114,7 @@ describe('OPLS-DA test orthogonal values', () => {
     // [3,]  0.221496966
     // [4,]  0.323480471
     // [5,] -0.006342759
-    expect(opls.output.tOrth.to1DArray().slice().splice(0, 5)).toBeDeepCloseTo(
+    expect(opls.output.tOrth.to1DArray().slice(0, 5)).toBeDeepCloseTo(
       [-0.120705304, 0.001762035, 0.221496966, 0.323480471, -0.006342759],
       8,
     );
@@ -123,9 +124,7 @@ describe('OPLS-DA test orthogonal values', () => {
     // [148,]  0.041028264
     // [149,]  0.631370238
     // [150,]  0.484405741
-    expect(
-      opls.output.tOrth.to1DArray().slice().splice(145, 149),
-    ).toBeDeepCloseTo(
+    expect(opls.output.tOrth.to1DArray().slice(145, 150)).toBeDeepCloseTo(
       [0.056756875, 0.074150505, 0.041028264, 0.631370238, 0.484405741],
       8,
     );
@@ -140,6 +139,7 @@ describe('OPLS-DA test orthogonal values', () => {
       7,
     );
   });
+
   it('test orthogonal weights', () => {
     // > model@w_orth
     //      Sepal.Length Sepal.Width Petal.Length Petal.Width
@@ -161,9 +161,7 @@ describe('Test cross-validation scores', () => {
     // [4,]  2.00857909
     // [5,]  2.38428588
     const tCV = opls.output.tCV;
-    expect(
-      tCV[tCV.length - 2].to1DArray().slice().splice(0, 5),
-    ).toBeDeepCloseTo(
+    expect(tCV[tCV.length - 2].to1DArray().slice(0, 5)).toBeDeepCloseTo(
       [2.38420136, 2.08072499, 2.25988084, 2.00857909, 2.38428588],
       8,
     );
@@ -171,15 +169,14 @@ describe('Test cross-validation scores', () => {
     // [146,] -1.75510608
     // [147,] -1.62748669
     // [148,] -1.63785885
-    // [149,] -1.72632549
+    // [149,] -1.72632549sP
     // [150,] -1.27648994
-    expect(
-      tCV[tCV.length - 2].to1DArray().slice().splice(145, 149),
-    ).toBeDeepCloseTo(
+    expect(tCV[tCV.length - 2].to1DArray().slice(145, 150)).toBeDeepCloseTo(
       [-1.75510608, -1.62748669, -1.63785885, -1.72632549, -1.27648994],
       8,
     );
   });
+
   it('Test predictive scores (tOrthCV)', () => {
     // > model@t_orth_cv
     // [1,] -0.1135301544
@@ -188,9 +185,7 @@ describe('Test cross-validation scores', () => {
     // [4,]  0.3427612559
     // [5,]  0.0122617949
     const tOrthCV = opls.output.tOrthCV;
-    expect(
-      tOrthCV[tOrthCV.length - 2].to1DArray().slice().splice(0, 5),
-    ).toBeDeepCloseTo(
+    expect(tOrthCV[tOrthCV.length - 2].to1DArray().slice(0, 5)).toBeDeepCloseTo(
       [-0.1135301544, -0.0140748502, 0.1578422859, 0.3427612559, 0.0122617949],
       8,
     );
@@ -201,9 +196,36 @@ describe('Test cross-validation scores', () => {
     // [149,]  0.6394495744
     // [150,]  0.4980731231
     expect(
-      tOrthCV[tOrthCV.length - 2].to1DArray().slice().splice(145, 149),
+      tOrthCV[tOrthCV.length - 2].to1DArray().slice(145, 150),
     ).toBeDeepCloseTo(
       [0.0204401295, 0.0529381252, 0.132951503, 0.6394495744, 0.4980731231],
+      8,
+    );
+  });
+
+  it('Test predictive scores (yHatCV)', () => {
+    // > model@t_yhat_cv
+    //     [,1]
+    // [1,]  5.234392e-03
+    // [2,]  4.568125e-03
+    // [3,] -1.154220e-02
+    // [4,] -3.222685e-03
+    // [5,] -3.825491e-03
+    const yHatCV = opls.output.yHatCV;
+    expect(yHatCV[yHatCV.length - 2].to1DArray().slice(0, 5)).toBeDeepCloseTo(
+      [5.234392e-3, 4.568125e-3, -1.15422e-2, -3.222685e-3, -3.825491e-3],
+      8,
+    );
+
+    // [146,] -3.402418e-02
+    // [147,] -3.573064e-03
+    // [148,]  8.365263e-03
+    // [149,]  2.769820e-03
+    // [150,]  2.048077e-03
+    expect(
+      yHatCV[yHatCV.length - 2].to1DArray().slice(145, 150),
+    ).toBeDeepCloseTo(
+      [-3.402418e-2, -3.573064e-3, 8.365263e-3, 2.76982e-3, 2.048077e-3],
       8,
     );
   });
@@ -218,7 +240,7 @@ describe('OPLS-DA test predictive components', () => {
     // [3,]  2.18730941
     // [4,]  2.04038657
     // [5,]  2.41783405
-    expect(opls.output.tPred.to1DArray().slice().splice(0, 5)).toBeDeepCloseTo(
+    expect(opls.output.tPred.to1DArray().slice(0, 5)).toBeDeepCloseTo(
       [2.36197253, 2.03663185, 2.18730941, 2.04038657, 2.41783405],
       8,
     );
@@ -228,9 +250,7 @@ describe('OPLS-DA test predictive components', () => {
     // [148,] -1.52853204
     // [149,] -1.74143731
     // [150,] -1.28568876
-    expect(
-      opls.output.tPred.to1DArray().slice().splice(145, 149),
-    ).toBeDeepCloseTo(
+    expect(opls.output.tPred.to1DArray().slice(145, 150)).toBeDeepCloseTo(
       [-1.88039825, -1.65429087, -1.52853204, -1.74143731, -1.28568876],
       8,
     );
@@ -260,5 +280,39 @@ describe('OPLS-DA test predictive components', () => {
     // > model@betas_pred
     // [1] 0.7158934
     expect(opls.output.betasPred.to1DArray()).toBeDeepCloseTo([0.7158934], 7);
+  });
+});
+
+describe('OPLS-DA test predict category', () => {
+  const prediction = opls.predictCategory(x);
+  it('Test setosa samples', () => {
+    expect(prediction.slice(0, 5)).toStrictEqual(new Array(5).fill('setosa'));
+  });
+
+  it('Test versicolor samples', () => {
+    expect(prediction.slice(50, 55)).toStrictEqual(
+      new Array(5).fill('versicolor'),
+    );
+  });
+
+  it('Test virginica samples', () => {
+    expect(prediction.slice(100, 105)).toStrictEqual(
+      new Array(5).fill('virginica'),
+    );
+  });
+
+  it('Testing 1 sample', () => {
+    const onePrediction = opls.predictCategory(x.getRow(0));
+    expect(onePrediction).toStrictEqual(['setosa']);
+  });
+
+  it('Testing 2 samples', () => {
+    const twoPrediction = opls.predictCategory([x.getRow(0), x.getRow(1)]);
+    expect(twoPrediction).toStrictEqual(['setosa', 'setosa']);
+  });
+
+  it('Testing the accuracy', () => {
+    const confusionMatrix = ConfusionMatrix.fromLabels(metadata, prediction);
+    expect(confusionMatrix.getAccuracy()).toBeDeepCloseTo(0.967, 3);
   });
 });

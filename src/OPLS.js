@@ -1,7 +1,8 @@
+import { isAnyArray } from 'is-any-array';
 import ConfusionMatrix from 'ml-confusion-matrix';
 import { getFolds } from 'ml-cross-validation';
 import { Matrix, NIPALS } from 'ml-matrix';
-import { getRocCurve, getAuc, getBinaryClassifiers } from 'ml-roc-multiclass';
+import { getRocCurve, getAuc, getClasses } from 'ml-roc-multiclass';
 
 import { oplsNipals } from './oplsNipals.js';
 import { tss } from './util/tss.js';
@@ -40,6 +41,7 @@ export class OPLS {
     // cvFolds allows to define folds for testing purpose
     const { center = true, scale = true, cvFolds = [], nbFolds = 7 } = options;
 
+    this.labels = labels;
     let group;
     if (typeof labels[0] === 'number') {
       // numeric labels: OPLS regression is used
@@ -141,6 +143,7 @@ export class OPLS {
         const yHatComponents = tPred
           .mmul(plsCV.betas)
           .mmul(plsCV.q.transpose()); // ok
+
         const yHat = new Matrix(yHatComponents.rows, 1);
         for (let i = 0; i < yHatComponents.rows; i++) {
           yHat.setRow(i, [yHatComponents.getRowVector(i).sum()]);
@@ -232,7 +235,7 @@ export class OPLS {
     const E = Xres.clone().sub(plsCall.t.mmul(plsCall.p));
     const R2x = this.model.map((x) => x.R2x);
     const R2y = this.model.map((x) => x.R2y);
-    this.getBinaryClassifiers = getBinaryClassifiers;
+
     this.output = {
       Q2y: Q2,
       auc: aucResult,
@@ -314,6 +317,54 @@ export class OPLS {
    * @param {Number} [options.nc] - the number of components to be used
    * @return {Object} - predictions
    */
+  predictCategory(features, options = {}) {
+    const {
+      trueLabels = [],
+      center = this.center,
+      scale = this.scale,
+    } = options;
+    if (isAnyArray(features)) {
+      if (features[0].length === undefined) {
+        features = Matrix.from1DArray(1, features.length, features);
+      } else {
+        features = Matrix.checkMatrix(features);
+      }
+    }
+    const prediction = this.predict(features, { trueLabels, center, scale });
+    const tPred = this.output.tPred.to1DArray();
+    const newTPred = prediction.tPred.to1DArray();
+    const categories = getClasses(this.labels);
+    const classes = this.labels.slice();
+    const result = [];
+
+    for (const pred of newTPred) {
+      let item;
+      let auc = 0;
+      for (const category of categories) {
+        const testTPred = tPred.slice();
+        testTPred.push(pred);
+        const testClasses = classes.slice();
+        testClasses.push(category.name);
+        const rocCurve = getRocCurve(testClasses, testTPred);
+        const areaUnderCurve = getAuc(rocCurve);
+        if (auc < areaUnderCurve) {
+          item = category.name;
+          auc = areaUnderCurve;
+        }
+      }
+      result.push(item);
+    }
+    return result;
+  }
+
+  /**
+   * Predict scores for new data
+   * @param {Matrix} features - a matrix containing new data
+   * @param {Object} [options={}]
+   * @param {Array} [options.trueLabel] - an array with true values to compute confusion matrix
+   * @param {Number} [options.nc] - the number of components to be used
+   * @return {Object} - predictions
+   */
   predict(features, options = {}) {
     const {
       trueLabels = [],
@@ -354,7 +405,7 @@ export class OPLS {
     let tOrth;
     let wOrth;
     let pOrth;
-    let yHat;
+    let totalPred;
     let tPred;
     for (let idx = 0; idx < nc; idx++) {
       const model = this.model[idx];
@@ -364,28 +415,33 @@ export class OPLS {
       Eh.sub(tOrth.mmul(pOrth));
       // prediction
       tPred = Eh.mmul(model.plsC.w.transpose());
-      yHat = tPred.mmul(model.plsC.betas).mmul(model.plsC.q);
+      const components = tPred
+        .mmul(model.plsC.betas)
+        .mmul(model.plsC.q.transpose());
+      totalPred = new Matrix(components.rows, 1);
+      for (let i = 0; i < components.rows; i++) {
+        totalPred.setRow(i, [components.getRowVector(i).sum()]);
+      }
     }
 
     if (labels?.rows > 0) {
       if (this.mode === 'regression') {
         const tssy = tss(labels);
-        const press = tss(labels.clone().sub(yHat));
+        const press = tss(labels.clone().sub(totalPred));
         const Q2y = 1 - press / tssy;
 
-        return { tPred, tOrth, yHat, Q2y };
+        return { tPred, tOrth, yHat: totalPred, Q2y };
       } else if (this.mode === 'discriminantAnalysis') {
         const confusionMatrix = ConfusionMatrix.fromLabels(
           trueLabels,
-          yHat.to1DArray(),
+          totalPred.to1DArray(),
         );
-
-        const rocCurve = getRocCurve(trueLabels, yHat.to1DArray());
+        const rocCurve = getRocCurve(trueLabels, totalPred.to1DArray());
         const auc = getAuc(rocCurve);
-        return { tPred, tOrth, yHat, confusionMatrix, auc };
+        return { tPred, tOrth, yHat: totalPred, confusionMatrix, auc };
       }
     } else {
-      return { tPred, tOrth, yHat };
+      return { tPred, tOrth, yHat: totalPred };
     }
   }
 
@@ -416,6 +472,7 @@ export class OPLS {
     const oplsC = oplsNipals(features, labels);
     const plsC = new NIPALS(oplsC.filteredX, { Y: labels });
     const tPred = plsC.t.clone();
+    // const yHat = tPred.mmul(plsC.betas).mmul(plsC.q.transpose()); // ok
     const yHatComponents = tPred.mmul(plsC.betas).mmul(plsC.q.transpose()); // ok
     const yHat = new Matrix(yHatComponents.rows, 1);
     for (let i = 0; i < yHatComponents.rows; i++) {
