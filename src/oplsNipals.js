@@ -38,21 +38,25 @@ export function oplsNipals(data, labels, options = {}) {
       count++;
     } while (ssT / ssWh > limit);
   }
-
   let u = labels.getColumnVector(0);
   let diff = 1;
   let t, c, w, uNew;
   for (let i = 0; i < numberOSC && diff > limit; i++) {
-    w = u.transpose().mmul(data).div(u.transpose().mmul(u).get(0, 0));
+    w = u
+      .transpose()
+      .mmul(data)
+      .div(u.norm() ** 2);
     w = w.transpose().div(w.norm());
-    t = data.mmul(w).div(w.transpose().mmul(w).get(0, 0)); // t_h paso 3
+    t = data.mmul(w).div(w.norm() ** 2); // t_h paso 3
 
     // calc loading
-    c = t.transpose().mmul(labels).div(t.transpose().mmul(t).get(0, 0));
+    c = t
+      .transpose()
+      .mmul(labels)
+      .div(t.norm() ** 2);
 
     // calc new u and compare with one in previus iteration (stop criterion)
-    uNew = labels.mmul(c.transpose());
-    uNew = uNew.div(c.norm() ** 2);
+    uNew = labels.mmul(c.transpose()).div(c.norm() ** 2);
     if (i > 0) {
       diff = uNew.clone().sub(u).pow(2).sum() / uNew.clone().pow(2).sum();
     }
@@ -60,34 +64,38 @@ export function oplsNipals(data, labels, options = {}) {
   }
   // calc loadings
   let wOrtho;
-  let p = t.transpose().mmul(data).div(t.transpose().mmul(t).get(0, 0));
+  let p = t
+    .transpose()
+    .mmul(data)
+    .div(t.norm() ** 2);
   if (labels.columns > 1) {
     for (let i = 0; i < tW.length - 1; i++) {
       let tw = tW[i].transpose();
-      p = p.sub(tw.mmul(p.transpose()).div(tw.mmul(tw.transpose())).mmul(tw));
+      p = p.sub(
+        tw
+          .mmul(p.transpose())
+          .div(tw.norm() ** 2)
+          .mmul(tw),
+      );
     }
     wOrtho = p.clone();
   } else {
-    wOrtho = p
-      .clone()
-      .sub(
-        w
-          .transpose()
-          .mmul(p.transpose())
-          .div(w.transpose().mmul(w).get(0, 0))
-          .mmul(w.transpose()),
-      );
+    wOrtho = p.clone().sub(
+      w
+        .transpose()
+        .mmul(p.transpose())
+        .div(w.norm() ** 2)
+        .mmul(w.transpose()),
+    );
   }
   wOrtho.div(wOrtho.norm());
-  let tOrtho = data
-    .mmul(wOrtho.transpose())
-    .div(wOrtho.mmul(wOrtho.transpose()).get(0, 0));
+  let tOrtho = data.mmul(wOrtho.transpose()).div(wOrtho.norm() ** 2);
 
   // orthogonal loadings
   let pOrtho = tOrtho
     .transpose()
     .mmul(data)
-    .div(tOrtho.transpose().mmul(tOrtho).get(0, 0));
+    .div(tOrtho.norm() ** 2);
 
   // filtered data
   let err = data.clone().sub(tOrtho.mmul(pOrtho));
@@ -107,7 +115,7 @@ function getWh(xValue, yValue) {
   let result = new Matrix(xValue.columns, yValue.columns);
   for (let i = 0; i < yValue.columns; i++) {
     let yN = yValue.getColumnVector(i).transpose();
-    let component = yN.mmul(xValue).div(yN.mmul(yN.transpose()).get(0, 0));
+    let component = yN.mmul(xValue).div(yN.norm() ** 2);
     result.setColumn(i, component.getRow(0));
   }
   return result;
