@@ -49,6 +49,18 @@
 
 
 <a name="0.2.1"></a>
+## [4.2.0](https://github.com/mljs/pls/compare/v4.1.1...v4.2.0) (2022-10-17)
+
+
+### Features
+
+* added discriminant analysis to OPLS ([d2891ad](https://github.com/mljs/pls/commit/d2891adb2adc1b385dd5aff79430fabf37b1a974))
+
+
+### Bug Fixes
+
+* bugs in oplsNipals and OPLS + testcases ([#33](https://github.com/mljs/pls/issues/33)) ([2c83fe3](https://github.com/mljs/pls/commit/2c83fe382fa6fcbf1f1edfc9dd0c828f794eb843))
+
 ### [4.1.1](https://www.github.com/mljs/pls/compare/v4.1.0...v4.1.1) (2021-10-20)
 
 
