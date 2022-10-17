@@ -163,13 +163,11 @@ export class KOPLS {
       kernelX[i + 1][i + 1] = ITo.mmul(kernelX[i][i]).mmul(ITo);
     }
 
-    let lastScoreMat = (predScoreMat[this.orthogonalComp] = kernelX[0][
-      this.orthogonalComp
-    ]
+    let lastScoreMat = kernelX[0][this.orthogonalComp]
       .transpose()
       .mmul(YScoreMat)
-      .mmul(SigmaPow));
-
+      .mmul(SigmaPow);
+    predScoreMat[this.orthogonalComp] = lastScoreMat.clone();
     let lastTpPrime = lastScoreMat.transpose();
     TURegressionCoeff[this.orthogonalComp] = inverse(
       lastTpPrime.mmul(lastScoreMat),
@@ -247,8 +245,8 @@ export class KOPLS {
       .mmul(this.YLoadingMat.transpose());
 
     return {
-      prediction: prediction,
-      predScoreMat: predScoreMat,
+      prediction,
+      predScoreMat,
       predYOrthVectors: YOrthScoreVector,
     };
   }

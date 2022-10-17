@@ -36,7 +36,7 @@ export function featureNormalize(dataset) {
     unbiased: true,
   });
   let result = Matrix.checkMatrix(dataset).subRowVector(means);
-  return { result: result.divRowVector(std), means: means, std: std };
+  return { result: result.divRowVector(std), means, std };
 }
 
 /**
