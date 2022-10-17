@@ -106,7 +106,7 @@ describe('OPLS nipals components', () => {
     testRawData = testRawData.map((d) => d.slice(0, 4));
     const testx = new Matrix(23, 4);
     testRawData.forEach((el, i) => testx.setRow(i, testRawData[i]));
-    testx.center('column', { center: center });
+    testx.center('column', { center });
     testx.scale('column', { scale: sd });
 
     expect(testx.get(0, 0)).toBeCloseTo(-1.10145274, 6);
@@ -157,7 +157,7 @@ describe('OPLS nipals components', () => {
       testRawData = testRawData.map((d) => d.slice(0, 4));
       const testx = new Matrix(testRawData.length, 4);
       testRawData.forEach((el, i) => testx.setRow(i, testRawData[i]));
-      testx.center('column', { center: center });
+      testx.center('column', { center });
       testx.scale('column', { scale: sd });
 
       const Eh = testx;

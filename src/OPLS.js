@@ -201,7 +201,7 @@ export class OPLS {
       modelNC.value = value;
 
       if (nc > 0) {
-        overfitted = value - listOfValues[nc - 1] < 0.05 ? true : false;
+        overfitted = value - listOfValues[nc - 1] < 0.05;
       }
       this.model.push(modelNC);
       // store the model for each component
@@ -254,9 +254,9 @@ export class OPLS {
       orthogonalScoresCV,
       yHatScoresCV,
       oplsCV,
-      orthogonalScores: orthogonalScores,
-      orthogonalLoadings: orthogonalLoadings,
-      orthogonalWeights: orthogonalWeights,
+      orthogonalScores,
+      orthogonalLoadings,
+      orthogonalWeights,
       Xorth: orthogonalData,
       yHat: m.totalPred,
       Yres: m.plsC.yResidual,
@@ -506,7 +506,7 @@ export class OPLS {
       orthogonalScores: oplsC.scoresXOrtho,
       orthogonalLoadings: oplsC.loadingsXOrtho,
       orthogonalWeights: oplsC.weightsXOrtho,
-      predictiveComponents: predictiveComponents,
+      predictiveComponents,
       totalPred: yHat,
       XOrth: oplsC.scoresXOrtho.mmul(oplsC.loadingsXOrtho),
       oplsC,

@@ -21,7 +21,7 @@ describe('K-OPLS', () => {
   let cls = new KOPLS({
     orthogonalComponents: 10,
     predictiveComponents: 1,
-    kernel: kernel,
+    kernel,
   });
 
   cls.train(Xtrain, Ytrain);
@@ -60,7 +60,7 @@ describe('K-OPLS', () => {
     cls = new KOPLS({
       orthogonalComponents: 10,
       predictiveComponents: 2,
-      kernel: kernel,
+      kernel,
     });
 
     cls.train(Xtrain, Ytrain);
