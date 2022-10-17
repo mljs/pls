@@ -27,11 +27,11 @@ export class OPLS {
       this.means = opls.means;
       this.meansY = opls.meansY;
       this.stdevs = opls.stdevs;
-      this.stdevs = opls.stdevsY;
+      this.stdevsY = opls.stdevsY;
       this.model = opls.model;
-      this.tCV = opls.tCV;
-      this.tOrthCV = opls.tOrthCV;
-      this.yHatCV = opls.yHatCV;
+      this.predictiveScoresCV = opls.predictiveScoresCV;
+      this.orthogonalScoresCV = opls.orthogonalScoresCV;
+      this.yHatScoresCV = opls.yHatScoresCV;
       this.mode = opls.mode;
       return;
     }
@@ -76,9 +76,9 @@ export class OPLS {
     const Q2 = [];
     const aucResult = [];
     this.model = [];
-    this.tCV = [];
-    this.tOrthCV = [];
-    this.yHatCV = [];
+    this.predictiveScoresCV = [];
+    this.orthogonalScoresCV = [];
+    this.yHatScoresCV = [];
     const oplsCV = [];
 
     let modelNC = [];
@@ -93,45 +93,45 @@ export class OPLS {
 
     do {
       const yHatk = new Matrix(group.rows, 1);
-      const tPredk = new Matrix(group.rows, 1);
-      const tOrthk = new Matrix(group.rows, 1);
+      const predictiveScoresK = new Matrix(group.rows, 1);
+      const orthogonalScoresK = new Matrix(group.rows, 1);
       oplsCV[nc] = [];
       for (let f = 0; f < folds.length; f++) {
         const trainTest = this._getTrainTest(features, group, folds[f]);
-        const testXk = trainTest.testFeatures;
-        const Xk = trainTest.trainFeatures;
-        const Yk = trainTest.trainLabels;
+        const testFeatures = trainTest.testFeatures;
+        const trainFeatures = trainTest.trainFeatures;
+        const trainLabels = trainTest.trainLabels;
         // determine center and scale of training set
-        const dataCenter = Xk.mean('column');
-        const dataSD = Xk.standardDeviation('column');
+        const dataCenter = trainFeatures.mean('column');
+        const dataSD = trainFeatures.standardDeviation('column');
 
         // center and scale training set
         if (center) {
-          Xk.center('column');
-          Yk.center('column');
+          trainFeatures.center('column');
+          trainLabels.center('column');
         }
 
         if (scale) {
-          Xk.scale('column');
-          Yk.scale('column');
+          trainFeatures.scale('column');
+          trainLabels.scale('column');
         }
         // perform opls
         let oplsk;
         if (nc === 0) {
-          oplsk = oplsNipals(Xk, Yk);
+          oplsk = oplsNipals(trainFeatures, trainLabels);
         } else {
-          oplsk = oplsNipals(oplsCV[nc - 1][f].filteredX, Yk);
+          oplsk = oplsNipals(oplsCV[nc - 1][f].filteredX, trainLabels);
         }
 
         // store model for next component
         oplsCV[nc][f] = oplsk;
-        const plsCV = new NIPALS(oplsk.filteredX, { Y: Yk });
+        const plsCV = new NIPALS(oplsk.filteredX, { Y: trainLabels });
 
         // scaling the test dataset with respect to the train
-        testXk.center('column', { center: dataCenter });
-        testXk.scale('column', { scale: dataSD });
+        testFeatures.center('column', { center: dataCenter });
+        testFeatures.scale('column', { scale: dataSD });
 
-        const Eh = testXk;
+        const Eh = testFeatures;
         // removing the orthogonal components from PLS
         let scores;
         for (let idx = 0; idx < nc + 1; idx++) {
@@ -139,8 +139,8 @@ export class OPLS {
           Eh.sub(scores.mmul(oplsCV[idx][f].loadingsXOrtho));
         }
         // prediction
-        const tPred = Eh.mmul(plsCV.w.transpose());
-        const yHatComponents = tPred
+        const predictiveComponents = Eh.mmul(plsCV.w.transpose());
+        const yHatComponents = predictiveComponents
           .mmul(plsCV.betas)
           .mmul(plsCV.q.transpose()); // ok
 
@@ -151,13 +151,15 @@ export class OPLS {
         // adding all prediction from all folds
         for (let i = 0; i < folds[f].testIndex.length; i++) {
           yHatk.setRow(folds[f].testIndex[i], [yHat.get(i, 0)]);
-          tPredk.setRow(folds[f].testIndex[i], [tPred.get(i, 0)]);
-          tOrthk.setRow(folds[f].testIndex[i], [scores.get(i, 0)]);
+          predictiveScoresK.setRow(folds[f].testIndex[i], [
+            predictiveComponents.get(i, 0),
+          ]);
+          orthogonalScoresK.setRow(folds[f].testIndex[i], [scores.get(i, 0)]);
         }
       } // end of loop over folds
-      this.tCV.push(tPredk);
-      this.tOrthCV.push(tOrthk);
-      this.yHatCV.push(yHatk);
+      this.predictiveScoresCV.push(predictiveScoresK);
+      this.orthogonalScoresCV.push(orthogonalScoresK);
+      this.yHatScoresCV.push(yHatk);
 
       // calculate Q2y for all the prediction (all folds)
       // ROC for DA is not implemented (check opls.R line 183) TODO
@@ -207,19 +209,19 @@ export class OPLS {
       // console.warn(`OPLS iteration over # of Components: ${nc + 1}`);
     } while (!overfitted); // end of loop over nc
     // store scores from CV
-    const tCV = this.tCV;
-    const tOrthCV = this.tOrthCV;
-    const yHatCV = this.yHatCV;
+    const predictiveScoresCV = this.predictiveScoresCV;
+    const orthogonalScoresCV = this.orthogonalScoresCV;
+    const yHatScoresCV = this.yHatScoresCV;
     const m = this.model[nc - 1];
-    const XOrth = new Matrix(features.rows, features.columns);
-    const tOrth = new Matrix(features.rows, nc - 1);
-    const pOrth = new Matrix(nc - 1, features.columns);
-    const wOrth = new Matrix(nc - 1, features.columns);
+    const orthogonalData = new Matrix(features.rows, features.columns);
+    const orthogonalScores = new Matrix(features.rows, nc - 1);
+    const orthogonalLoadings = new Matrix(nc - 1, features.columns);
+    const orthogonalWeights = new Matrix(nc - 1, features.columns);
     for (let i = 0; i < this.model.length - 1; i++) {
-      XOrth.add(this.model[i].XOrth);
-      tOrth.setSubMatrix(this.model[i].tOrth, 0, i);
-      pOrth.setSubMatrix(this.model[i].pOrth, i, 0);
-      wOrth.setSubMatrix(this.model[i].wOrth, i, 0);
+      orthogonalData.add(this.model[i].XOrth);
+      orthogonalScores.setSubMatrix(this.model[i].orthogonalScores, 0, i);
+      orthogonalLoadings.setSubMatrix(this.model[i].orthogonalLoadings, i, 0);
+      orthogonalWeights.setSubMatrix(this.model[i].orthogonalWeights, i, 0);
     }
 
     const FeaturesCS = features.center('column').scale('column');
@@ -230,9 +232,11 @@ export class OPLS {
       labelsCS = group;
     }
 
-    const Xres = FeaturesCS.clone().sub(XOrth);
-    const plsCall = new NIPALS(Xres, { Y: labelsCS });
-    const E = Xres.clone().sub(plsCall.t.mmul(plsCall.p));
+    const orthogonalizedData = FeaturesCS.clone().sub(orthogonalData);
+    const plsCall = new NIPALS(orthogonalizedData, { Y: labelsCS });
+    const residualData = orthogonalizedData
+      .clone()
+      .sub(plsCall.t.mmul(plsCall.p));
     const R2x = this.model.map((x) => x.R2x);
     const R2y = this.model.map((x) => x.R2y);
 
@@ -241,22 +245,22 @@ export class OPLS {
       auc: aucResult,
       R2x,
       R2y,
-      tPred: plsCall.t,
-      pPred: plsCall.p,
-      wPred: plsCall.w,
-      betasPred: plsCall.betas,
+      predictiveComponents: plsCall.t,
+      predictiveLoadings: plsCall.p,
+      predictiveWeights: plsCall.w,
+      betas: plsCall.betas,
       Qpc: plsCall.q,
-      tCV,
-      tOrthCV,
-      yHatCV,
+      predictiveScoresCV,
+      orthogonalScoresCV,
+      yHatScoresCV,
       oplsCV,
-      tOrth: tOrth,
-      pOrth: pOrth,
-      wOrth: wOrth,
-      XOrth,
+      orthogonalScores: orthogonalScores,
+      orthogonalLoadings: orthogonalLoadings,
+      orthogonalWeights: orthogonalWeights,
+      Xorth: orthogonalData,
       yHat: m.totalPred,
       Yres: m.plsC.yResidual,
-      E,
+      residualData,
       folds,
     };
   }
@@ -271,8 +275,8 @@ export class OPLS {
   }
 
   getScores() {
-    const scoresX = this.tCV.map((x) => x.to1DArray());
-    const scoresY = this.tOrthCV.map((x) => x.to1DArray());
+    const scoresX = this.predictiveScoresCV.map((x) => x.to1DArray());
+    const scoresY = this.orthogonalScoresCV.map((x) => x.to1DArray());
     return { scoresX, scoresY };
   }
 
@@ -303,9 +307,9 @@ export class OPLS {
       means: this.means,
       stdevs: this.stdevs,
       model: this.model,
-      tCV: this.tCV,
-      tOrthCV: this.tOrthCV,
-      yHatCV: this.yHatCV,
+      predictiveScoresCV: this.predictiveScoresCV,
+      orthogonalScoresCV: this.orthogonalScoresCV,
+      yHatScoresCV: this.yHatScoresCV,
     };
   }
 
@@ -331,8 +335,8 @@ export class OPLS {
       }
     }
     const prediction = this.predict(features, { trueLabels, center, scale });
-    const tPred = this.output.tPred.to1DArray();
-    const newTPred = prediction.tPred.to1DArray();
+    const predictiveComponents = this.output.predictiveComponents.to1DArray();
+    const newTPred = prediction.predictiveComponents.to1DArray();
     const categories = getClasses(this.labels);
     const classes = this.labels.slice();
     const result = [];
@@ -341,7 +345,7 @@ export class OPLS {
       let item;
       let auc = 0;
       for (const category of categories) {
-        const testTPred = tPred.slice();
+        const testTPred = predictiveComponents.slice();
         testTPred.push(pred);
         const testClasses = classes.slice();
         testClasses.push(category.name);
@@ -402,20 +406,20 @@ export class OPLS {
 
     const Eh = features.clone();
     // removing the orthogonal components from PLS
-    let tOrth;
-    let wOrth;
-    let pOrth;
+    let orthogonalScores;
+    let orthogonalWeights;
+    let orthogonalLoadings;
     let totalPred;
-    let tPred;
+    let predictiveComponents;
     for (let idx = 0; idx < nc; idx++) {
       const model = this.model[idx];
-      wOrth = model.wOrth.transpose();
-      pOrth = model.pOrth;
-      tOrth = Eh.mmul(wOrth);
-      Eh.sub(tOrth.mmul(pOrth));
+      orthogonalWeights = model.orthogonalWeights.transpose();
+      orthogonalLoadings = model.orthogonalLoadings;
+      orthogonalScores = Eh.mmul(orthogonalWeights);
+      Eh.sub(orthogonalScores.mmul(orthogonalLoadings));
       // prediction
-      tPred = Eh.mmul(model.plsC.w.transpose());
-      const components = tPred
+      predictiveComponents = Eh.mmul(model.plsC.w.transpose());
+      const components = predictiveComponents
         .mmul(model.plsC.betas)
         .mmul(model.plsC.q.transpose());
       totalPred = new Matrix(components.rows, 1);
@@ -430,7 +434,7 @@ export class OPLS {
         const press = tss(labels.clone().sub(totalPred));
         const Q2y = 1 - press / tssy;
 
-        return { tPred, tOrth, yHat: totalPred, Q2y };
+        return { predictiveComponents, orthogonalScores, yHat: totalPred, Q2y };
       } else if (this.mode === 'discriminantAnalysis') {
         const confusionMatrix = ConfusionMatrix.fromLabels(
           trueLabels,
@@ -438,10 +442,16 @@ export class OPLS {
         );
         const rocCurve = getRocCurve(trueLabels, totalPred.to1DArray());
         const auc = getAuc(rocCurve);
-        return { tPred, tOrth, yHat: totalPred, confusionMatrix, auc };
+        return {
+          predictiveComponents,
+          orthogonalScores,
+          yHat: totalPred,
+          confusionMatrix,
+          auc,
+        };
       }
     } else {
-      return { tPred, tOrth, yHat: totalPred };
+      return { predictiveComponents, orthogonalScores, yHat: totalPred };
     }
   }
 
@@ -471,9 +481,11 @@ export class OPLS {
     }
     const oplsC = oplsNipals(features, labels);
     const plsC = new NIPALS(oplsC.filteredX, { Y: labels });
-    const tPred = plsC.t.clone();
+    const predictiveComponents = plsC.t.clone();
     // const yHat = tPred.mmul(plsC.betas).mmul(plsC.q.transpose()); // ok
-    const yHatComponents = tPred.mmul(plsC.betas).mmul(plsC.q.transpose()); // ok
+    const yHatComponents = predictiveComponents
+      .mmul(plsC.betas)
+      .mmul(plsC.q.transpose()); // ok
     const yHat = new Matrix(yHatComponents.rows, 1);
     for (let i = 0; i < yHatComponents.rows; i++) {
       yHat.setRow(i, [yHatComponents.getRowVector(i).sum()]);
@@ -491,10 +503,10 @@ export class OPLS {
       R2y,
       R2x,
       xRes: oplsC.filteredX,
-      tOrth: oplsC.scoresXOrtho,
-      pOrth: oplsC.loadingsXOrtho,
-      wOrth: oplsC.weightsXOrtho,
-      tPred: tPred,
+      orthogonalScores: oplsC.scoresXOrtho,
+      orthogonalLoadings: oplsC.loadingsXOrtho,
+      orthogonalWeights: oplsC.weightsXOrtho,
+      predictiveComponents: predictiveComponents,
       totalPred: yHat,
       XOrth: oplsC.scoresXOrtho.mmul(oplsC.loadingsXOrtho),
       oplsC,

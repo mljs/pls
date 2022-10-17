@@ -122,11 +122,11 @@ describe('OPLS nipals components', () => {
     expect(Eh.get(0, 0)).toBeCloseTo(-1.11357563, 6);
     expect(Eh.get(22, 1)).toBeCloseTo(-1.22642102, 6);
 
-    const tPred = Eh.mmul(plsComp.w.transpose());
-    expect(tPred.get(0, 0)).toBeCloseTo(-2.0983292, 6);
-    expect(tPred.get(7, 0)).toBeCloseTo(-2.4324436, 6);
+    const predictiveComponents = Eh.mmul(plsComp.w.transpose());
+    expect(predictiveComponents.get(0, 0)).toBeCloseTo(-2.0983292, 6);
+    expect(predictiveComponents.get(7, 0)).toBeCloseTo(-2.4324436, 6);
 
-    const yHat = tPred.mmul(plsComp.betas);
+    const yHat = predictiveComponents.mmul(plsComp.betas);
     expect(yHat.get(0, 0)).toBeCloseTo(-1.21268611, 6);
     expect(yHat.get(7, 0)).toBeCloseTo(-1.40578061, 6);
   });
@@ -165,8 +165,8 @@ describe('OPLS nipals components', () => {
       const scores = Eh.mmul(opls.weightsXOrtho.transpose());
       Eh.sub(scores.mmul(opls.loadingsXOrtho));
 
-      const tPred = Eh.mmul(plsComp.w.transpose());
-      const yHat = tPred.mmul(plsComp.betas);
+      const predictiveComponents = Eh.mmul(plsComp.w.transpose());
+      const yHat = predictiveComponents.mmul(plsComp.betas);
       let testCv = [];
       for (let j = 0; j < 150; j++) {
         testCv.push(j);
@@ -175,7 +175,9 @@ describe('OPLS nipals components', () => {
       testCv = testCv.filter((el, idx) => !fold.includes(idx));
       testCv.forEach((el, idx) => cvPreds.setRow(el, [yHat.get(idx, 0)]));
       testCv.forEach((el, idx) => cvScoresO.setRow(el, [scores.get(idx, 0)]));
-      testCv.forEach((el, idx) => cvScoresP.setRow(el, [tPred.get(idx, 0)]));
+      testCv.forEach((el, idx) =>
+        cvScoresP.setRow(el, [predictiveComponents.get(idx, 0)]),
+      );
     }
 
     const y = newM.get('iris', { format: 'matrix' }).values;
@@ -226,10 +228,10 @@ describe('OPLS utility functions', () => {
     expect(plsComp.p.get(0, 1)).toBeCloseTo(-0.2864595, 3);
     expect(plsComp.w.get(0, 0)).toBeCloseTo(0.484385, 6);
 
-    const tPred = xRes.mmul(plsComp.w.transpose());
-    const yHat = tPred.mmul(plsComp.betas);
+    const predictiveComponents = xRes.mmul(plsComp.w.transpose());
+    const yHat = predictiveComponents.mmul(plsComp.betas);
 
-    expect(tPred.get(0, 0)).toBeCloseTo(-2.32295367, 6);
+    expect(predictiveComponents.get(0, 0)).toBeCloseTo(-2.32295367, 6);
     expect(yHat.get(0, 0)).toBeCloseTo(-1.33501112, 6);
 
     const tssy = tss(y);
@@ -296,25 +298,52 @@ describe('OPLS', () => {
     const labels = newM.get('iris', { format: 'factor' }).values;
     const model = new OPLS(x, labels, { cvFolds });
 
-    expect(model.tCV[0].get(0, 0)).toBeCloseTo(-2.48581401, 6);
-    expect(model.tOrthCV[0].get(0, 0)).toBeCloseTo(0.078273936, 6);
-    expect(model.tOrthCV[1].get(0, 0)).toBeCloseTo(-0.439656132, 6);
-    expect(model.tCV[1].get(0, 0)).toBeCloseTo(-2.453147, 6);
+    expect(model.predictiveScoresCV[0].get(0, 0)).toBeCloseTo(-2.48581401, 6);
+    expect(model.orthogonalScoresCV[0].get(0, 0)).toBeCloseTo(0.078273936, 6);
+    expect(model.orthogonalScoresCV[1].get(0, 0)).toBeCloseTo(-0.439656132, 6);
+    expect(model.predictiveScoresCV[1].get(0, 0)).toBeCloseTo(-2.453147, 6);
     expect(model.getLogs().Q2y[0]).toBeCloseTo(0.9209228, 6);
     expect(model.getLogs().Q2y[1]).toBeCloseTo(0.9263751, 6);
     expect(model.getLogs().R2y[0]).toBeCloseTo(0.9284787, 6);
     expect(model.getLogs().R2y[1]).toBeCloseTo(0.9301693, 6);
     expect(model.getLogs().R2x[0]).toBeCloseTo(0.7031765, 3);
     expect(model.getLogs().R2x[1]).toBeCloseTo(0.7015103, 3);
-    expect(model.model[1].tPred.get(0, 0)).toBeCloseTo(-2.290801, 6);
-    expect(model.model[0].tPred.get(0, 0)).toBeCloseTo(-2.32295367, 6);
-    expect(model.model[0].tOrth.get(0, 0)).toBeCloseTo(0.074537852, 6);
-    expect(model.model[1].tOrth.get(0, 0)).toBeCloseTo(-0.416881408, 6);
-    expect(model.model[0].tOrth.get(149, 0)).toBeCloseTo(-0.486465664, 6);
-    expect(model.model[0].pOrth.get(0, 0)).toBeCloseTo(1.318924, 6);
-    expect(model.model[1].pOrth.get(0, 0)).toBeCloseTo(-0.2600433, 6);
-    expect(model.model[0].wOrth.get(0, 0)).toBeCloseTo(0.7888785, 6);
-    expect(model.model[1].wOrth.get(0, 0)).toBeCloseTo(-0.2831915, 6);
+    expect(model.model[1].predictiveComponents.get(0, 0)).toBeCloseTo(
+      -2.290801,
+      6,
+    );
+    expect(model.model[0].predictiveComponents.get(0, 0)).toBeCloseTo(
+      -2.32295367,
+      6,
+    );
+    expect(model.model[0].orthogonalScores.get(0, 0)).toBeCloseTo(
+      0.074537852,
+      6,
+    );
+    expect(model.model[1].orthogonalScores.get(0, 0)).toBeCloseTo(
+      -0.416881408,
+      6,
+    );
+    expect(model.model[0].orthogonalScores.get(149, 0)).toBeCloseTo(
+      -0.486465664,
+      6,
+    );
+    expect(model.model[0].orthogonalLoadings.get(0, 0)).toBeCloseTo(
+      1.318924,
+      6,
+    );
+    expect(model.model[1].orthogonalLoadings.get(0, 0)).toBeCloseTo(
+      -0.2600433,
+      6,
+    );
+    expect(model.model[0].orthogonalWeights.get(0, 0)).toBeCloseTo(
+      0.7888785,
+      6,
+    );
+    expect(model.model[1].orthogonalWeights.get(0, 0)).toBeCloseTo(
+      -0.2831915,
+      6,
+    );
     expect(model.model[0].plsC.betas.get(0, 0)).toBeCloseTo(0.5747042, 6);
     expect(model.model[1].plsC.betas.get(0, 0)).toBeCloseTo(0.5758896, 3);
     expect(model.model[0].plsC.q.get(0, 0)).toBeCloseTo(1, 6);
@@ -379,7 +408,7 @@ describe('prediction', () => {
   const prediction = model.predict(x, { trueLabels: labels });
 
   it('test prediction length', () => {
-    expect(prediction.tPred.rows).toBe(150);
+    expect(prediction.predictiveComponents.rows).toBe(150);
   });
 
   it('test prediction Q2y', () => {
@@ -401,33 +430,35 @@ describe('prediction with metadata', () => {
   const prediction = model.predict(x, { trueLabels: metadata });
 
   it('test prediction length', () => {
-    expect(prediction.tPred.rows).toBe(150);
+    expect(prediction.predictiveComponents.rows).toBe(150);
   });
 
-  it('test prediction tPred result', () => {
-    expect(prediction.tPred.to1DArray().slice(0, 5)).toBeDeepCloseTo(
+  it('test prediction predictiveComponents result', () => {
+    expect(
+      prediction.predictiveComponents.to1DArray().slice(0, 5),
+    ).toBeDeepCloseTo(
       [2.36197253, 2.03663185, 2.18730941, 2.04038657, 2.41783405],
       8,
     );
   });
 
-  it('test prediction tOrth result', () => {
-    expect(prediction.tOrth.to1DArray().slice(0, 5)).toBeDeepCloseTo(
+  it('test prediction orthogonalScores result', () => {
+    expect(prediction.orthogonalScores.to1DArray().slice(0, 5)).toBeDeepCloseTo(
       [-0.120705304, 0.001762035, 0.221496966, 0.323480471, -0.006342759],
       8,
     );
   });
 
-  it('test prediction tPred vector', () => {
-    expect(prediction.tPred.to1DArray()).toBeDeepCloseTo(
-      model.getLogs().tPred.to1DArray(),
+  it('test prediction predictiveComponents vector', () => {
+    expect(prediction.predictiveComponents.to1DArray()).toBeDeepCloseTo(
+      model.getLogs().predictiveComponents.to1DArray(),
       8,
     );
   });
 
-  it('test prediction tOrth vector', () => {
-    expect(prediction.tOrth.to1DArray()).toBeDeepCloseTo(
-      model.getLogs().tOrth.to1DArray(),
+  it('test prediction orthogonalScores vector', () => {
+    expect(prediction.orthogonalScores.to1DArray()).toBeDeepCloseTo(
+      model.getLogs().orthogonalScores.to1DArray(),
       8,
     );
   });
@@ -448,7 +479,7 @@ describe('prediction without labels', () => {
   const prediction = model.predict(x);
 
   it('test prediction length', () => {
-    expect(prediction.tPred.rows).toBe(150);
+    expect(prediction.predictiveComponents.rows).toBe(150);
   });
 
   it('test prediction yHat', () => {

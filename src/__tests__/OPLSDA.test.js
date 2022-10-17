@@ -50,24 +50,24 @@ describe('Statistic values with OPLS-DA working on iris', () => {
     //  [3,] -0.055799091 -0.24308369 -4.437359e-02 -0.041734675
     //  [4,] -0.110771432 -0.36843166  1.732106e-02 -0.127486751
     //  [5,]  0.113426110  0.47315503  7.063183e-02  0.093097059
-    const E = opls.output.E.to2DArray();
-    expect(E[0]).toBeDeepCloseTo(
+    const residualData = opls.output.residualData.to2DArray();
+    expect(residualData[0]).toBeDeepCloseTo(
       [0.056367716, 0.19711813, -2.417647e-5, 0.061137059],
       8,
     );
-    expect(E[1]).toBeDeepCloseTo(
+    expect(residualData[1]).toBeDeepCloseTo(
       [-0.176379276, -0.77771969, -1.487345e-1, -0.128314741],
       7,
     );
-    expect(E[2]).toBeDeepCloseTo(
+    expect(residualData[2]).toBeDeepCloseTo(
       [-0.055799091, -0.24308369, -4.437359e-2, -0.041734675],
       8,
     );
-    expect(E[3]).toBeDeepCloseTo(
+    expect(residualData[3]).toBeDeepCloseTo(
       [-0.110771432, -0.36843166, 1.732106e-2, -0.127486751],
       8,
     );
-    expect(E[4]).toBeDeepCloseTo(
+    expect(residualData[4]).toBeDeepCloseTo(
       [0.11342611, 0.47315503, 7.063183e-2, 0.093097059],
       8,
     );
@@ -78,23 +78,23 @@ describe('Statistic values with OPLS-DA working on iris', () => {
     // [149,]  0.4457218985  1.694858777  1.261085e-01  0.430024961
     // [150,]  0.1037061687  0.549617725  1.726800e-01  0.039348872
 
-    expect(E[145]).toBeDeepCloseTo(
+    expect(residualData[145]).toBeDeepCloseTo(
       [0.2229086977, 0.497928923, -2.59642e-1, 0.351741065],
       7,
     );
-    expect(E[146]).toBeDeepCloseTo(
+    expect(residualData[146]).toBeDeepCloseTo(
       [-0.1304725091, -0.711272547, -2.354227e-1, -0.041794135],
       7,
     );
-    expect(E[147]).toBeDeepCloseTo(
+    expect(residualData[147]).toBeDeepCloseTo(
       [0.1264911514, 0.377266215, -5.9906e-2, 0.162570429],
       8,
     );
-    expect(E[148]).toBeDeepCloseTo(
+    expect(residualData[148]).toBeDeepCloseTo(
       [0.4457218985, 1.694858777, 1.261085e-1, 0.430024961],
       7,
     );
-    expect(E[149]).toBeDeepCloseTo(
+    expect(residualData[149]).toBeDeepCloseTo(
       [0.1037061687, 0.549617725, 1.7268e-1, 0.039348872],
       7,
     );
@@ -110,7 +110,9 @@ describe('OPLS-DA test orthogonal values', () => {
     // [3,]  0.221496966
     // [4,]  0.323480471
     // [5,] -0.006342759
-    expect(opls.output.tOrth.to1DArray().slice(0, 5)).toBeDeepCloseTo(
+    expect(
+      opls.output.orthogonalScores.to1DArray().slice(0, 5),
+    ).toBeDeepCloseTo(
       [-0.120705304, 0.001762035, 0.221496966, 0.323480471, -0.006342759],
       8,
     );
@@ -120,7 +122,9 @@ describe('OPLS-DA test orthogonal values', () => {
     // [148,]  0.041028264
     // [149,]  0.631370238
     // [150,]  0.484405741
-    expect(opls.output.tOrth.to1DArray().slice(145, 150)).toBeDeepCloseTo(
+    expect(
+      opls.output.orthogonalScores.to1DArray().slice(145, 150),
+    ).toBeDeepCloseTo(
       [0.056756875, 0.074150505, 0.041028264, 0.631370238, 0.484405741],
       8,
     );
@@ -130,7 +134,7 @@ describe('OPLS-DA test orthogonal values', () => {
     // > model@p_orth
     //      Sepal.Length Sepal.Width Petal.Length Petal.Width
     // [1,]    -1.324534  -0.5627685   -0.3332748 0.004204019
-    expect(opls.output.pOrth.to1DArray()).toBeDeepCloseTo(
+    expect(opls.output.orthogonalLoadings.to1DArray()).toBeDeepCloseTo(
       [-1.324534, -0.5627685, -0.3332748, 0.004204019],
       7,
     );
@@ -140,7 +144,7 @@ describe('OPLS-DA test orthogonal values', () => {
     // > model@w_orth
     //      Sepal.Length Sepal.Width Petal.Length Petal.Width
     // [1,]   -0.8212997   0.0661631    0.1587031   0.5439692
-    expect(opls.output.wOrth.to1DArray()).toBeDeepCloseTo(
+    expect(opls.output.orthogonalWeights.to1DArray()).toBeDeepCloseTo(
       [-0.8212997, 0.0661631, 0.1587031, 0.5439692],
       7,
     );
@@ -148,7 +152,7 @@ describe('OPLS-DA test orthogonal values', () => {
 });
 
 describe('Test cross-validation scores', () => {
-  it('Test predictive scores (tCV)', () => {
+  it('Test predictive scores (predictiveScoresCV)', () => {
     // > model@t_cv
     //             [,1]
     // [1,]  2.38420136
@@ -156,8 +160,10 @@ describe('Test cross-validation scores', () => {
     // [3,]  2.25988084
     // [4,]  2.00857909
     // [5,]  2.38428588
-    const tCV = opls.output.tCV;
-    expect(tCV[tCV.length - 2].to1DArray().slice(0, 5)).toBeDeepCloseTo(
+    const predictiveScoresCV = opls.output.predictiveScoresCV;
+    expect(
+      predictiveScoresCV[predictiveScoresCV.length - 2].to1DArray().slice(0, 5),
+    ).toBeDeepCloseTo(
       [2.38420136, 2.08072499, 2.25988084, 2.00857909, 2.38428588],
       8,
     );
@@ -167,21 +173,27 @@ describe('Test cross-validation scores', () => {
     // [148,] -1.63785885
     // [149,] -1.72632549sP
     // [150,] -1.27648994
-    expect(tCV[tCV.length - 2].to1DArray().slice(145, 150)).toBeDeepCloseTo(
+    expect(
+      predictiveScoresCV[predictiveScoresCV.length - 2]
+        .to1DArray()
+        .slice(145, 150),
+    ).toBeDeepCloseTo(
       [-1.75510608, -1.62748669, -1.63785885, -1.72632549, -1.27648994],
       8,
     );
   });
 
-  it('Test predictive scores (tOrthCV)', () => {
+  it('Test predictive scores (orthogonalScoresCV)', () => {
     // > model@t_orth_cv
     // [1,] -0.1135301544
     // [2,] -0.0140748502
     // [3,]  0.1578422859
     // [4,]  0.3427612559
     // [5,]  0.0122617949
-    const tOrthCV = opls.output.tOrthCV;
-    expect(tOrthCV[tOrthCV.length - 2].to1DArray().slice(0, 5)).toBeDeepCloseTo(
+    const orthogonalScoresCV = opls.output.orthogonalScoresCV;
+    expect(
+      orthogonalScoresCV[orthogonalScoresCV.length - 2].to1DArray().slice(0, 5),
+    ).toBeDeepCloseTo(
       [-0.1135301544, -0.0140748502, 0.1578422859, 0.3427612559, 0.0122617949],
       8,
     );
@@ -192,14 +204,16 @@ describe('Test cross-validation scores', () => {
     // [149,]  0.6394495744
     // [150,]  0.4980731231
     expect(
-      tOrthCV[tOrthCV.length - 2].to1DArray().slice(145, 150),
+      orthogonalScoresCV[orthogonalScoresCV.length - 2]
+        .to1DArray()
+        .slice(145, 150),
     ).toBeDeepCloseTo(
       [0.0204401295, 0.0529381252, 0.132951503, 0.6394495744, 0.4980731231],
       8,
     );
   });
 
-  it('Test predictive scores (yHatCV)', () => {
+  it('Test predictive scores (yHatScoresCV)', () => {
     // > model@t_yhat_cv
     //     [,1]
     // [1,]  5.234392e-03
@@ -207,8 +221,10 @@ describe('Test cross-validation scores', () => {
     // [3,] -1.154220e-02
     // [4,] -3.222685e-03
     // [5,] -3.825491e-03
-    const yHatCV = opls.output.yHatCV;
-    expect(yHatCV[yHatCV.length - 2].to1DArray().slice(0, 5)).toBeDeepCloseTo(
+    const yHatScoresCV = opls.output.yHatScoresCV;
+    expect(
+      yHatScoresCV[yHatScoresCV.length - 2].to1DArray().slice(0, 5),
+    ).toBeDeepCloseTo(
       [5.234392e-3, 4.568125e-3, -1.15422e-2, -3.222685e-3, -3.825491e-3],
       8,
     );
@@ -219,7 +235,7 @@ describe('Test cross-validation scores', () => {
     // [149,]  2.769820e-03
     // [150,]  2.048077e-03
     expect(
-      yHatCV[yHatCV.length - 2].to1DArray().slice(145, 150),
+      yHatScoresCV[yHatScoresCV.length - 2].to1DArray().slice(145, 150),
     ).toBeDeepCloseTo(
       [-3.402418e-2, -3.573064e-3, 8.365263e-3, 2.76982e-3, 2.048077e-3],
       8,
@@ -236,7 +252,9 @@ describe('OPLS-DA test predictive components', () => {
     // [3,]  2.18730941
     // [4,]  2.04038657
     // [5,]  2.41783405
-    expect(opls.output.tPred.to1DArray().slice(0, 5)).toBeDeepCloseTo(
+    expect(
+      opls.output.predictiveComponents.to1DArray().slice(0, 5),
+    ).toBeDeepCloseTo(
       [2.36197253, 2.03663185, 2.18730941, 2.04038657, 2.41783405],
       8,
     );
@@ -246,7 +264,9 @@ describe('OPLS-DA test predictive components', () => {
     // [148,] -1.52853204
     // [149,] -1.74143731
     // [150,] -1.28568876
-    expect(opls.output.tPred.to1DArray().slice(145, 150)).toBeDeepCloseTo(
+    expect(
+      opls.output.predictiveComponents.to1DArray().slice(145, 150),
+    ).toBeDeepCloseTo(
       [-1.88039825, -1.65429087, -1.52853204, -1.74143731, -1.28568876],
       8,
     );
@@ -256,7 +276,7 @@ describe('OPLS-DA test predictive components', () => {
     // > model@p_pred
     //      Sepal.Length Sepal.Width Petal.Length Petal.Width
     // [1,]   -0.4716058   0.3177661   -0.5825451  -0.5807357
-    expect(opls.output.pPred.to1DArray()).toBeDeepCloseTo(
+    expect(opls.output.predictiveLoadings.to1DArray()).toBeDeepCloseTo(
       [-0.4716058, 0.3177661, -0.5825451, -0.5807357],
       7,
     );
@@ -266,7 +286,7 @@ describe('OPLS-DA test predictive components', () => {
     // > model@w_pred
     //      Sepal.Length Sepal.Width Petal.Length Petal.Width
     // [1,]   -0.4714635   0.3145122   -0.5860378  -0.5791061
-    expect(opls.output.wPred.to1DArray()).toBeDeepCloseTo(
+    expect(opls.output.predictiveWeights.to1DArray()).toBeDeepCloseTo(
       [-0.4714635, 0.3145122, -0.5860378, -0.5791061],
       5,
     );
@@ -275,7 +295,7 @@ describe('OPLS-DA test predictive components', () => {
   it('Test predictive betas', () => {
     // > model@betas_pred
     // [1] 0.7158934
-    expect(opls.output.betasPred.to1DArray()).toBeDeepCloseTo([0.7158934], 7);
+    expect(opls.output.betas.to1DArray()).toBeDeepCloseTo([0.7158934], 7);
   });
 });
 
