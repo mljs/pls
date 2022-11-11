@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: 'If you use this software, please cite it as below.'
 title: 'Javascript implementation of Partial Least Squares (PLS), Kernel-based Orthogonal Projections to Latent Structures (K-OPLS) and NIPALS based OPLS'
-abstract: 'The tools in this package allows to model linear relationships between a descriptor and response matrix using projection to latent structures with different approches.'
+abstract: 'The tools in this package allows to model linear relationships between a descriptor and response matrix using projection to latent structures with different approches using Javascript.'
 repository-artifact: http://cheminfo.github.io/jcampconverter/
 repository-code: https://github.com/cheminfo/jcampconverter
 authors:
