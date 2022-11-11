@@ -49,6 +49,13 @@
 
 
 <a name="0.2.1"></a>
+## [4.3.0](https://github.com/mljs/pls/compare/v4.2.0...v4.3.0) (2022-11-11)
+
+
+### Features
+
+* Add citation ([9be78eb](https://github.com/mljs/pls/commit/9be78ebb882d4db8cff44600ba21304d06d66013))
+
 ## [4.2.0](https://github.com/mljs/pls/compare/v4.1.1...v4.2.0) (2022-10-17)
 
 
