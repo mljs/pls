@@ -49,6 +49,13 @@
 
 
 <a name="0.2.1"></a>
+## [4.3.1](https://github.com/mljs/pls/compare/v4.3.0...v4.3.1) (2022-11-11)
+
+
+### Bug Fixes
+
+* correct DOI to Zenodo ([5a79a1e](https://github.com/mljs/pls/commit/5a79a1ee7c69df4a8b80a9685ed0fdd9feb57278))
+
 ## [4.3.0](https://github.com/mljs/pls/compare/v4.2.0...v4.3.0) (2022-11-11)
 
 
