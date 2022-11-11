@@ -2,6 +2,7 @@
 
 [![NPM version][npm-image]][npm-url]
 [![build status][ci-image]][ci-url]
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7314529.svg)](https://doi.org/10.5281/zenodo.7314529)
 [![npm download][download-image]][download-url]
 
 PLS regression algorithm based on the Yi Cao implementation:
@@ -69,6 +70,7 @@ The OPLS class is intended for exploratory modeling, that is not for the creatio
 ```js
 console.log(model.model[0].Q2y);
 ```
+
 should give 0.9209227614652857
 
 ### [OPLS-DA](./src/OPLS.js)
