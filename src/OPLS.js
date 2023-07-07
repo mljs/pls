@@ -307,6 +307,7 @@ export class OPLS {
       means: this.means,
       stdevs: this.stdevs,
       model: this.model,
+      mode: this.mode,
       predictiveScoresCV: this.predictiveScoresCV,
       orthogonalScoresCV: this.orthogonalScoresCV,
       yHatScoresCV: this.yHatScoresCV,
