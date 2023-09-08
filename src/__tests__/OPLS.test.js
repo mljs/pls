@@ -391,12 +391,20 @@ describe('import / export model', () => {
   const model = new OPLS(x, labels, { cvFolds });
   const exportedModel = JSON.stringify(model.toJSON());
   const newModel = OPLS.load(JSON.parse(exportedModel));
-
+  const test = [
+    [5.1, 3.5, 1.4, 0.2],
+    [7, 3.2, 4.7, 1.4],
+    [6.3, 3.3, 6, 2.5],
+  ];
   it('test export', () => {
     expect(JSON.parse(exportedModel).name).toBe('OPLS');
   });
   it('test import', () => {
-    expect(Object.keys(newModel)[0]).toBe('center');
+    expect(model.predict(test)).toStrictEqual(newModel.predict(test));
+  });
+  it('test category prediction', () => {
+    expect(model.predictCategory(test)).toStrictEqual([0, 1, 2]);
+    expect(newModel.predictCategory(test)).toStrictEqual([0, 1, 2]);
   });
 });
 
