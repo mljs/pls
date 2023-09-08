@@ -49,6 +49,14 @@
 
 
 <a name="0.2.1"></a>
+## [4.3.2](https://github.com/mljs/pls/compare/v4.3.1...v4.3.2) (2023-09-08)
+
+
+### Bug Fixes
+
+* ensure that predict and predictCategory methods work after loading exported model + test case close [#32](https://github.com/mljs/pls/issues/32) ([239f18b](https://github.com/mljs/pls/commit/239f18b8e3681487eaf0e4f0284dd5082cb7ff66))
+* export the mode in the model ([453222e](https://github.com/mljs/pls/commit/453222e2423f91885336053053ead56c1bb61944))
+
 ## [4.3.1](https://github.com/mljs/pls/compare/v4.3.0...v4.3.1) (2022-11-11)
 
 
