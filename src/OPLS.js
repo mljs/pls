@@ -1,5 +1,5 @@
 import { isAnyArray } from 'is-any-array';
-import ConfusionMatrix from 'ml-confusion-matrix';
+import { ConfusionMatrix } from 'ml-confusion-matrix';
 import { getFolds } from 'ml-cross-validation';
 import { Matrix, NIPALS } from 'ml-matrix';
 import { getRocCurve, getAuc, getClasses } from 'ml-roc-multiclass';

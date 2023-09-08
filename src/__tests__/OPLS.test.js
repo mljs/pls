@@ -1,5 +1,5 @@
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
-import ConfusionMatrix from 'ml-confusion-matrix';
+import { ConfusionMatrix } from 'ml-confusion-matrix';
 import { sampleAClass } from 'ml-cross-validation';
 import {
   getNumbers,
