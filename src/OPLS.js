@@ -1,5 +1,5 @@
 import { isAnyArray } from 'is-any-array';
-import ConfusionMatrix from 'ml-confusion-matrix';
+import { ConfusionMatrix } from 'ml-confusion-matrix';
 import { getFolds } from 'ml-cross-validation';
 import { Matrix, NIPALS } from 'ml-matrix';
 import { getRocCurve, getAuc, getClasses } from 'ml-roc-multiclass';
@@ -22,6 +22,7 @@ export class OPLS {
   constructor(data, labels, options = {}) {
     if (data === true) {
       const opls = options;
+      this.labels = opls.labels;
       this.center = opls.center;
       this.scale = opls.scale;
       this.means = opls.means;
@@ -33,6 +34,7 @@ export class OPLS {
       this.orthogonalScoresCV = opls.orthogonalScoresCV;
       this.yHatScoresCV = opls.yHatScoresCV;
       this.mode = opls.mode;
+      this.output = opls.output;
       return;
     }
 
@@ -302,11 +304,14 @@ export class OPLS {
   toJSON() {
     return {
       name: 'OPLS',
+      labels: this.labels,
       center: this.center,
       scale: this.scale,
       means: this.means,
       stdevs: this.stdevs,
       model: this.model,
+      mode: this.mode,
+      output: this.output,
       predictiveScoresCV: this.predictiveScoresCV,
       orthogonalScoresCV: this.orthogonalScoresCV,
       yHatScoresCV: this.yHatScoresCV,
@@ -335,12 +340,15 @@ export class OPLS {
       }
     }
     const prediction = this.predict(features, { trueLabels, center, scale });
-    const predictiveComponents = this.output.predictiveComponents.to1DArray();
-    const newTPred = prediction.predictiveComponents.to1DArray();
+    const predictiveComponents = Matrix.checkMatrix(
+      this.output.predictiveComponents,
+    ).to1DArray();
+    const newTPred = Matrix.checkMatrix(
+      prediction.predictiveComponents,
+    ).to1DArray();
     const categories = getClasses(this.labels);
     const classes = this.labels.slice();
     const result = [];
-
     for (const pred of newTPred) {
       let item;
       let auc = 0;
@@ -413,15 +421,19 @@ export class OPLS {
     let predictiveComponents;
     for (let idx = 0; idx < nc; idx++) {
       const model = this.model[idx];
-      orthogonalWeights = model.orthogonalWeights.transpose();
-      orthogonalLoadings = model.orthogonalLoadings;
+      orthogonalWeights = Matrix.checkMatrix(
+        model.orthogonalWeights,
+      ).transpose();
+      orthogonalLoadings = Matrix.checkMatrix(model.orthogonalLoadings);
       orthogonalScores = Eh.mmul(orthogonalWeights);
       Eh.sub(orthogonalScores.mmul(orthogonalLoadings));
       // prediction
-      predictiveComponents = Eh.mmul(model.plsC.w.transpose());
+      predictiveComponents = Eh.mmul(
+        Matrix.checkMatrix(model.plsC.w).transpose(),
+      );
       const components = predictiveComponents
         .mmul(model.plsC.betas)
-        .mmul(model.plsC.q.transpose());
+        .mmul(Matrix.checkMatrix(model.plsC.q).transpose());
       totalPred = new Matrix(components.rows, 1);
       for (let i = 0; i < components.rows; i++) {
         totalPred.setRow(i, [components.getRowVector(i).sum()]);
