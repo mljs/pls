@@ -177,7 +177,7 @@ console.log(predYOrthVectors);
 
 [npm-image]: https://img.shields.io/npm/v/ml-pls.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/ml-pls
-[ci-image]: https://github.com/mljs/pls/workflows/Node.js%20CI/badge.svg?branch=master
+[ci-image]: https://github.com/mljs/pls/workflows/Node.js%20CI/badge.svg?branch=main
 [ci-url]: https://github.com/mljs/pls/actions?query=workflow%3A%22Node.js+CI%22
 [download-image]: https://img.shields.io/npm/dm/ml-pls.svg?style=flat-square
 [download-url]: https://npmjs.org/package/ml-pls
