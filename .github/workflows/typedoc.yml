@@ -1,0 +1,14 @@
+name: TypeDoc
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  typedoc:
+    uses: zakodium/workflows/.github/workflows/typedoc.yml@typedoc-v1
+    with:
+      entry: 'src/index.js'
+    secrets:
+      github-token: ${{ secrets.BOT_TOKEN }}

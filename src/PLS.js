@@ -1,6 +1,6 @@
 import { Matrix } from 'ml-matrix';
 
-import * as Utils from './util/utils';
+import * as Utils from './util/utils.js';
 
 /**
  * @class PLS
@@ -8,9 +8,9 @@ import * as Utils from './util/utils';
 export class PLS {
   /**
    * Constructor for Partial Least Squares (PLS)
-   * @param {object} options
+   * @param {object} options - constructor options.
    * @param {number} [options.latentVectors] - Number of latent vector to get (if the algorithm doesn't find a good model below the tolerance)
-   * @param {number} [options.tolerance=1e-5]
+   * @param {number} [options.tolerance=1e-5] - tolerance used to stop the algorithm.
    * @param {boolean} [options.scale=true] - rescale dataset using mean.
    * @param {object} model - for load purposes.
    */
@@ -26,10 +26,10 @@ export class PLS {
       this.scaleMethod = model.scaleMethod;
       this.tolerance = model.tolerance;
     } else {
-      let { tolerance = 1e-5, scale = true } = options;
+      let { tolerance = 1e-5, scale = true, latentVectors } = options;
       this.tolerance = tolerance;
       this.scale = scale;
-      this.latentVectors = options.latentVectors;
+      this.latentVectors = latentVectors;
     }
   }
 
@@ -43,9 +43,8 @@ export class PLS {
    * Q - Loading matrix of Y
    * B - Matrix of regression coefficient
    * W - Weight matrix of X
-   *
-   * @param {Matrix|Array} trainingSet
-   * @param {Matrix|Array} trainingValues
+   * @param {Matrix|Array} trainingSet - matrix of features.
+   * @param {Matrix|Array} trainingValues - matrix of predictions.
    */
   train(trainingSet, trainingValues) {
     trainingSet = Matrix.checkMatrix(trainingSet);
@@ -180,7 +179,7 @@ export class PLS {
   /**
    * Predicts the behavior of the given dataset.
    * @param {Matrix|Array} dataset - data to be predicted.
-   * @return {Matrix} - predictions of each element of the dataset.
+   * @returns {Matrix} - predictions of each element of the dataset.
    */
   predict(dataset) {
     let X = Matrix.checkMatrix(dataset);
@@ -194,7 +193,7 @@ export class PLS {
 
   /**
    * Returns the explained variance on training of the PLS model
-   * @return {number}
+   * @returns {number} the explained variance.
    */
   getExplainedVariance() {
     return this.R2X;
@@ -202,7 +201,7 @@ export class PLS {
 
   /**
    * Export the current model to JSON.
-   * @return {object} - Current model.
+   * @returns {object} - Current model.
    */
   toJSON() {
     return {
@@ -220,8 +219,8 @@ export class PLS {
 
   /**
    * Load a PLS model from a JSON Object
-   * @param {object} model
-   * @return {PLS} - PLS object from the given model
+   * @param {object} model - the serialized model to load.
+   * @returns {PLS} - PLS object from the given model
    */
   static load(model) {
     if (model.name !== 'PLS') {
@@ -232,11 +231,10 @@ export class PLS {
 }
 
 /**
+ * Returns the index where the sum of each column vector is maximum.
  * @private
- * Function that returns the index where the sum of each
- * column vector is maximum.
- * @param {Matrix} data
- * @return {number} index of the maximum
+ * @param {Matrix} data - the matrix to scan.
+ * @returns {number} index of the maximum.
  */
 function maxSumColIndex(data) {
   return Matrix.rowVector(data.sum('column')).maxIndex()[0];

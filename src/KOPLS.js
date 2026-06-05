@@ -1,6 +1,6 @@
 import { Matrix, SingularValueDecomposition, inverse } from 'ml-matrix';
 
-import { initializeMatrices } from './util/utils';
+import { initializeMatrices } from './util/utils.js';
 
 /**
  * @class KOPLS
@@ -8,10 +8,10 @@ import { initializeMatrices } from './util/utils';
 export class KOPLS {
   /**
    * Constructor for Kernel-based Orthogonal Projections to Latent Structures (K-OPLS)
-   * @param {object} options
+   * @param {object} options - constructor options.
    * @param {number} [options.predictiveComponents] - Number of predictive components to use.
    * @param {number} [options.orthogonalComponents] - Number of Y-Orthogonal components.
-   * @param {Kernel} [options.kernel] - Kernel object to apply, see [ml-kernel](https://github.com/mljs/kernel).
+   * @param {object} [options.kernel] - Kernel object to apply, see [ml-kernel](https://github.com/mljs/kernel).
    * @param {object} model - for load purposes.
    */
   constructor(options, model) {
@@ -52,8 +52,8 @@ export class KOPLS {
 
   /**
    * Train the K-OPLS model with the given training set and labels.
-   * @param {Matrix|Array} trainingSet
-   * @param {Matrix|Array} trainingValues
+   * @param {Matrix|Array} trainingSet - matrix of features.
+   * @param {Matrix|Array} trainingValues - matrix of labels.
    */
   train(trainingSet, trainingValues) {
     trainingSet = Matrix.checkMatrix(trainingSet);
@@ -106,13 +106,6 @@ export class KOPLS {
 
     let SigmaPow = Matrix.pow(Sigma, -0.5);
     // to avoid errors, check infinity
-
-    function removeInfinity(i, j) {
-      if (this.get(i, j) === Infinity) {
-        this.set(i, j, 0);
-      }
-    }
-
     SigmaPow.apply(removeInfinity);
 
     for (let i = 0; i < this.orthogonalComp; ++i) {
@@ -147,7 +140,7 @@ export class KOPLS {
       )
         .mmul(predScoreMat[i])
         .mmul(YOrthLoadingVec[i])
-        .mul(Math.pow(YOrthEigen[i], -0.5));
+        .mul(YOrthEigen[i] ** -0.5);
 
       let toiPrime = YOrthScoreMat[i].transpose();
       YOrthScoreNorm[i] = Matrix.sqrt(toiPrime.mmul(YOrthScoreMat[i]));
@@ -189,8 +182,8 @@ export class KOPLS {
 
   /**
    * Predicts the output given the matrix to predict.
-   * @param {Matrix|Array} toPredict
-   * @return {{y: Matrix, predScoreMat: Array<Matrix>, predYOrthVectors: Array<Matrix>}} predictions
+   * @param {Matrix|Array} toPredict - matrix of features to predict.
+   * @returns {{y: Matrix, predScoreMat: Array<Matrix>, predYOrthVectors: Array<Matrix>}} predictions
    */
   predict(toPredict) {
     let KTestTrain = this.kernel.compute(toPredict, this.trainingSet);
@@ -217,7 +210,7 @@ export class KOPLS {
       )
         .mmul(this.predScoreMat[i])
         .mmul(this.YOrthLoadingVec[i])
-        .mul(Math.pow(this.YOrthEigen[i], -0.5));
+        .mul(this.YOrthEigen[i] ** -0.5);
 
       YOrthScoreVector[i] = YOrthScoreVector[i].divRowVector(this.toNorm[i]);
 
@@ -253,7 +246,7 @@ export class KOPLS {
 
   /**
    * Export the current model to JSON.
-   * @return {object} - Current model.
+   * @returns {object} - Current model.
    */
   toJSON() {
     return {
@@ -276,9 +269,9 @@ export class KOPLS {
 
   /**
    * Load a K-OPLS with the given model.
-   * @param {object} model
-   * @param {Kernel} kernel - kernel used on the model, see [ml-kernel](https://github.com/mljs/kernel).
-   * @return {KOPLS}
+   * @param {object} model - the serialized model to load.
+   * @param {object} kernel - kernel used on the model, see [ml-kernel](https://github.com/mljs/kernel).
+   * @returns {KOPLS} the loaded K-OPLS model.
    */
   static load(model, kernel) {
     if (model.name !== 'K-OPLS') {
@@ -291,5 +284,18 @@ export class KOPLS {
 
     model.kernel = kernel;
     return new KOPLS(true, model);
+  }
+}
+
+/**
+ * Replaces infinite entries with zero. Used as a Matrix.apply() callback.
+ * @param {number} i - row index.
+ * @param {number} j - column index.
+ */
+function removeInfinity(i, j) {
+  // eslint-disable-next-line no-invalid-this -- `this` is the Matrix bound by apply()
+  if (this.get(i, j) === Infinity) {
+    // eslint-disable-next-line no-invalid-this -- `this` is the Matrix bound by apply()
+    this.set(i, j, 0);
   }
 }

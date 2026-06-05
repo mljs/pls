@@ -1,16 +1,20 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
 import { Matrix } from 'ml-matrix';
 import { parse } from 'papaparse';
+import { expect, test } from 'vitest';
 
-import kFoldCoffeeTest from '../../data/kFoldCoffeeTest.json';
+import kFoldCoffeeTest from '../../data/kFoldCoffeeTest.json' with { type: 'json' };
 import { OPLS } from '../OPLS.js';
 
 expect.extend({ toBeDeepCloseTo });
 
-const raw = readFileSync(join(__dirname, '../../data/coffee1k.tsv'), 'utf8');
+const raw = readFileSync(
+  join(import.meta.dirname, '../../data/coffee1k.tsv'),
+  'utf8',
+);
 const coffee1k = parse(raw, { delimiter: '\t', dynamicTyping: true }).data;
 const y = [];
 const x = [];

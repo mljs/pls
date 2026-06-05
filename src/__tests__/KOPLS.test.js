@@ -1,70 +1,92 @@
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
 import Kernel from 'ml-kernel';
 import { Matrix } from 'ml-matrix';
+import { beforeAll, expect, test } from 'vitest';
 
-import { KOPLS } from '../KOPLS';
+import XtestData from '../../data/Xtest.json' with { type: 'json' };
+import Xtest1Data from '../../data/Xtest1.json' with { type: 'json' };
+import XtrainData from '../../data/Xtrain.json' with { type: 'json' };
+import Xtrain1Data from '../../data/Xtrain1.json' with { type: 'json' };
+import YtestData from '../../data/Ytest.json' with { type: 'json' };
+import Ytest1Data from '../../data/Ytest1.json' with { type: 'json' };
+import YtrainData from '../../data/Ytrain.json' with { type: 'json' };
+import Ytrain1Data from '../../data/Ytrain1.json' with { type: 'json' };
+import toData from '../../data/to.json' with { type: 'json' };
+import tpData from '../../data/tp.json' with { type: 'json' };
+import { KOPLS } from '../KOPLS.js';
 
 expect.extend({ toBeDeepCloseTo });
 
-describe('K-OPLS', () => {
-  let Xtest = new Matrix(require('../../data/Xtest.json'));
-  let Xtrain = new Matrix(require('../../data/Xtrain.json'));
-  let Ytest = require('../../data/Ytest.json');
-  let Ytrain = new Matrix(require('../../data/Ytrain.json'));
-  let Tp = new Matrix(require('../../data/tp.json'));
-  let to = new Matrix(require('../../data/to.json'));
+let Xtest;
+let Xtrain;
+let Ytest;
+let Ytrain;
+let Tp;
+let to;
+let kernel;
+let cls;
 
-  let kernel = new Kernel('gaussian', {
+beforeAll(() => {
+  Xtest = new Matrix(XtestData);
+  Xtrain = new Matrix(XtrainData);
+  Ytest = YtestData;
+  Ytrain = new Matrix(YtrainData);
+  Tp = new Matrix(tpData);
+  to = new Matrix(toData);
+
+  kernel = new Kernel('gaussian', {
     sigma: 25,
   });
 
-  let cls = new KOPLS({
+  cls = new KOPLS({
     orthogonalComponents: 10,
     predictiveComponents: 1,
     kernel,
   });
 
   cls.train(Xtrain, Ytrain);
+});
 
-  it('K-OPLS test with main features', () => {
-    let { prediction, predScoreMat, predYOrthVectors } = cls.predict(Xtest);
+test('K-OPLS test with main features', () => {
+  let { prediction, predScoreMat, predYOrthVectors } = cls.predict(Xtest);
 
-    for (let i = 0; i < predScoreMat.length; ++i) {
-      for (let j = 0; j < predScoreMat[i].length; ++j) {
-        expect(predScoreMat[i][j][0]).toBeCloseTo(Tp[i][j], 2);
-      }
+  for (let i = 0; i < predScoreMat.length; ++i) {
+    for (let j = 0; j < predScoreMat[i].length; ++j) {
+      expect(predScoreMat[i][j][0]).toBeCloseTo(Tp[i][j], 2);
     }
+  }
 
-    for (let i = 0; i < predYOrthVectors.length; ++i) {
-      for (let j = 0; j < predYOrthVectors[i].length; ++j) {
-        expect(predYOrthVectors[i][j][0]).toBeCloseTo(to[i][j], 2);
-      }
+  for (let i = 0; i < predYOrthVectors.length; ++i) {
+    for (let j = 0; j < predYOrthVectors[i].length; ++j) {
+      expect(predYOrthVectors[i][j][0]).toBeCloseTo(to[i][j], 2);
     }
+  }
 
-    expect(prediction.to2DArray()).toBeDeepCloseTo(Ytest, 3);
+  expect(prediction.to2DArray()).toBeDeepCloseTo(Ytest, 3);
+});
+
+test('Load and save', () => {
+  // eslint-disable-next-line unicorn/prefer-structured-clone -- JSON round-trip exercises model serialization/deserialization
+  let model = KOPLS.load(JSON.parse(JSON.stringify(cls)), kernel);
+  let output = model.predict(Xtest).prediction;
+
+  expect(output.to2DArray()).toBeDeepCloseTo(Ytest, 3);
+});
+
+test('with real dataset', () => {
+  Xtest = new Matrix(Xtest1Data);
+  Xtrain = new Matrix(Xtrain1Data);
+  Ytest = Ytest1Data;
+  Ytrain = new Matrix(Ytrain1Data);
+
+  cls = new KOPLS({
+    orthogonalComponents: 10,
+    predictiveComponents: 2,
+    kernel,
   });
 
-  it('Load and save', () => {
-    let model = KOPLS.load(JSON.parse(JSON.stringify(cls)), kernel);
-    let output = model.predict(Xtest).prediction;
+  cls.train(Xtrain, Ytrain);
+  let output = cls.predict(Xtest).prediction;
 
-    expect(output.to2DArray()).toBeDeepCloseTo(Ytest, 3);
-  });
-
-  it('Test with real dataset', () => {
-    Xtest = new Matrix(require('../../data/Xtest1.json'));
-    Xtrain = new Matrix(require('../../data/Xtrain1.json'));
-    Ytest = require('../../data/Ytest1.json');
-    Ytrain = new Matrix(require('../../data/Ytrain1.json'));
-
-    cls = new KOPLS({
-      orthogonalComponents: 10,
-      predictiveComponents: 2,
-      kernel,
-    });
-
-    cls.train(Xtrain, Ytrain);
-    let output = cls.predict(Xtest).prediction;
-    expect(output.to2DArray()).toBeDeepCloseTo(Ytest, 1);
-  });
+  expect(output.to2DArray()).toBeDeepCloseTo(Ytest, 1);
 });

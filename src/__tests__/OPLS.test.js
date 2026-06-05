@@ -2,13 +2,15 @@ import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
 import { ConfusionMatrix } from 'ml-confusion-matrix';
 import { sampleAClass } from 'ml-cross-validation';
 import {
-  getNumbers,
   getClasses,
   getCrossValidationSets,
+  getNumbers,
 } from 'ml-dataset-iris';
 import { METADATA } from 'ml-dataset-metadata';
 import { Matrix, NIPALS } from 'ml-matrix';
+import { describe, expect, it } from 'vitest';
 
+import trainTestLabels from '../../data/trainTestLabels.json' with { type: 'json' };
 import { OPLS } from '../OPLS.js';
 import { oplsNipals } from '../oplsNipals.js';
 import { tss } from '../util/tss.js';
@@ -21,16 +23,16 @@ const folds = getCrossValidationSets(7, { idx: 0, by: 'folds' });
 const newM = new METADATA([metadata], { headers: ['iris'] });
 
 describe('centering and scaling X and Y', () => {
-  let x = new Matrix(iris);
-
   it('test that iris X scaling is similar to scaling in R', () => {
-    x = x.center('column').scale('column');
+    const x = new Matrix(iris).center('column').scale('column');
+
     expect(x.get(0, 0)).toBeCloseTo(-0.8976739, 6); // ok
   });
 
   it('test that iris Y scaling is similar to scaling in R', () => {
     let y = newM.get('iris', { format: 'matrix' }).values;
     y = y.center('column').scale('column');
+
     expect(y.get(0, 0)).toBeCloseTo(-1.220656, 6); // ok
   });
 });
@@ -105,7 +107,7 @@ describe('OPLS nipals components', () => {
     // scaling of the test dataset with respect to the train
     testRawData = testRawData.map((d) => d.slice(0, 4));
     const testx = new Matrix(23, 4);
-    testRawData.forEach((el, i) => testx.setRow(i, testRawData[i]));
+    for (const [i] of testRawData.entries()) testx.setRow(i, testRawData[i]);
     testx.center('column', { center });
     testx.scale('column', { scale: sd });
 
@@ -123,10 +125,12 @@ describe('OPLS nipals components', () => {
     expect(Eh.get(22, 1)).toBeCloseTo(-1.22642102, 6);
 
     const predictiveComponents = Eh.mmul(plsComp.w.transpose());
+
     expect(predictiveComponents.get(0, 0)).toBeCloseTo(-2.0983292, 6);
     expect(predictiveComponents.get(7, 0)).toBeCloseTo(-2.4324436, 6);
 
     const yHat = predictiveComponents.mmul(plsComp.betas);
+
     expect(yHat.get(0, 0)).toBeCloseTo(-1.21268611, 6);
     expect(yHat.get(7, 0)).toBeCloseTo(-1.40578061, 6);
   });
@@ -156,7 +160,7 @@ describe('OPLS nipals components', () => {
 
       testRawData = testRawData.map((d) => d.slice(0, 4));
       const testx = new Matrix(testRawData.length, 4);
-      testRawData.forEach((el, i) => testx.setRow(i, testRawData[i]));
+      for (const [i] of testRawData.entries()) testx.setRow(i, testRawData[i]);
       testx.center('column', { center });
       testx.scale('column', { scale: sd });
 
@@ -173,11 +177,15 @@ describe('OPLS nipals components', () => {
       }
 
       testCv = testCv.filter((el, idx) => !fold.includes(idx));
-      testCv.forEach((el, idx) => cvPreds.setRow(el, [yHat.get(idx, 0)]));
-      testCv.forEach((el, idx) => cvScoresO.setRow(el, [scores.get(idx, 0)]));
-      testCv.forEach((el, idx) =>
-        cvScoresP.setRow(el, [predictiveComponents.get(idx, 0)]),
-      );
+      for (const [idx, el] of testCv.entries()) {
+        cvPreds.setRow(el, [yHat.get(idx, 0)]);
+      }
+      for (const [idx, el] of testCv.entries()) {
+        cvScoresO.setRow(el, [scores.get(idx, 0)]);
+      }
+      for (const [idx, el] of testCv.entries()) {
+        cvScoresP.setRow(el, [predictiveComponents.get(idx, 0)]);
+      }
     }
 
     const y = newM.get('iris', { format: 'matrix' }).values;
@@ -202,6 +210,7 @@ describe('OPLS utility functions', () => {
 
     let x = new Matrix(iris);
     x = x.center('column').scale('column');
+
     expect(x.get(0, 0)).toBeCloseTo(-0.8976739, 6);
     expect(y.get(0, 0)).toBeCloseTo(-1.220656, 6);
     expect(tss(x)).toBeCloseTo(596, 6);
@@ -217,6 +226,7 @@ describe('OPLS utility functions', () => {
 
     const res = oplsNipals(x, y);
     const xRes = res.filteredX;
+
     expect(xRes.get(0, 0)).toBeCloseTo(-0.99598366, 6);
     expect(res.scoresXOrtho.get(0, 0)).toBeCloseTo(0.074537852, 6);
 
@@ -256,11 +266,11 @@ describe('OPLS utility functions', () => {
   it('test OPLS sampleAClass', () => {
     const c = sampleAClass(metadata, 0.1).trainIndex;
     const d = [];
-    c.forEach((el) => d.push(metadata[el]));
+    for (const el of c) d.push(metadata[el]);
     let counts = {};
-    d.forEach((x) => {
+    for (const x of d) {
       counts[x] = (counts[x] || 0) + 1;
-    });
+    }
 
     expect(sampleAClass(metadata, 0.1).trainIndex).toHaveLength(15);
     expect(sampleAClass(metadata, 0.1).testIndex).toHaveLength(135);
@@ -282,7 +292,6 @@ describe('OPLS utility functions', () => {
 
   it('test OPLS dataArray', () => {
     const x = new Matrix(iris);
-    const trainTestLabels = require('../../data/trainTestLabels.json');
     const M = new METADATA([metadata], { headers: ['iris'] });
     const labels = M.get('iris', { format: 'factor' }).values;
     const model = new OPLS(x, labels, { cvFolds: trainTestLabels });
@@ -396,12 +405,15 @@ describe('import / export model', () => {
     [7, 3.2, 4.7, 1.4],
     [6.3, 3.3, 6, 2.5],
   ];
+
   it('test export', () => {
     expect(JSON.parse(exportedModel).name).toBe('OPLS');
   });
+
   it('test import', () => {
     expect(model.predict(test)).toStrictEqual(newModel.predict(test));
   });
+
   it('test category prediction', () => {
     expect(model.predictCategory(test)).toStrictEqual([0, 1, 2]);
     expect(newModel.predictCategory(test)).toStrictEqual([0, 1, 2]);

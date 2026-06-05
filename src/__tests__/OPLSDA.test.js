@@ -1,10 +1,11 @@
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
 import { ConfusionMatrix } from 'ml-confusion-matrix';
-import { getNumbers, getClasses } from 'ml-dataset-iris';
+import { getClasses, getNumbers } from 'ml-dataset-iris';
 import { Matrix } from 'ml-matrix';
+import { describe, expect, it } from 'vitest';
 
-import cvSets from '../../data/kFoldStratifiedTest.json';
-import { OPLS } from '../OPLS';
+import cvSets from '../../data/kFoldStratifiedTest.json' with { type: 'json' };
+import { OPLS } from '../OPLS.js';
 
 // Cross-validation sets for R code in Metabomate
 // cv_sets <- list(
@@ -18,6 +19,7 @@ import { OPLS } from '../OPLS';
 // )
 
 expect.extend({ toBeDeepCloseTo });
+
 const iris = getNumbers();
 const metadata = getClasses();
 
@@ -31,6 +33,7 @@ model=opls(X, labels)
 
 const x = new Matrix(iris);
 const opls = new OPLS(x, metadata, { cvFolds: cvSets });
+
 describe('Statistic values with OPLS-DA working on iris', () => {
   // > model@summary
   //   R2X  R2Y   Q2 AUROC
@@ -51,6 +54,7 @@ describe('Statistic values with OPLS-DA working on iris', () => {
     //  [4,] -0.110771432 -0.36843166  1.732106e-02 -0.127486751
     //  [5,]  0.113426110  0.47315503  7.063183e-02  0.093097059
     const residualData = opls.output.residualData.to2DArray();
+
     expect(residualData[0]).toBeDeepCloseTo(
       [0.056367716, 0.19711813, -2.417647e-5, 0.061137059],
       8,
@@ -161,9 +165,8 @@ describe('Test cross-validation scores', () => {
     // [4,]  2.00857909
     // [5,]  2.38428588
     const predictiveScoresCV = opls.output.predictiveScoresCV;
-    expect(
-      predictiveScoresCV[predictiveScoresCV.length - 2].to1DArray().slice(0, 5),
-    ).toBeDeepCloseTo(
+
+    expect(predictiveScoresCV.at(-2).to1DArray().slice(0, 5)).toBeDeepCloseTo(
       [2.38420136, 2.08072499, 2.25988084, 2.00857909, 2.38428588],
       8,
     );
@@ -174,9 +177,7 @@ describe('Test cross-validation scores', () => {
     // [149,] -1.72632549sP
     // [150,] -1.27648994
     expect(
-      predictiveScoresCV[predictiveScoresCV.length - 2]
-        .to1DArray()
-        .slice(145, 150),
+      predictiveScoresCV.at(-2).to1DArray().slice(145, 150),
     ).toBeDeepCloseTo(
       [-1.75510608, -1.62748669, -1.63785885, -1.72632549, -1.27648994],
       8,
@@ -191,9 +192,8 @@ describe('Test cross-validation scores', () => {
     // [4,]  0.3427612559
     // [5,]  0.0122617949
     const orthogonalScoresCV = opls.output.orthogonalScoresCV;
-    expect(
-      orthogonalScoresCV[orthogonalScoresCV.length - 2].to1DArray().slice(0, 5),
-    ).toBeDeepCloseTo(
+
+    expect(orthogonalScoresCV.at(-2).to1DArray().slice(0, 5)).toBeDeepCloseTo(
       [-0.1135301544, -0.0140748502, 0.1578422859, 0.3427612559, 0.0122617949],
       8,
     );
@@ -204,9 +204,7 @@ describe('Test cross-validation scores', () => {
     // [149,]  0.6394495744
     // [150,]  0.4980731231
     expect(
-      orthogonalScoresCV[orthogonalScoresCV.length - 2]
-        .to1DArray()
-        .slice(145, 150),
+      orthogonalScoresCV.at(-2).to1DArray().slice(145, 150),
     ).toBeDeepCloseTo(
       [0.0204401295, 0.0529381252, 0.132951503, 0.6394495744, 0.4980731231],
       8,
@@ -222,9 +220,8 @@ describe('Test cross-validation scores', () => {
     // [4,] -3.222685e-03
     // [5,] -3.825491e-03
     const yHatScoresCV = opls.output.yHatScoresCV;
-    expect(
-      yHatScoresCV[yHatScoresCV.length - 2].to1DArray().slice(0, 5),
-    ).toBeDeepCloseTo(
+
+    expect(yHatScoresCV.at(-2).to1DArray().slice(0, 5)).toBeDeepCloseTo(
       [5.234392e-3, 4.568125e-3, -1.15422e-2, -3.222685e-3, -3.825491e-3],
       8,
     );
@@ -234,9 +231,7 @@ describe('Test cross-validation scores', () => {
     // [148,]  8.365263e-03
     // [149,]  2.769820e-03
     // [150,]  2.048077e-03
-    expect(
-      yHatScoresCV[yHatScoresCV.length - 2].to1DArray().slice(145, 150),
-    ).toBeDeepCloseTo(
+    expect(yHatScoresCV.at(-2).to1DArray().slice(145, 150)).toBeDeepCloseTo(
       [-3.402418e-2, -3.573064e-3, 8.365263e-3, 2.76982e-3, 2.048077e-3],
       8,
     );
@@ -301,6 +296,7 @@ describe('OPLS-DA test predictive components', () => {
 
 describe('OPLS-DA test predict category', () => {
   const prediction = opls.predictCategory(x);
+
   it('Test setosa samples', () => {
     expect(prediction.slice(0, 5)).toStrictEqual(new Array(5).fill('setosa'));
   });
@@ -319,16 +315,19 @@ describe('OPLS-DA test predict category', () => {
 
   it('Testing 1 sample', () => {
     const onePrediction = opls.predictCategory(x.getRow(0));
+
     expect(onePrediction).toStrictEqual(['setosa']);
   });
 
   it('Testing 2 samples', () => {
     const twoPrediction = opls.predictCategory([x.getRow(0), x.getRow(1)]);
+
     expect(twoPrediction).toStrictEqual(['setosa', 'setosa']);
   });
 
   it('Testing the accuracy with iris dataset', () => {
     const confusionMatrix = ConfusionMatrix.fromLabels(metadata, prediction);
+
     expect(confusionMatrix.getAccuracy()).toBeDeepCloseTo(0.973, 3);
   });
 });

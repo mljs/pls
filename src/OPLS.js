@@ -2,7 +2,7 @@ import { isAnyArray } from 'is-any-array';
 import { ConfusionMatrix } from 'ml-confusion-matrix';
 import { getFolds } from 'ml-cross-validation';
 import { Matrix, NIPALS } from 'ml-matrix';
-import { getRocCurve, getAuc, getClasses } from 'ml-roc-multiclass';
+import { getAuc, getClasses, getRocCurve } from 'ml-roc-multiclass';
 
 import { oplsNipals } from './oplsNipals.js';
 import { tss } from './util/tss.js';
@@ -11,12 +11,12 @@ import { tss } from './util/tss.js';
  * Creates new OPLS (orthogonal partial latent structures) from features and labels.
  * @param {Array} data - matrix containing data (X).
  * @param {Array} labels - 1D Array containing metadata (Y).
- * @param {Object} [options={}]
+ * @param {object} [options={}]
  * @param {boolean} [options.center = true] - should the data be centered (subtract the mean).
  * @param {boolean} [options.scale = true] - should the data be scaled (divide by the standard deviation).
  * @param {Array} [options.cvFolds = []] - Allows to provide folds as array of objects with the arrays trainIndex and testIndex as properties.
  * @param {number} [options.nbFolds = 7] - Allows to generate the defined number of folds with the training and test set choosen randomly from the data set.
- * */
+ */
 
 export class OPLS {
   constructor(data, labels, options = {}) {
@@ -270,7 +270,7 @@ export class OPLS {
   /**
    * get access to all the computed elements
    * Mainly for debug and testing
-   * @return {Object} output object
+   * @returns {object} output object
    */
   getLogs() {
     return this.output;
@@ -284,8 +284,8 @@ export class OPLS {
 
   /**
    * Load an OPLS model from JSON
-   * @param {Object} model
-   * @return {OPLS}
+   * @param {object} model - the serialized model to load.
+   * @returns {OPLS} the loaded OPLS model.
    */
   static load(model) {
     if (typeof model.name !== 'string') {
@@ -299,7 +299,7 @@ export class OPLS {
 
   /**
    * Export the current model to a JSON object
-   * @return {Object} model
+   * @returns {object} model
    */
   toJSON() {
     return {
@@ -321,10 +321,10 @@ export class OPLS {
   /**
    * Predict scores for new data
    * @param {Matrix} features - a matrix containing new data
-   * @param {Object} [options={}]
+   * @param {object} [options={}] - prediction options.
    * @param {Array} [options.trueLabel] - an array with true values to compute confusion matrix
-   * @param {Number} [options.nc] - the number of components to be used
-   * @return {Object} - predictions
+   * @param {number} [options.nc] - the number of components to be used
+   * @returns {object} - predictions
    */
   predictCategory(features, options = {}) {
     const {
@@ -369,13 +369,14 @@ export class OPLS {
     return result;
   }
 
+  /* eslint-disable-next-line jsdoc/require-returns-check -- always returns for the supported modes (regression / discriminantAnalysis) */
   /**
    * Predict scores for new data
    * @param {Matrix} features - a matrix containing new data
-   * @param {Object} [options={}]
+   * @param {object} [options={}] - prediction options.
    * @param {Array} [options.trueLabel] - an array with true values to compute confusion matrix
-   * @param {Number} [options.nc] - the number of components to be used
-   * @return {Object} - predictions
+   * @param {number} [options.nc] - the number of components to be used
+   * @returns {object} - predictions
    */
   predict(features, options = {}) {
     const {
@@ -526,25 +527,27 @@ export class OPLS {
     };
   }
   /**
-   *
-   * @param {*} X - dataset matrix object
-   * @param {*} group - labels matrix object
-   * @param {*} index - train and test index (output from getFold())
+   * Splits the data into train and test sets for the given fold.
+   * @private
+   * @param {Matrix} X - dataset matrix object.
+   * @param {Matrix} group - labels matrix object.
+   * @param {object} index - train and test index (output from getFold()).
+   * @returns {object} train and test features and labels.
    */
   _getTrainTest(X, group, index) {
     const testFeatures = new Matrix(index.testIndex.length, X.columns);
     const testLabels = new Matrix(index.testIndex.length, group.columns);
-    index.testIndex.forEach((el, idx) => {
+    for (const [idx, el] of index.testIndex.entries()) {
       testFeatures.setRow(idx, X.getRow(el));
       testLabels.setRow(idx, group.getRow(el));
-    });
+    }
 
     const trainFeatures = new Matrix(index.trainIndex.length, X.columns);
     const trainLabels = new Matrix(index.trainIndex.length, group.columns);
-    index.trainIndex.forEach((el, idx) => {
+    for (const [idx, el] of index.trainIndex.entries()) {
       trainFeatures.setRow(idx, X.getRow(el));
       trainLabels.setRow(idx, group.getRow(el));
-    });
+    }
 
     return {
       trainFeatures,

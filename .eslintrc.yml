@@ -1,6 +1,0 @@
-extends: cheminfo-typescript
-env:
-  jest: true
-  node: true
-parserOptions:
-  sourceType: module

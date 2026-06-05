@@ -2,17 +2,17 @@ import { Matrix, NIPALS } from 'ml-matrix';
 
 /**
  * OPLS loop
- * @param {Array|Matrix} data matrix with features
- * @param {Array|Matrix} labels an array of labels (dependent variable)
- * @param {Object} [options={}] an object with options
- * @return {Object} an object with model (filteredX: err,
-    loadingsXOrtho: pOrtho,
-    scoresXOrtho: tOrtho,
-    weightsXOrtho: wOrtho,
-    weightsPred: w,
-    loadingsXpred: p,
-    scoresXpred: t,
-    loadingsY:)
+ * @param {Array|Matrix} data - matrix with features
+ * @param {Array|Matrix} labels - an array of labels (dependent variable)
+ * @param {object} [options={}] - an object with options
+ * @returns {object} an object with model (filteredX: err,
+ * loadingsXOrtho: pOrtho,
+ * scoresXOrtho: tOrtho,
+ * weightsXOrtho: wOrtho,
+ * weightsPred: w,
+ * loadingsXpred: p,
+ * scoresXpred: t,
+ * loadingsY:)
  */
 export function oplsNipals(data, labels, options = {}) {
   const { numberOSC = 1000, limit = 1e-10 } = options;
