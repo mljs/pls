@@ -49,6 +49,27 @@
 
 
 <a name="0.2.1"></a>
+## [4.4.0](https://github.com/mljs/pls/compare/v4.3.2...v4.4.0) (2026-06-06)
+
+
+### Features
+
+* migrate to ESM, vitest and current tooling ([a163ca6](https://github.com/mljs/pls/commit/a163ca64ccee401ba631be5009cf03ed4d0371ea))
+
+
+### Bug Fixes
+
+* bound the OPLS component loop with maxComponents ([79de99a](https://github.com/mljs/pls/commit/79de99a61bedb62a414b8fe06f67a483b4041ab1))
+* handle zero-variance columns to avoid NaN in OPLS ([fbc2257](https://github.com/mljs/pls/commit/fbc2257ba2caa4f77394241df1d6e52220c495d3))
+* throw on constant labels instead of returning NaN ([9b7f364](https://github.com/mljs/pls/commit/9b7f3649c075d2692e3a0b24e3cec2292cf4a9ce))
+
+
+### Performance Improvements
+
+* avoid clone churn in the oplsNipals OSC loop ([9a89625](https://github.com/mljs/pls/commit/9a89625f552d349b22a17014cd1ef541e8e7ae4d))
+* skip dead trainFeatures scaling for later OPLS components ([fb724e5](https://github.com/mljs/pls/commit/fb724e59cb3f355aa8295341d6df03bd65a54dea))
+* skip redundant clones in OPLS _predictAll ([921dbda](https://github.com/mljs/pls/commit/921dbdab425e216804bab3276b8c46e74bc24c73))
+
 ## [4.3.2](https://github.com/mljs/pls/compare/v4.3.1...v4.3.2) (2023-09-08)
 
 
