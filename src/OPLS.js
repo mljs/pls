@@ -509,8 +509,12 @@ export class OPLS {
     // centering and scaling should only be
     // performed once
     const { center = true, scale = true } = options;
-    const features = data.clone();
-    const labels = categories.clone();
+    // clone only when we mutate the inputs (center/scale below); oplsNipals and
+    // NIPALS do not mutate the X/Y passed here, so when called with
+    // center/scale = false (every component after the first) the clones are pure
+    // waste of a full-matrix copy per iteration.
+    const features = center || scale ? data.clone() : data;
+    const labels = center || scale ? categories.clone() : categories;
 
     if (center) {
       const means = features.mean('column');
