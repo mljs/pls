@@ -123,18 +123,22 @@ export class OPLS {
         const dataCenter = trainFeatures.mean('column');
         const dataSD = getSafeStandardDeviations(trainFeatures);
 
-        // center and scale training set
+        // center and scale training set. trainFeatures is only consumed for the
+        // first component; later components run oplsNipals on the stored
+        // filteredX, so centering/scaling trainFeatures again would be dead work.
         if (center) {
-          trainFeatures.center('column');
+          if (nc === 0) trainFeatures.center('column');
           trainLabels.center('column');
         }
 
         if (scale) {
-          // std computed after centering to stay bit-identical to the previous
-          // internal scale('column'); sanitized to avoid dividing by a zero sd.
-          trainFeatures.scale('column', {
-            scale: getSafeStandardDeviations(trainFeatures),
-          });
+          if (nc === 0) {
+            // std computed after centering to stay bit-identical to the previous
+            // internal scale('column'); sanitized to avoid dividing by a zero sd.
+            trainFeatures.scale('column', {
+              scale: getSafeStandardDeviations(trainFeatures),
+            });
+          }
           trainLabels.scale('column');
         }
         // perform opls
