@@ -15,7 +15,7 @@ K-OPLS regression algorithm based on [this paper](http://onlinelibrary.wiley.com
 
 OPLS implementation based on the R package [Metabomate](https://github.com/kimsche/MetaboMate) using NIPALS factorization loop.
 
-## installation
+## Installation
 
 `$ npm i ml-pls`
 
@@ -24,7 +24,7 @@ OPLS implementation based on the R package [Metabomate](https://github.com/kimsc
 ### [PLS](./src/PLS.js)
 
 ```js
-import PLS from 'ml-pls';
+import { PLS } from 'ml-pls';
 
 const X = [
   [0.1, 0.02],
@@ -65,13 +65,13 @@ const model = new OPLS(data, irisLabels, { cvFolds });
 console.log(model.mode); // 'regression'
 ```
 
-The OPLS class is intended for exploratory modeling, that is not for the creation of predictors. Therefore there is a built-in k-fold cross-validation loop and Q2y is an average over the folds.
+The OPLS class is intended for exploratory modeling, that is not for the creation of predictors. Therefore there is a built-in k-fold cross-validation loop and Q2y is an average over the folds. `Q2y` is an array with one entry per fitted component:
 
 ```js
-console.log(model.model[0].Q2y);
+console.log(model.model[0].Q2y[0]);
 ```
 
-should give 0.9209227614652857
+should give 0.9209227614652846
 
 ### [OPLS-DA](./src/OPLS.js)
 
@@ -89,7 +89,8 @@ const irisLabels = getClasses();
 
 const model = new OPLS(data, irisLabels, { cvFolds });
 console.log(model.mode); // 'discriminantAnalysis'
-console.log(model.model[0].auc); // 0.5366666666666665,
+// auc is an array with one entry per fitted component
+console.log(model.model[0].auc[0]); // 0.6816
 ```
 
 If for some reason a predictor is necessary the following code may serve as an example
@@ -121,10 +122,10 @@ const testLabels = irisLabels.filter((el, idx) => testIndex.includes(idx));
 const trainingLabels = irisLabels.filter((el, idx) => trainIndex.includes(idx));
 
 const model = new OPLS(trainingData, trainingLabels);
-console.log(model.mode); // 'discriminantAnalysis'
+console.log(model.mode); // 'regression'
 const prediction = model.predict(testData, { trueLabels: testLabels });
 // Get the predicted Q2 value
-console.log(prediction.Q2y); // 0.9247698398971457
+console.log(prediction.Q2y); // 0.9243354801393767
 ```
 
 ### [K-OPLS](./src/KOPLS.js)
@@ -169,7 +170,7 @@ console.log(predScoreMat);
 console.log(predYOrthVectors);
 ```
 
-## [API Documentation](http://mljs.github.io/pls/)
+## [API Documentation](https://mljs.github.io/pls/)
 
 ## License
 
