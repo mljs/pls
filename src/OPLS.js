@@ -21,6 +21,7 @@ export class OPLS {
    * @param {boolean} [options.scale=true] - should the data be scaled (divide by the standard deviation).
    * @param {Array} [options.cvFolds=[]] - Allows to provide folds as array of objects with the arrays trainIndex and testIndex as properties.
    * @param {number} [options.nbFolds=7] - Allows to generate the defined number of folds with the training and test set chosen randomly from the data set.
+   * @param {number} [options.maxComponents=min(rows - 1, columns)] - upper bound on the number of orthogonal components. The fit normally stops earlier (when adding a component no longer improves the cross-validated metric by at least 0.05); this is a hard cap that guarantees termination even when the metric never plateaus.
    */
   constructor(data, labels, options = {}) {
     if (data === true) {
@@ -44,7 +45,13 @@ export class OPLS {
     const features = new Matrix(data);
     // set default values
     // cvFolds allows to define folds for testing purpose
-    const { center = true, scale = true, cvFolds = [], nbFolds = 7 } = options;
+    const {
+      center = true,
+      scale = true,
+      cvFolds = [],
+      nbFolds = 7,
+      maxComponents = Math.min(features.rows - 1, features.columns),
+    } = options;
 
     this.labels = labels;
     let group;
@@ -209,13 +216,16 @@ export class OPLS {
       modelNC.value = value;
 
       if (nc > 0) {
-        overfitted = value - listOfValues[nc - 1] < 0.05;
+        // a non-finite metric means the fit degenerated; stop rather than keep
+        // adding components until the maxComponents cap.
+        overfitted =
+          !Number.isFinite(value) || value - listOfValues[nc - 1] < 0.05;
       }
       this.model.push(modelNC);
       // store the model for each component
       nc++;
       // console.warn(`OPLS iteration over # of Components: ${nc + 1}`);
-    } while (!overfitted); // end of loop over nc
+    } while (!overfitted && nc < maxComponents); // end of loop over nc
     // store scores from CV
     const predictiveScoresCV = this.predictiveScoresCV;
     const orthogonalScoresCV = this.orthogonalScoresCV;

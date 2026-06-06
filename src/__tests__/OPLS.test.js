@@ -402,6 +402,17 @@ describe('zero-variance (constant) columns', () => {
   });
 });
 
+describe('maxComponents guard', () => {
+  it('caps the number of orthogonal components', () => {
+    const x = new Matrix(iris);
+    const cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+    const labels = newM.get('iris', { format: 'factor' }).values;
+    const model = new OPLS(x, labels, { cvFolds, maxComponents: 1 });
+
+    expect(model.model).toHaveLength(1);
+  });
+});
+
 describe('confusion matrix', () => {
   const trueLabels = [1];
   const predictedLabels = [1];
