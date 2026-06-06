@@ -54,6 +54,13 @@ export class OPLS {
     } = options;
 
     this.labels = labels;
+    // a constant Y has zero variance: it cannot define a direction to model and
+    // would silently produce NaN once scaled. Fail loudly instead of hiding it.
+    if (new Set(labels).size < 2) {
+      throw new RangeError(
+        'labels must contain at least two distinct values; a constant Y has zero variance and cannot fit an OPLS model',
+      );
+    }
     let group;
     if (typeof labels[0] === 'number') {
       // numeric labels: OPLS regression is used

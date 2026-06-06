@@ -413,6 +413,17 @@ describe('maxComponents guard', () => {
   });
 });
 
+describe('degenerate labels', () => {
+  it('throws on constant (zero-variance) labels instead of returning NaN', () => {
+    const x = new Matrix(iris);
+    const constantLabels = new Array(iris.length).fill('a');
+
+    expect(() => new OPLS(x, constantLabels)).toThrow(
+      /at least two distinct values/,
+    );
+  });
+});
+
 describe('confusion matrix', () => {
   const trueLabels = [1];
   const predictedLabels = [1];
