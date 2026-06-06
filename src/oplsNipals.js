@@ -1,18 +1,23 @@
 import { Matrix, NIPALS } from 'ml-matrix';
 
 /**
- * OPLS loop
- * @param {Array|Matrix} data - matrix with features
- * @param {Array|Matrix} labels - an array of labels (dependent variable)
- * @param {object} [options={}] - an object with options
- * @returns {object} an object with model (filteredX: err,
- * loadingsXOrtho: pOrtho,
- * scoresXOrtho: tOrtho,
- * weightsXOrtho: wOrtho,
- * weightsPred: w,
- * loadingsXpred: p,
- * scoresXpred: t,
- * loadingsY:)
+ * Single OPLS (orthogonal projections to latent structures) NIPALS iteration.
+ * Computes the predictive and Y-orthogonal components and returns the data with
+ * the orthogonal variation filtered out.
+ * @param {Array|Matrix} data - matrix with features (X).
+ * @param {Array|Matrix} labels - an array of labels (dependent variable Y).
+ * @param {object} [options={}] - an object with options.
+ * @param {number} [options.numberOSC=1000] - maximum number of NIPALS iterations.
+ * @param {number} [options.limit=1e-10] - convergence threshold used to stop the iteration.
+ * @returns {object} the computed model with the following properties:
+ * - `filteredX`: X with the orthogonal component removed.
+ * - `weightsXOrtho`: Y-orthogonal weights of X.
+ * - `loadingsXOrtho`: Y-orthogonal loadings of X.
+ * - `scoresXOrtho`: Y-orthogonal scores of X.
+ * - `weightsXPred`: predictive weights of X.
+ * - `loadingsXpred`: predictive loadings of X.
+ * - `scoresXpred`: predictive scores of X.
+ * - `loadingsY`: loadings of Y.
  */
 export function oplsNipals(data, labels, options = {}) {
   const { numberOSC = 1000, limit = 1e-10 } = options;
@@ -111,6 +116,13 @@ export function oplsNipals(data, labels, options = {}) {
   };
 }
 
+/**
+ * Computes the W matrix used to initialize the orthogonal loop for multi-column Y.
+ * @private
+ * @param {Matrix} xValue - the feature matrix (X).
+ * @param {Matrix} yValue - the label matrix (Y).
+ * @returns {Matrix} the W matrix (one column per Y variable).
+ */
 function getWh(xValue, yValue) {
   let result = new Matrix(xValue.columns, yValue.columns);
   for (let i = 0; i < yValue.columns; i++) {

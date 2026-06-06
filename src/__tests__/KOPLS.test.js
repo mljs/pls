@@ -1,5 +1,5 @@
 import { toBeDeepCloseTo } from 'jest-matcher-deep-close-to';
-import Kernel from 'ml-kernel';
+import { Kernel } from 'ml-kernel';
 import { Matrix } from 'ml-matrix';
 import { beforeAll, expect, test } from 'vitest';
 

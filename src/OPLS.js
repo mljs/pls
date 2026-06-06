@@ -8,17 +8,19 @@ import { oplsNipals } from './oplsNipals.js';
 import { tss } from './util/tss.js';
 
 /**
- * Creates new OPLS (orthogonal partial latent structures) from features and labels.
- * @param {Array} data - matrix containing data (X).
- * @param {Array} labels - 1D Array containing metadata (Y).
- * @param {object} [options={}]
- * @param {boolean} [options.center = true] - should the data be centered (subtract the mean).
- * @param {boolean} [options.scale = true] - should the data be scaled (divide by the standard deviation).
- * @param {Array} [options.cvFolds = []] - Allows to provide folds as array of objects with the arrays trainIndex and testIndex as properties.
- * @param {number} [options.nbFolds = 7] - Allows to generate the defined number of folds with the training and test set choosen randomly from the data set.
+ * OPLS (orthogonal projections to latent structures).
  */
-
 export class OPLS {
+  /**
+   * Creates a new OPLS model from features and labels.
+   * @param {Array} data - matrix containing data (X).
+   * @param {Array} labels - 1D Array containing metadata (Y). Numeric labels trigger regression, string labels trigger discriminant analysis.
+   * @param {object} [options={}] - constructor options.
+   * @param {boolean} [options.center=true] - should the data be centered (subtract the mean).
+   * @param {boolean} [options.scale=true] - should the data be scaled (divide by the standard deviation).
+   * @param {Array} [options.cvFolds=[]] - Allows to provide folds as array of objects with the arrays trainIndex and testIndex as properties.
+   * @param {number} [options.nbFolds=7] - Allows to generate the defined number of folds with the training and test set chosen randomly from the data set.
+   */
   constructor(data, labels, options = {}) {
     if (data === true) {
       const opls = options;
@@ -276,6 +278,10 @@ export class OPLS {
     return this.output;
   }
 
+  /**
+   * Returns the cross-validated predictive and orthogonal scores.
+   * @returns {{scoresX: Array<Array<number>>, scoresY: Array<Array<number>>}} the predictive (`scoresX`) and orthogonal (`scoresY`) cross-validated scores.
+   */
   getScores() {
     const scoresX = this.predictiveScoresCV.map((x) => x.to1DArray());
     const scoresY = this.orthogonalScoresCV.map((x) => x.to1DArray());
@@ -319,12 +325,13 @@ export class OPLS {
   }
 
   /**
-   * Predict scores for new data
-   * @param {Matrix} features - a matrix containing new data
+   * Predicts the class of each row of new data (discriminant analysis mode).
+   * @param {Matrix} features - a matrix containing new data.
    * @param {object} [options={}] - prediction options.
-   * @param {Array} [options.trueLabel] - an array with true values to compute confusion matrix
-   * @param {number} [options.nc] - the number of components to be used
-   * @returns {object} - predictions
+   * @param {Array} [options.trueLabels] - an array with true values to compute confusion matrix.
+   * @param {boolean} [options.center=this.center] - should the data be centered before prediction.
+   * @param {boolean} [options.scale=this.scale] - should the data be scaled before prediction.
+   * @returns {Array} the predicted class name for each row of `features`.
    */
   predictCategory(features, options = {}) {
     const {
@@ -374,8 +381,9 @@ export class OPLS {
    * Predict scores for new data
    * @param {Matrix} features - a matrix containing new data
    * @param {object} [options={}] - prediction options.
-   * @param {Array} [options.trueLabel] - an array with true values to compute confusion matrix
-   * @param {number} [options.nc] - the number of components to be used
+   * @param {Array} [options.trueLabels] - an array with true values to compute confusion matrix.
+   * @param {boolean} [options.center=this.center] - should the data be centered before prediction.
+   * @param {boolean} [options.scale=this.scale] - should the data be scaled before prediction.
    * @returns {object} - predictions
    */
   predict(features, options = {}) {
@@ -468,6 +476,16 @@ export class OPLS {
     }
   }
 
+  /**
+   * Fits a one-component OPLS model on the full data set and computes its R2 statistics.
+   * @private
+   * @param {Matrix} data - the feature matrix (X).
+   * @param {Matrix} categories - the label matrix (Y).
+   * @param {object} [options={}] - prediction options.
+   * @param {boolean} [options.center=true] - should the data be centered.
+   * @param {boolean} [options.scale=true] - should the data be scaled.
+   * @returns {object} the fitted component with its scores, loadings, weights and R2x/R2y statistics.
+   */
   _predictAll(data, categories, options = {}) {
     // cannot use the global this.center here
     // since it is used in the NC loop and
@@ -558,6 +576,14 @@ export class OPLS {
   }
 }
 
+/**
+ * Builds a dummy (indicator) Y matrix from an array of class labels.
+ * For more than two classes each row encodes one class as `1` and the others as `-1`;
+ * for two classes a single row of `2`/`1` values is returned.
+ * @private
+ * @param {Array} array - the array of class labels.
+ * @returns {Array<Array<number>>} the dummy Y matrix.
+ */
 function createDummyY(array) {
   const features = [...new Set(array)];
   const result = [];
