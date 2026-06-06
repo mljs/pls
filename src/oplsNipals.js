@@ -63,9 +63,20 @@ export function oplsNipals(data, labels, options = {}) {
     // calc new u and compare with one in previus iteration (stop criterion)
     uNew = labels.mmul(c.transpose()).div(c.norm() ** 2);
     if (i > 0) {
-      diff = uNew.clone().sub(u).pow(2).sum() / uNew.clone().pow(2).sum();
+      // same value as uNew.clone().sub(u).pow(2).sum() / uNew.clone().pow(2).sum()
+      // but without allocating three full-vector clones per iteration.
+      let numerator = 0;
+      let denominator = 0;
+      for (let row = 0; row < uNew.rows; row++) {
+        const newValue = uNew.get(row, 0);
+        const delta = newValue - u.get(row, 0);
+        numerator += delta * delta;
+        denominator += newValue * newValue;
+      }
+      diff = numerator / denominator;
     }
-    u = uNew.clone();
+    // uNew is reassigned to a fresh matrix next iteration, so a reference is safe.
+    u = uNew;
   }
   // calc loadings
   let wOrtho;
