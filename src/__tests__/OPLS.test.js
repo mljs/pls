@@ -383,6 +383,25 @@ describe('OPLS', () => {
   });
 });
 
+describe('zero-variance (constant) columns', () => {
+  it('does not produce NaN and treats a constant column as neutral', () => {
+    // append a constant column: standardDeviation is 0, which would divide by
+    // zero and poison the whole model with NaN if not handled.
+    const withConstant = iris.map((row) => [...row, 5]);
+    const x = new Matrix(withConstant);
+    const cvFolds = getCrossValidationSets(7, { idx: 0, by: 'trainTest' });
+    const labels = newM.get('iris', { format: 'factor' }).values;
+    const model = new OPLS(x, labels, { cvFolds });
+
+    expect(model.getLogs().R2y[0]).toBeCloseTo(0.9284787, 6);
+    expect(model.getLogs().R2x[0]).toBeCloseTo(0.7031765, 3);
+    expect(Number.isNaN(model.getLogs().Q2y[0])).toBe(false);
+    expect(
+      model.predict(withConstant).yHat.to1DArray().every(Number.isFinite),
+    ).toBe(true);
+  });
+});
+
 describe('confusion matrix', () => {
   const trueLabels = [1];
   const predictedLabels = [1];

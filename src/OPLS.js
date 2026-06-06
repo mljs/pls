@@ -5,6 +5,7 @@ import { Matrix, NIPALS } from 'ml-matrix';
 import { getAuc, getClasses, getRocCurve } from 'ml-roc-multiclass';
 
 import { oplsNipals } from './oplsNipals.js';
+import { getSafeStandardDeviations } from './util/getSafeStandardDeviations.js';
 import { tss } from './util/tss.js';
 
 /**
@@ -67,14 +68,13 @@ export class OPLS {
     }
     this.scale = scale;
     if (this.scale) {
-      this.stdevs = features.standardDeviation('column');
-      this.stdevsY = group.standardDeviation('column');
+      // constant columns (sd = 0) would divide by zero when scaling and produce
+      // NaN; getSafeStandardDeviations replaces those zeros by 1 (check opls.R line 70).
+      this.stdevs = getSafeStandardDeviations(features);
+      this.stdevsY = getSafeStandardDeviations(group);
     } else {
       this.means = null;
     }
-
-    // check and remove for features with sd = 0 TODO here
-    // check opls.R line 70
 
     const folds = cvFolds.length > 0 ? cvFolds : getFolds(labels, nbFolds);
     const Q2 = [];
@@ -107,7 +107,7 @@ export class OPLS {
         const trainLabels = trainTest.trainLabels;
         // determine center and scale of training set
         const dataCenter = trainFeatures.mean('column');
-        const dataSD = trainFeatures.standardDeviation('column');
+        const dataSD = getSafeStandardDeviations(trainFeatures);
 
         // center and scale training set
         if (center) {
@@ -116,7 +116,11 @@ export class OPLS {
         }
 
         if (scale) {
-          trainFeatures.scale('column');
+          // std computed after centering to stay bit-identical to the previous
+          // internal scale('column'); sanitized to avoid dividing by a zero sd.
+          trainFeatures.scale('column', {
+            scale: getSafeStandardDeviations(trainFeatures),
+          });
           trainLabels.scale('column');
         }
         // perform opls
@@ -228,7 +232,10 @@ export class OPLS {
       orthogonalWeights.setSubMatrix(this.model[i].orthogonalWeights, i, 0);
     }
 
-    const FeaturesCS = features.center('column').scale('column');
+    const FeaturesCS = features.center('column');
+    FeaturesCS.scale('column', {
+      scale: getSafeStandardDeviations(FeaturesCS),
+    });
     let labelsCS;
     if (this.mode === 'regression') {
       labelsCS = group.clone().center('column').scale('column');
@@ -501,7 +508,7 @@ export class OPLS {
       labels.center('column');
     }
     if (scale) {
-      const stdevs = features.standardDeviation('column');
+      const stdevs = getSafeStandardDeviations(features);
       features.scale('column', { scale: stdevs });
       labels.scale('column');
       // reevaluate tssy and tssx after scaling
