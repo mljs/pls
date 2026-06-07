@@ -49,6 +49,13 @@
 
 
 <a name="0.2.1"></a>
+## [4.4.1](https://github.com/mljs/pls/compare/v4.4.0...v4.4.1) (2026-06-07)
+
+
+### Bug Fixes
+
+* avoid NaN in cross-validated OPLS scores on rank-deficient data ([9068395](https://github.com/mljs/pls/commit/9068395965a2fb0685d6a202941aba1beb15f4b2))
+
 ## [4.4.0](https://github.com/mljs/pls/compare/v4.3.2...v4.4.0) (2026-06-06)
 
 
