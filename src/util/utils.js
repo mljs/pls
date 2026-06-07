@@ -11,6 +11,23 @@ export function norm(X) {
 }
 
 /**
+ * Checks whether every element of a matrix is finite. Loops over the entries
+ * directly — no intermediate array is allocated — and short-circuits on the
+ * first non-finite value.
+ * @private
+ * @param {Matrix} matrix - the matrix to check.
+ * @returns {boolean} `true` when all entries are finite, `false` otherwise.
+ */
+export function isFiniteMatrix(matrix) {
+  for (let row = 0; row < matrix.rows; row++) {
+    for (let column = 0; column < matrix.columns; column++) {
+      if (!Number.isFinite(matrix.get(row, column))) return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Powers by 2 each element of a Matrix or a Vector, used in the apply method of
  * the Matrix object.
  * @private

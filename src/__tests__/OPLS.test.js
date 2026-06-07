@@ -402,6 +402,53 @@ describe('zero-variance (constant) columns', () => {
   });
 });
 
+describe('rank-deficient / perfectly separable data', () => {
+  // Class A is non-zero only on the first two columns, class B only on the last
+  // two, so the matrix is rank-deficient and perfectly separable. On a fold that
+  // fully deflates a component this used to leave a zero-norm orthogonal weight
+  // (0/0) — and non-finite predictive weights from NIPALS — which filled the
+  // cross-validated scores and the Q2/R2/AUC logs with NaN. This exact fold split
+  // reproduced it before the guard in oplsNipals / OPLS.
+  const separable = [
+    [10, 10, 0, 0],
+    [11, 11, 0, 0],
+    [12, 12, 0, 0],
+    [13, 13, 0, 0],
+    [0, 0, 14, 14],
+    [0, 0, 15, 15],
+    [0, 0, 16, 16],
+    [0, 0, 17, 17],
+  ];
+  const labels = ['A', 'A', 'A', 'A', 'B', 'B', 'B', 'B'];
+  const cvFolds = [
+    { testIndex: [0, 1], trainIndex: [2, 3, 4, 5, 6, 7] },
+    { testIndex: [2, 3], trainIndex: [0, 1, 4, 5, 6, 7] },
+    { testIndex: [4, 5], trainIndex: [0, 1, 2, 3, 6, 7] },
+    { testIndex: [6, 7], trainIndex: [0, 1, 2, 3, 4, 5] },
+  ];
+
+  it('keeps cross-validated scores and metrics finite (no NaN)', () => {
+    const model = new OPLS(new Matrix(separable), labels, {
+      center: true,
+      scale: true,
+      cvFolds,
+    });
+
+    const { scoresX, scoresY } = model.getScores();
+    const allFinite = (rows) => rows.flat().every(Number.isFinite);
+
+    expect(allFinite(scoresX)).toBe(true);
+    expect(allFinite(scoresY)).toBe(true);
+
+    const logs = model.getLogs();
+
+    expect(logs.Q2y.every(Number.isFinite)).toBe(true);
+    expect(logs.R2x.every(Number.isFinite)).toBe(true);
+    expect(logs.R2y.every(Number.isFinite)).toBe(true);
+    expect(logs.auc.every(Number.isFinite)).toBe(true);
+  });
+});
+
 describe('maxComponents guard', () => {
   it('caps the number of orthogonal components', () => {
     const x = new Matrix(iris);

@@ -104,17 +104,37 @@ export function oplsNipals(data, labels, options = {}) {
         .mmul(w.transpose()),
     );
   }
-  wOrtho.div(wOrtho.norm());
-  let tOrtho = data.mmul(wOrtho.transpose()).div(wOrtho.norm() ** 2);
+  // When no Y-orthogonal variation remains — a rank-deficient or perfectly
+  // separable X, which happens routinely on a single cross-validation fold —
+  // wOrtho is the zero vector. Normalising it (or dividing by its squared norm)
+  // is a 0/0 that fills the component with NaN, and every sample later projected
+  // through these weights (e.g. the held-out fold during cross-validation)
+  // inherits it. Treat that as a null orthogonal component: the data passes
+  // through unfiltered with zero orthogonal scores and loadings.
+  const wOrthoNorm = wOrtho.norm();
+  let tOrtho;
+  let pOrtho;
+  let err;
+  if (wOrthoNorm > 0) {
+    wOrtho.div(wOrthoNorm);
+    tOrtho = data.mmul(wOrtho.transpose()).div(wOrtho.norm() ** 2);
 
-  // orthogonal loadings
-  let pOrtho = tOrtho
-    .transpose()
-    .mmul(data)
-    .div(tOrtho.norm() ** 2);
+    // orthogonal loadings
+    pOrtho = tOrtho
+      .transpose()
+      .mmul(data)
+      .div(tOrtho.norm() ** 2);
 
-  // filtered data
-  let err = data.clone().sub(tOrtho.mmul(pOrtho));
+    // filtered data
+    err = data.clone().sub(tOrtho.mmul(pOrtho));
+  } else {
+    // No Y-orthogonal variation remains: the data passes through unfiltered and
+    // the orthogonal scores/loadings are zero.
+    wOrtho = Matrix.zeros(1, data.columns);
+    tOrtho = Matrix.zeros(data.rows, 1);
+    pOrtho = Matrix.zeros(1, data.columns);
+    err = data.clone();
+  }
   return {
     filteredX: err,
     weightsXOrtho: wOrtho,

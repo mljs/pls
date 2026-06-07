@@ -7,6 +7,7 @@ import { getAuc, getClasses, getRocCurve } from 'ml-roc-multiclass';
 import { oplsNipals } from './oplsNipals.js';
 import { getSafeStandardDeviations } from './util/getSafeStandardDeviations.js';
 import { tss } from './util/tss.js';
+import { isFiniteMatrix } from './util/utils.js';
 
 /**
  * OPLS (orthogonal projections to latent structures).
@@ -165,10 +166,18 @@ export class OPLS {
           Eh.sub(scores.mmul(oplsCV[idx][f].loadingsXOrtho));
         }
         // prediction
-        const predictiveComponents = Eh.mmul(plsCV.w.transpose());
-        const yHatComponents = predictiveComponents
-          .mmul(plsCV.betas)
-          .mmul(plsCV.q.transpose()); // ok
+        // A fully deflated training residual (rank-deficient or perfectly
+        // separable data, common on a single fold) leaves no predictive
+        // variation, so NIPALS returns non-finite weights. Treat it as a null
+        // predictive component — the held-out fold contributes zero — instead of
+        // leaking NaN into the cross-validated scores and the Q2/AUC metrics.
+        const hasPredictive = isFiniteMatrix(plsCV.w);
+        const predictiveComponents = hasPredictive
+          ? Eh.mmul(plsCV.w.transpose())
+          : Matrix.zeros(Eh.rows, 1);
+        const yHatComponents = hasPredictive
+          ? predictiveComponents.mmul(plsCV.betas).mmul(plsCV.q.transpose())
+          : Matrix.zeros(Eh.rows, 1);
 
         const yHat = new Matrix(yHatComponents.rows, 1);
         for (let i = 0; i < yHatComponents.rows; i++) {
